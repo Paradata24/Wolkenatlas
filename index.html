@@ -168,7 +168,7 @@
 
 <div id="boot">Flugbuch wird geladen …</div>
 
-<!-- ================= ANMELDUNG ================= -->
+<!-- =================  ================= -->
 <div id="login">
   <div class="box">
     <h1>Flugbuch</h1>
@@ -422,7 +422,7 @@ function toast(msg, bad){
 }
 const oops = e => { console.error(e); toast(e?.message || 'Etwas ist schiefgegangen.', true); };
 
-/* ══════════ ANMELDUNG ══════════ */
+/* ══════════  ══════════ */
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
   document.getElementById('boot').style.display = 'none';
@@ -440,7 +440,7 @@ async function doLogin(){
     password: document.getElementById('l-pass').value
   });
   btn.disabled = false;
-  if (error){ msg.textContent = 'Anmeldung fehlgeschlagen. Prüf E-Mail und Passwort.'; return; }
+    if (error){ msg.textContent = 'Fehler: ' + error.message; return; }
   document.getElementById('login').classList.remove('on');
   startApp(data.session);
 }
