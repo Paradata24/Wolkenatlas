@@ -440,7 +440,7 @@ async function doLogin(){
     password: document.getElementById('l-pass').value
   });
   btn.disabled = false;
-    if (error){ msg.textContent = 'Fehler: ' + error.message; return; }
+    if (error){ msg.textContent = 'Anmeldung fehlgeschlagen. Prüf E-Mail und Passwort.'; }
   document.getElementById('login').classList.remove('on');
   startApp(data.session);
 }
