@@ -40,6 +40,21 @@ asc_m, asc_min, glider, harness, note, reminder, created_at`
 `start_place` und `land_place` verweisen auf `places` mit `on delete restrict`:
 Ein Ort, an dem noch Flüge hängen, lässt sich nicht löschen.
 
+### Leere Felder
+
+Beim Eintragen eines Flugs ist **kein Feld Pflicht**. Alles, was leer bleibt, wird als
+leerer Wert (`null`) gespeichert; `mins` wird zu `0`. Damit das funktioniert, müssen
+`flight_date` und `start_place` in Supabase leere Werte erlauben. Falls beim Speichern
+die Meldung erscheint, dass die Datenbank ein Feld noch nicht leer lässt: In Supabase
+unter **SQL Editor** einmalig ausführen:
+
+```sql
+alter table flights alter column flight_date drop not null;
+alter table flights alter column start_place drop not null;
+```
+
+Danach lässt sich ein Flug auch halb ausgefüllt speichern.
+
 ## Festgelegte Regeln
 
 Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
@@ -49,6 +64,10 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
 - **Aufstiegszeit zählt nicht zur Flugzeit.** Gleicher Grund.
 - Bei `kind = 'gh'` wird nur *ein* Ort erfasst; er steht in `start_place`, `land_place` bleibt leer.
 - Aufstiegsfelder dürfen leer sein — das bedeutet: mit Bahn oder Auto zum Startplatz.
+- **Jede Angabe darf leer bleiben, auch Datum, Orte und Dauer.** Ein Flug wird immer
+  gespeichert und kann später ergänzt werden. Leere Werte erscheinen in Listen als „—“,
+  Flüge ohne Datum stehen in der Liste ganz oben und tauchen in der Jahresstatistik
+  nicht auf, weil sie keinem Jahr zugeordnet werden können.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
 - Notizen sind tagebuchlang und erscheinen nur in der Detailansicht, nie in der Liste.

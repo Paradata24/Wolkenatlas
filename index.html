@@ -72,6 +72,7 @@
 
   label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;
     text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+  label .opt{text-transform:none;letter-spacing:.02em;opacity:.7;font-style:italic}
   input,select,textarea{width:100%;font:inherit;font-size:14px;padding:7px 9px;color:var(--ink);
     background:#fff;border:1px solid var(--line);border-radius:var(--r)}
   input[type=number],input[type=date],input[type=time]{font-family:var(--mono)}
@@ -215,7 +216,7 @@
         <div class="body">
           <div class="pair">
             <div class="field"><label for="f-date">Datum</label><input type="date" id="f-date"></div>
-            <div class="field"><label for="f-time">Startzeit</label><input type="time" id="f-time"></div>
+            <div class="field"><label for="f-time">Startzeit <span class="opt">optional</span></label><input type="time" id="f-time"></div>
           </div>
           <div class="field"><label for="f-kind">Art des Flugs</label>
             <select id="f-kind">
@@ -250,6 +251,8 @@
             <button class="btn" id="savebtn" onclick="saveFlight()">Flug speichern</button>
             <button class="btn ghost" id="cancelbtn" style="display:none" onclick="resetForm()">Abbrechen</button>
           </div>
+          <p class="note">Kein Feld ist Pflicht. Was du gerade nicht weißt, lässt du leer —
+            der Flug wird trotzdem gespeichert und du kannst ihn später über „Bearbeiten“ ergänzen.</p>
           <p class="note" id="noplaces"></p>
         </div>
       </div>
@@ -402,17 +405,33 @@ let S = { places: [], gear: [], flights: [] };
 let map, layer, armed = false, pending = null, editId = null;
 
 const pad = n => String(n).padStart(2,'0');
-const fmt = m => Math.floor(m/60) + ':' + pad(m%60);
+const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
 const t2m = v => { if(!v) return 0; const [h,m] = v.split(':'); return (+h||0)*60 + (+m||0); };
 const m2t = m => pad(Math.floor(m/60)) + ':' + pad(m%60);
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const deDate = iso => { const [y,m,d] = iso.split('-'); return d+'.'+m+'.'+y; };
+/* Alle Angaben eines Flugs dürfen leer sein — darum überall auf Leerwerte gefasst sein. */
+const deDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); return d+'.'+m+'.'+y; };
+const dateLbl = iso => deDate(iso) || 'ohne Datum';
+const dur = m => m ? fmt(m) : '—';
 
 const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Flugschule', siv:'SIV', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
 const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
 const isGH = f => f.kind === 'gh';
 const pname = id => (S.places.find(p=>p.id===id)||{}).name || '—';
+/* Strecke als Text — je nachdem, was eingetragen ist. Leer, wenn gar kein Ort drinsteht. */
+const routeTxt = f => {
+  if (isGH(f)) return f.start ? pname(f.start) : '';
+  if (!f.start && !f.land) return '';
+  return (f.start ? pname(f.start) : '—') + ' → ' + (f.land ? pname(f.land) : '—');
+};
+const routeHTML = f => {
+  if (isGH(f)) return f.start ? esc(pname(f.start)) : '';
+  if (!f.start && !f.land) return '';
+  return (f.start ? esc(pname(f.start)) : '—')
+    + ' <span style="color:var(--muted)">→</span> '
+    + (f.land ? esc(pname(f.land)) : '—');
+};
 const gearOf = kind => S.gear.filter(g=>g.kind===kind).map(g=>g.name);
 
 function toast(msg, bad){
@@ -466,8 +485,8 @@ async function loadAll(){
   S.places  = pl.data;
   S.gear    = ge.data;
   S.flights = fl.data.map(f => ({
-    id:f.id, date:f.flight_date, time:f.start_time ? f.start_time.slice(0,5) : '',
-    kind:f.kind, start:f.start_place, land:f.land_place, mins:f.mins,
+    id:f.id, date:f.flight_date || '', time:f.start_time ? f.start_time.slice(0,5) : '',
+    kind:f.kind || 'thermik', start:f.start_place || '', land:f.land_place || '', mins:f.mins || 0,
     ascM:f.asc_m||0, ascMin:f.asc_min||0,
     glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
   }));
@@ -582,22 +601,20 @@ function updateKindUI(){
 }
 document.getElementById('f-kind').addEventListener('change', updateKindUI);
 
+/* Nichts ist Pflicht: Ein Flug lässt sich auch halb oder gar nicht ausgefüllt speichern
+   und später über „Bearbeiten“ ergänzen. */
 window.saveFlight = async () => {
   const btn = document.getElementById('savebtn');
   const d = document.getElementById('f-date').value;
   const kind = document.getElementById('f-kind').value, gh = kind === 'gh';
   const s = gh ? document.getElementById('f-place').value : document.getElementById('f-start').value;
-  const l = gh ? null : document.getElementById('f-land').value;
+  const l = gh ? '' : document.getElementById('f-land').value;
   const mins = t2m(document.getElementById('f-dur').value);
-  if (!d){ toast('Bitte ein Datum eintragen.'); return; }
-  if (gh && !s){ toast('Bitte den Ort wählen.'); return; }
-  if (!gh && (!s || !l)){ toast('Bitte Start- und Landeplatz wählen.'); return; }
-  if (!mins){ toast('Bitte die Dauer eintragen.'); return; }
 
   const row = {
-    flight_date: d,
+    flight_date: d || null,
     start_time: document.getElementById('f-time').value || null,
-    kind, start_place: s, land_place: l, mins,
+    kind, start_place: s || null, land_place: l || null, mins,
     asc_m:   +document.getElementById('f-asc-m').value || 0,
     asc_min: t2m(document.getElementById('f-asc-t').value),
     glider:  document.getElementById('f-glider').value || null,
@@ -610,7 +627,13 @@ window.saveFlight = async () => {
   const { error } = editId ? await sb.from('flights').update(row).eq('id', editId)
                            : await sb.from('flights').insert(row);
   btn.disabled = false;
-  if (error) return oops(error);
+  if (error){
+    /* 23502 = die Datenbank verlangt für diese Spalte noch einen Wert. */
+    if (error.code === '23502') return toast(
+      'Die Datenbank lässt dieses Feld noch nicht leer. In Supabase einmalig freigeben '
+      + '(siehe README, Abschnitt „Leere Felder“).', true);
+    return oops(error);
+  }
   toast(editId ? 'Änderungen gespeichert.' : 'Flug gespeichert.');
   resetForm(); await loadAll();
 };
@@ -618,7 +641,8 @@ window.saveFlight = async () => {
 window.resetForm = () => {
   editId = null;
   document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
-  ['f-time','f-dur','f-asc-m','f-asc-t','f-note','f-rem'].forEach(i=>document.getElementById(i).value='');
+  ['f-time','f-dur','f-asc-m','f-asc-t','f-note','f-rem',
+   'f-start','f-land','f-place','f-glider','f-harness'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('formtitle').textContent = 'Flug eintragen';
   document.getElementById('savebtn').textContent = 'Flug speichern';
   document.getElementById('cancelbtn').style.display = 'none';
@@ -627,19 +651,19 @@ window.resetForm = () => {
 window.editFlight = id => {
   const f = S.flights.find(x=>x.id===id); if (!f) return;
   closeDetail(); editId = id;
-  document.getElementById('f-date').value = f.date;
+  document.getElementById('f-date').value = f.date || '';
   document.getElementById('f-time').value = f.time || '';
   document.getElementById('f-kind').value = f.kind;
   updateKindUI();
-  if (isGH(f)) document.getElementById('f-place').value = f.start;
-  else { document.getElementById('f-start').value = f.start; document.getElementById('f-land').value = f.land; }
-  document.getElementById('f-dur').value = m2t(f.mins);
+  if (isGH(f)) document.getElementById('f-place').value = f.start || '';
+  else { document.getElementById('f-start').value = f.start || ''; document.getElementById('f-land').value = f.land || ''; }
+  document.getElementById('f-dur').value = f.mins ? m2t(f.mins) : '';
   document.getElementById('f-asc-m').value = f.ascM || '';
   document.getElementById('f-asc-t').value = f.ascMin ? m2t(f.ascMin) : '';
-  document.getElementById('f-glider').value = f.glider;
-  document.getElementById('f-harness').value = f.harness;
-  document.getElementById('f-note').value = f.note;
-  document.getElementById('f-rem').value = f.reminder;
+  document.getElementById('f-glider').value = f.glider || '';
+  document.getElementById('f-harness').value = f.harness || '';
+  document.getElementById('f-note').value = f.note || '';
+  document.getElementById('f-rem').value = f.reminder || '';
   document.getElementById('formtitle').textContent = 'Flug bearbeiten';
   document.getElementById('savebtn').textContent = 'Änderungen speichern';
   document.getElementById('cancelbtn').style.display = 'inline-block';
@@ -653,13 +677,13 @@ window.openDetail = id => {
   const row = (t,v) => v ? `<dt>${t}</dt><dd>${v}</dd>` : '';
   const auf = [f.ascM?f.ascM.toLocaleString('de-DE')+' Höhenmeter':'', f.ascMin?fmt(f.ascMin)+' h':'']
                 .filter(Boolean).join(' · ');
-  document.getElementById('d-title').firstChild.textContent = KINDS[f.kind] + ' am ' + deDate(f.date);
+  document.getElementById('d-title').firstChild.textContent =
+    KINDS[f.kind] + (f.date ? ' am ' + deDate(f.date) : ' — ohne Datum');
   document.getElementById('d-body').innerHTML = `
     <div class="sec" style="border-top:none"><dl class="dl">
-      ${row('Datum', deDate(f.date) + (f.time?`, ${f.time} Uhr`:''))}
-      ${row(isGH(f)?'Ort':'Strecke', isGH(f) ? esc(pname(f.start))
-            : esc(pname(f.start))+' <span style="color:var(--muted)">→</span> '+esc(pname(f.land)))}
-      ${row(isGH(f)?'Dauer':'Flugzeit', '<b class="num">'+fmt(f.mins)+' h</b>')}
+      ${row('Datum', [deDate(f.date), f.time?`${f.time} Uhr`:''].filter(Boolean).join(', '))}
+      ${row(isGH(f)?'Ort':'Strecke', routeHTML(f))}
+      ${row(isGH(f)?'Dauer':'Flugzeit', f.mins ? '<b class="num">'+fmt(f.mins)+' h</b>' : '')}
       ${row('Aufstieg', auf)}
       ${row('Schirm', esc(f.glider))}
       ${row('Gurtzeug', esc(f.harness))}
@@ -684,8 +708,9 @@ window.closeConfirm = () => document.getElementById('confirm').classList.remove(
 
 window.askDelete = id => {
   const f = S.flights.find(x=>x.id===id); if (!f) return;
-  const wo = isGH(f) ? pname(f.start) : pname(f.start)+' → '+pname(f.land);
-  ask(`<b>${esc(KINDS[f.kind])} am ${deDate(f.date)}</b><br>${esc(wo)} · ${fmt(f.mins)} h`
+  const wo = [routeTxt(f), f.mins ? fmt(f.mins)+' h' : ''].filter(Boolean).join(' · ');
+  ask(`<b>${esc(KINDS[f.kind])} ${f.date ? 'am '+deDate(f.date) : '— ohne Datum'}</b>`
+      + (wo ? `<br>${esc(wo)}` : '')
       + ((f.note||f.reminder) ? '<br><br>Notiz und Reminder werden mitgelöscht.' : '')
       + '<br><br>Das lässt sich nicht rückgängig machen.',
     async () => {
@@ -698,16 +723,18 @@ window.askDelete = id => {
 
 /* ══════════ RENDERN ══════════ */
 function renderAll(){
-  const sorted = [...S.flights].sort((a,b)=> b.date.localeCompare(a.date));
+  /* Flüge ohne Datum stehen oben, damit man sie nicht vergisst. */
+  const sorted = [...S.flights].sort((a,b)=> (b.date||'9999').localeCompare(a.date||'9999'));
   const now = new Date(), yr = now.getFullYear(), mo = pad(now.getMonth()+1);
-  const sum = a => a.reduce((t,f)=>t+f.mins, 0);
+  const sum = a => a.reduce((t,f)=>t+(f.mins||0), 0);
+  const inTime = (f, p) => f.date && f.date.startsWith(p);
   const air = S.flights.filter(f=>!isGH(f)), gnd = S.flights.filter(isGH);
 
   document.getElementById('r-total').innerHTML = fmt(sum(air))+'<small>h</small>';
-  document.getElementById('r-year').innerHTML  = fmt(sum(air.filter(f=>f.date.startsWith(yr))))+'<small>h</small>';
-  document.getElementById('r-month').innerHTML = fmt(sum(air.filter(f=>f.date.startsWith(yr+'-'+mo))))+'<small>h</small>';
+  document.getElementById('r-year').innerHTML  = fmt(sum(air.filter(f=>inTime(f, ''+yr))))+'<small>h</small>';
+  document.getElementById('r-month').innerHTML = fmt(sum(air.filter(f=>inTime(f, yr+'-'+mo))))+'<small>h</small>';
   document.getElementById('r-count').textContent = air.length;
-  document.getElementById('r-max').innerHTML = fmt(air.length ? Math.max(...air.map(f=>f.mins)) : 0)+'<small>h</small>';
+  document.getElementById('r-max').innerHTML = fmt(air.length ? Math.max(...air.map(f=>f.mins||0)) : 0)+'<small>h</small>';
   document.getElementById('r-gh').innerHTML = fmt(sum(gnd))+'<small>h</small>';
 
   const fill = (el, opts, leer) => {
@@ -725,16 +752,16 @@ function renderAll(){
   updateKindUI();
 
   document.getElementById('noplaces').textContent = S.places.length ? ''
-    : 'Lege zuerst unter „Orte“ deine Start- und Landeplätze auf der Karte an.';
+    : 'Start- und Landeplätze legst du unter „Orte“ auf der Karte an.';
 
   document.getElementById('flightlist').innerHTML = sorted.length ? `<table>
     <tr><th>Datum</th><th>Art</th><th>Strecke</th><th>Dauer</th><th>Schirm</th><th></th></tr>
     ${sorted.map(f=>`<tr class="click" onclick="openDetail('${f.id}')" title="Flug öffnen">
-      <td class="num">${deDate(f.date)}${f.time?`<br><span style="color:var(--muted);font-size:12px">${f.time}</span>`:''}</td>
+      <td class="num">${f.date ? deDate(f.date) : '<span style="color:var(--muted)">ohne Datum</span>'}${
+        f.time?`<br><span style="color:var(--muted);font-size:12px">${f.time}</span>`:''}</td>
       <td><span class="tag ${isGH(f)?'g':'k'}">${esc(KINDS[f.kind])}</span></td>
-      <td>${isGH(f) ? esc(pname(f.start))
-            : esc(pname(f.start))+' <span style="color:var(--muted)">→</span> '+esc(pname(f.land))}</td>
-      <td class="num"><b>${fmt(f.mins)}</b>${(f.ascM||f.ascMin)?`<br><span style="color:var(--contour);font-size:11.5px">↑ ${
+      <td>${routeHTML(f) || '<span style="color:var(--line)">—</span>'}</td>
+      <td class="num"><b>${dur(f.mins)}</b>${(f.ascM||f.ascMin)?`<br><span style="color:var(--contour);font-size:11.5px">↑ ${
         [f.ascM?f.ascM+' hm':'', f.ascMin?fmt(f.ascMin)+' h':''].filter(Boolean).join(' · ')}</span>`:''}</td>
       <td>${esc(f.glider)||'<span style="color:var(--line)">—</span>'}
         ${f.harness?`<br><span style="color:var(--muted);font-size:12.5px">${esc(f.harness)}</span>`:''}
@@ -761,8 +788,8 @@ function renderAll(){
   const rems = sorted.filter(f=>f.reminder);
   document.getElementById('remlist').innerHTML = rems.length
     ? rems.map(f=>`<div class="rem" onclick="openDetail('${f.id}')" title="Flug öffnen">
-        <div class="meta"><span>${deDate(f.date)}</span><span>${esc(KINDS[f.kind])}</span>
-          <span>${isGH(f) ? esc(pname(f.start)) : esc(pname(f.start))+' → '+esc(pname(f.land))}</span>
+        <div class="meta"><span>${dateLbl(f.date)}</span><span>${esc(KINDS[f.kind])}</span>
+          ${routeTxt(f)?`<span>${esc(routeTxt(f))}</span>`:''}
           ${f.glider?`<span>${esc(f.glider)}</span>`:''}</div>
         <div class="txt">${esc(f.reminder)}</div></div>`).join('')
     : '<div class="empty"><b>Noch keine Reminder.</b><br>Schreib beim nächsten Flug ins Feld „Reminder!“,<br>was du dir merken willst.</div>';
@@ -774,7 +801,7 @@ function renderAll(){
       ${list.map(g=>{
         const used = S.flights.filter(f=>f[field]===g.name);
         return `<tr><td>${esc(g.name)}</td><td class="num">${used.length}</td>
-          <td class="num"><b>${fmt(used.reduce((t,f)=>t+f.mins,0))}</b></td>
+          <td class="num"><b>${fmt(used.reduce((t,f)=>t+(f.mins||0),0))}</b></td>
           <td style="text-align:right"><button class="del" title="Löschen" onclick="delGear('${g.id}')">×</button></td>
         </tr>`;}).join('')}</table>`
       : '<div class="empty">Noch nichts angelegt.</div>';
@@ -786,7 +813,8 @@ function renderAll(){
 }
 
 function renderStats(){
-  const years = [...new Set(S.flights.map(f=>f.date.slice(0,4)))].sort().reverse();
+  /* Flüge ohne Datum lassen sich keinem Jahr zuordnen und bleiben hier außen vor. */
+  const years = [...new Set(S.flights.filter(f=>f.date).map(f=>f.date.slice(0,4)))].sort().reverse();
   const yp = document.getElementById('yearpick'), keep = yp.value;
   yp.innerHTML = years.length ? years.map(y=>`<option>${y}</option>`).join('')
                               : `<option>${new Date().getFullYear()}</option>`;
@@ -794,13 +822,13 @@ function renderStats(){
   const y = yp.value;
 
   const perMonth = Array(12).fill(0);
-  S.flights.filter(f=>f.date.startsWith(y) && !isGH(f))
-           .forEach(f=> perMonth[+f.date.slice(5,7)-1] += f.mins);
+  S.flights.filter(f=>f.date && f.date.startsWith(y) && !isGH(f))
+           .forEach(f=> perMonth[+f.date.slice(5,7)-1] += (f.mins||0));
   const peak = Math.max(...perMonth, 60);
   document.getElementById('profile').innerHTML = perMonth.map(m=>
     `<div class="col" title="${fmt(m)} h"><div class="bar ${m?'':'zero'}" style="height:${m?Math.max(3,m/peak*100):2}%"></div></div>`).join('');
 
-  const yf = S.flights.filter(f=>f.date.startsWith(y) && !isGH(f));
+  const yf = S.flights.filter(f=>f.date && f.date.startsWith(y) && !isGH(f));
   const total = perMonth.reduce((a,b)=>a+b,0);
   const hm = yf.reduce((t,f)=>t+(f.ascM||0),0), asc = yf.reduce((t,f)=>t+(f.ascMin||0),0);
   document.getElementById('yearsum').textContent = yf.length
@@ -811,7 +839,7 @@ function renderStats(){
   const tally = (key, list) => {
     const m = {};
     (list||S.flights).forEach(f=>{ const k = key(f); if(!k) return;
-      m[k]=m[k]||{n:0,min:0}; m[k].n++; m[k].min+=f.mins; });
+      m[k]=m[k]||{n:0,min:0}; m[k].n++; m[k].min+=(f.mins||0); });
     return Object.entries(m).sort((a,b)=>b[1].min-a[1].min);
   };
   const block = (title, rows) => rows.length ? `
@@ -823,7 +851,7 @@ function renderStats(){
   const airOnly = S.flights.filter(f=>!isGH(f));
   document.getElementById('breakdown').innerHTML =
       block('Art des Flugs', tally(f=>KINDS[f.kind]))
-    + block('Startplätze', tally(f=>pname(f.start), airOnly))
+    + block('Startplätze', tally(f=>f.start ? pname(f.start) : '', airOnly))
     + block('Schirme', tally(f=>f.glider))
     + block('Gurtzeuge', tally(f=>f.harness))
     || '<div class="empty">Sobald du Flüge einträgst,<br>erscheint hier die Auswertung.</div>';
@@ -897,10 +925,11 @@ window.exportCSV = () => {
     'Schirm','Gurtzeug','Notiz','Reminder'];
   const q = v => '"' + String(v??'').replace(/"/g,'""') + '"';
   const P = id => S.places.find(p=>p.id===id) || {name:'',lat:'',lng:''};
-  const rows = [...S.flights].sort((a,b)=>a.date.localeCompare(b.date)).map(f=>{
-    const s = P(f.start), l = isGH(f) ? {name:'',lat:'',lng:''} : P(f.land);
+  const rows = [...S.flights].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(f=>{
+    const s = f.start ? P(f.start) : {name:'',lat:'',lng:''};
+    const l = (isGH(f) || !f.land) ? {name:'',lat:'',lng:''} : P(f.land);
     return [deDate(f.date), f.time, KINDS[f.kind], s.name, s.lat, s.lng, l.name, l.lat, l.lng,
-            f.mins, fmt(f.mins), f.ascM||'', f.ascMin||'',
+            f.mins||'', f.mins?fmt(f.mins):'', f.ascM||'', f.ascMin||'',
             f.glider, f.harness, f.note, f.reminder].map(q).join(';');
   });
   download('flugbuch-'+new Date().toISOString().slice(0,10)+'.csv',
