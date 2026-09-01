@@ -171,41 +171,46 @@
   .iconbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
   .iconbtn svg{width:15px;height:15px;display:block}
   .tablewrap{overflow-x:auto}
-  table.flights{min-width:880px}
+  table.flights{min-width:720px}
   table.flights th{padding:11px 7px 7px;white-space:normal;line-height:1.35}
   table.flights td{padding:6px 7px;vertical-align:middle;white-space:nowrap}
   table.flights input,table.flights select{font-size:13px;padding:4px 4px;
     background:#F7F9FB;border-color:#E4EBF1}
   table.flights input:focus,table.flights select:focus{background:#fff}
-  table.flights .c-date{width:114px}
-  table.flights .c-time,table.flights .c-dur,table.flights .c-asct{width:84px}
-  table.flights .c-ascm{width:62px}
-  table.flights .c-kind,table.flights .c-start,table.flights .c-land,
-  table.flights .c-glider,table.flights .c-harness{width:112px;min-width:112px}
-  td.gearcell{padding:5px 7px}
-  td.gearcell select{display:block}
-  td.gearcell select+select{margin-top:4px}
-  .gearbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:var(--r);background:none;
-    cursor:pointer;color:var(--muted);padding:0;display:inline-flex;align-items:center;justify-content:center}
-  .gearbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
-  .gearbtn.on{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
-  .gearbtn svg{width:18px;height:18px;display:block}
-
-  /* kleines Fenster, das den Namen von Schirm und Gurtzeug zeigt */
-  /* nimmt keine Klicks an: ein Klick geht durch auf das Symbol darunter */
-  #pop{position:fixed;z-index:700;display:none;pointer-events:none;
-    background:var(--panel);border:1px solid var(--ink);
-    border-radius:var(--r);padding:10px 13px;max-width:250px;
-    box-shadow:0 6px 20px rgba(21,32,43,.17)}
-  #pop.on{display:block}
-  #pop .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--muted)}
-  #pop .v{font-size:14.5px;margin:1px 0 8px;white-space:normal}
-  #pop .v:last-child{margin-bottom:0}
+  table.flights .c-date{width:136px}
+  table.flights .c-time,table.flights .c-dur{width:136px}
+  table.flights .c-kind{width:136px}
+  table.flights .c-start,table.flights .c-land,
+  table.flights .c-glider,table.flights .c-harness{width:150px;min-width:150px}
+  /* ---------- zwei Angaben übereinander in einer Zelle ---------- */
+  table.flights td .a{display:block}
+  table.flights td .b{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
+  table.flights td.mid{text-align:center}
+  table.flights td.lang{max-width:170px;white-space:normal}
+  table.flights td.gear{max-width:150px}
+  table.flights td.gear .a,table.flights td.gear .b{overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .pfeil{color:var(--muted);opacity:.6}
+  .ascbox{display:inline-flex;align-items:center;gap:7px}
+  .ascbox .ico{color:var(--contour);line-height:0;flex:none}
+  .ascbox .ico svg{width:20px;height:20px;display:block}
+  .ascbox .small .a,.ascbox .small .b{font-size:11.5px;line-height:1.35}
+  .ascbox .small .a{color:var(--ink)}
+  .stackbtn{display:inline-flex;flex-direction:column;gap:3px;align-items:center}
+  td.stackcell{padding:5px 7px}
+  td.stackcell>input,td.stackcell>select{display:block}
+  td.stackcell>input+input,td.stackcell>select+select,td.stackcell>*+*{margin-top:4px}
+  td.asccell .zufuss{display:flex;gap:4px;margin-top:4px}
+  td.asccell .zufuss[hidden]{display:none}
+  td.asccell .zufuss input{margin-top:0}
+  table.flights .c-ascm{width:62px;min-width:0}
+  table.flights .c-asct{width:78px;min-width:0}
+  table.flights .c-dist{width:84px}
+  table.flights .c-asc{width:136px}
   table.flights select{text-overflow:ellipsis}
   td.mark{text-align:center;padding:6px 5px;width:1%}
-  .markbtn{width:25px;height:25px;border-radius:50%;border:1px dashed var(--line);background:none;
-    cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:15px;line-height:1;padding:0}
+  .markbtn{width:22px;height:22px;border-radius:50%;border:1px dashed var(--line);background:none;
+    cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:13px;line-height:1;padding:0}
   .markbtn:hover{border-style:solid;border-color:var(--ink);color:var(--ink);background:#EAEFF4}
   .markbtn.red{color:var(--start)}
   .markbtn.red:hover{border-color:var(--start);color:var(--start);background:#FCEEF3}
@@ -293,6 +298,7 @@
       <p class="edithint" id="edithint" style="display:none">Änder, was du willst, und drück dann
         <b>Speichern</b>. Kein Feld ist Pflicht — was du leer lässt, bleibt leer.</p>
       <p class="note" id="noplaces" style="padding:0 15px;margin:10px 0"></p>
+      <p class="note" id="needcols" style="padding:0 15px;margin:10px 0"></p>
     </div>
   </section>
 
@@ -435,8 +441,6 @@
   </div>
 </div>
 
-<div id="pop" role="dialog" aria-label="Ausrüstung"></div>
-
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -455,6 +459,10 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------- Zustand ---------- */
 let S = { places: [], gear: [], flights: [] };
+/* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
+   der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
+   siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
+let HAS = { dist:false, asc:false };
 let map, layer, armed = false, pending = null;
 
 const pad = n => String(n).padStart(2,'0');
@@ -465,6 +473,8 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 /* Alle Angaben eines Flugs dürfen leer sein — darum überall auf Leerwerte gefasst sein. */
 const deDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); return d+'.'+m+'.'+y; };
 const dateLbl = iso => deDate(iso) || 'ohne Datum';
+/* Kilometer deutsch: 12.4 wird zu 12,4 */
+const nk = v => (typeof v === 'number' ? v : parseFloat(v)).toLocaleString('de-DE');
 
 const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Flugschule', siv:'SIV', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
@@ -522,10 +532,20 @@ async function startApp(session){
   document.getElementById('whoami').textContent = session.user.email;
   document.getElementById('app').classList.add('on');
   initMap();
+  await checkCols();
   await loadAll();
 }
 
 /* ══════════ DATEN LADEN ══════════ */
+async function checkCols(){
+  const [d, a] = await Promise.all([
+    sb.from('flights').select('dist_km').limit(1),
+    sb.from('flights').select('ascent').limit(1)
+  ]);
+  HAS.dist = !d.error;
+  HAS.asc  = !a.error;
+}
+
 async function loadAll(){
   const [pl, ge, fl] = await Promise.all([
     sb.from('places').select('*').order('name'),
@@ -539,6 +559,7 @@ async function loadAll(){
     id:f.id, date:f.flight_date || '', time:f.start_time ? f.start_time.slice(0,5) : '',
     kind:f.kind || 'thermik', start:f.start_place || '', land:f.land_place || '', mins:f.mins || 0,
     ascM:f.asc_m||0, ascMin:f.asc_min||0,
+    dist:(f.dist_km ?? '') === null ? '' : (f.dist_km ?? ''), asc:f.ascent||'',
     glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
   }));
   renderAll(); renderStats();
@@ -681,113 +702,149 @@ function gearOpts(kind, cur, leer){
     `<option${n===cur?' selected':''}>${esc(n)}</option>`).join('');
 }
 
-/* ---------- Ausrüstung: ein Symbol, das den Namen zeigt ---------- */
-const WING = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" '
-  + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-  + '<path d="M2.2 7.4C4 4.6 7.7 3 12 3s8 1.6 9.8 4.4"></path>'
-  + '<path d="M2.2 7.4 5.7 10.2 8.9 8 12 10.2 15.1 8 18.3 10.2 21.8 7.4"></path>'
-  + '<path d="M5.7 10.2 12 18.6M18.3 10.2 12 18.6"></path>'
-  + '<circle cx="12" cy="19.8" r="1.5" fill="currentColor" stroke="none"></circle></svg>';
-
-/* Leer bleibt leer: ohne Schirm und Gurtzeug steht in der Zelle nichts. */
-function gearCell(f){
-  const g = f.glider || '', h = f.harness || '';
-  if (!g && !h) return '<td class="mark"></td>';
-  const t = [g ? 'Schirm: '+g : '', h ? 'Gurtzeug: '+h : ''].filter(Boolean).join(' · ');
-  return `<td class="mark"><button class="gearbtn" title="${esc(t)}" aria-label="${esc(t)}"
-    onclick="event.stopPropagation();showGear(event,'${f.id}')">${WING}</button></td>`;
-}
-
-window.showGear = (ev, id) => {
-  const f = S.flights.find(x=>x.id===id); if (!f) return;
-  const pop = document.getElementById('pop');
-  const btn = ev.currentTarget;
-  if (pop.classList.contains('on') && pop.dataset.for === id) return closePop();
-  document.querySelectorAll('.gearbtn.on').forEach(b=>b.classList.remove('on'));
-  pop.innerHTML = [f.glider ? ['Schirm', f.glider] : null, f.harness ? ['Gurtzeug', f.harness] : null]
-    .filter(Boolean).map(([k,v])=>`<div class="k">${k}</div><div class="v">${esc(v)}</div>`).join('');
-  pop.dataset.for = id;
-  pop.classList.add('on');
-  btn.classList.add('on');
-  const r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
-  let left = r.left + r.width/2 - w/2;
-  left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
-  let top = r.bottom + 7;
-  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 7);
-  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+/* ---------- Aufstieg: Auto, Bahn oder zu Fuss ----------
+   Braucht die Spalte `ascent` in der Datenbank (siehe README). Fehlt sie, wird
+   aus den Hoehenmetern geschlossen: sind welche da, war es zu Fuss. */
+const ASCLBL = {foot:'zu Fuß', car:'mit dem Auto', lift:'mit der Bahn'};
+const SVG = (d, extra) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+  + 'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + d + (extra||'') + '</svg>';
+const ASCICON = {
+  /* Wanderer mit Rucksack */
+  foot: SVG('<circle cx="13.2" cy="3.9" r="1.9" fill="currentColor" stroke="none"></circle>'
+          + '<path d="M12.1 21.5 12.9 15l-2.6-2.4.9-4.4"></path>'
+          + '<path d="M11.2 8.2 8.2 9.6 6.6 13"></path>'
+          + '<path d="M11.2 8.2c2.1-.6 3.4-.2 4 1.2l1 2.4 2.6 1.1"></path>'
+          + '<path d="M12.9 15l3.3 2.2 1.1 4.3"></path>'),
+  /* Auto */
+  car: SVG('<path d="M3.2 16.4v-3.1l2-4.6c.3-.7.9-1.1 1.7-1.1h10.2c.8 0 1.4.4 1.7 1.1l2 4.6v3.1"></path>'
+         + '<path d="M3.2 13.3h17.6"></path>'
+         + '<circle cx="7.2" cy="16.6" r="1.7"></circle><circle cx="16.8" cy="16.6" r="1.7"></circle>'),
+  /* Gondel an der Seilbahn */
+  lift: SVG('<path d="M2 5.4 22 3"></path><path d="M11.6 4.3v3.1"></path>'
+          + '<path d="M7.8 7.4h7.6c.7 0 1.2.5 1.2 1.2v8.2c0 .7-.5 1.2-1.2 1.2H7.8c-.7 0-1.2-.5-1.2-1.2V8.6c0-.7.5-1.2 1.2-1.2Z"></path>'
+          + '<path d="M6.6 12.2h10"></path>')
 };
-
-function closePop(){
-  const pop = document.getElementById('pop');
-  pop.classList.remove('on'); pop.dataset.for = '';
-  document.querySelectorAll('.gearbtn.on').forEach(b=>b.classList.remove('on'));
+/* Welche Aufstiegsart gilt fuer diesen Flug? */
+function ascMode(f){
+  if (HAS.asc && f.asc) return f.asc;
+  return (f.ascM || f.ascMin) ? 'foot' : '';
 }
-window.closePop = closePop;
-/* Ein Klick irgendwo anders, Scrollen oder Escape schließt das Fenster wieder. */
-document.addEventListener('click', () => closePop());
-window.addEventListener('resize', closePop);
-document.addEventListener('scroll', closePop, true);
+function ascOpts(cur){
+  return '<option value="">— Aufstieg —</option>' + ['foot','car','lift'].map(k=>
+    `<option value="${k}"${k===cur?' selected':''}>${ASCLBL[k]}</option>`).join('');
+}
 
-/* ---------- Die beiden Knöpfe ganz rechts ---------- */
-function markCell(id, field, val){
+/* ---------- Bausteine fuer die Zellen ---------- */
+/* zwei Angaben uebereinander: oben normal, darunter kleiner und grau */
+const stack = (oben, unten, cls) =>
+  (oben || unten)
+    ? `<span class="a ${cls||''}">${oben||'&nbsp;'}</span>`
+      + (unten ? `<span class="b ${cls||''}">${unten}</span>` : '')
+    : '';
+
+function routeCell(f){
+  const st = f.start ? esc(placeName(f.start)) : '';
+  const la = (!isGH(f) && f.land) ? esc(placeName(f.land)) : '';
+  if (!st && !la) return '<td></td>';
+  return `<td class="lang">${stack(st, la ? '<span class="pfeil">↳</span> ' + la : '')}</td>`;
+}
+
+function flightCell(f){
+  const d = f.mins ? '<b>' + fmt(f.mins) + '</b>' : '';
+  const km = f.dist ? nk(f.dist) + ' km' : '';
+  if (!d && !km) return '<td></td>';
+  return `<td class="num">${stack(d, km)}</td>`;
+}
+
+function ascCell(f){
+  const m = ascMode(f);
+  if (!m) return '<td></td>';
+  const hm  = (m === 'foot' && f.ascM)   ? f.ascM.toLocaleString('de-DE') + ' hm' : '';
+  const dau = (m === 'foot' && f.ascMin) ? fmt(f.ascMin) + ' h' : '';
+  return `<td><span class="ascbox" title="${ASCLBL[m]}"><span class="ico">${ASCICON[m]}</span>`
+    + ((hm || dau) ? `<span class="num small">${stack(hm, dau)}</span>` : '')
+    + '</span></td>';
+}
+
+/* Lange Namen werden abgeschnitten; der ganze Name steht im Tooltip
+   und im Fenster, das beim Klick auf die Zeile aufgeht. */
+function gearCell(f){
+  const g = esc(f.glider), h = esc(f.harness);
+  if (!g && !h) return '<td></td>';
+  const t = [f.glider ? 'Schirm: '+f.glider : '', f.harness ? 'Gurtzeug: '+f.harness : '']
+              .filter(Boolean).join(' · ');
+  return `<td class="gear" title="${esc(t)}">${stack(g, h)}</td>`;
+}
+
+/* ---------- Kommentar und Reminder ---------- */
+function markBtn(id, field, val){
   const rot = field === 'reminder';
   const wort = rot ? 'Reminder' : 'Kommentar';
   const da = !!(val && val.trim());
   const kurz = da ? val.trim().replace(/\s+/g,' ').slice(0,90) : '';
-  return `<td class="mark"><button class="markbtn${rot?' red':''}${da?' has':''}"
+  return `<button class="markbtn${rot?' red':''}${da?' has':''}"
     title="${da ? esc(wort + ': ' + kurz) : wort + ' schreiben'}"
     aria-label="${wort}" onclick="event.stopPropagation();openText('${id}','${field}')"
-    >${da ? '●' : '+'}</button></td>`;
+    >${da ? '●' : '+'}</button>`;
 }
+const noteCell = (id, f) => `<td class="mark"><span class="stackbtn">`
+  + markBtn(id, 'note', f.note) + markBtn(id, 'reminder', f.reminder) + '</span></td>';
+
 function refreshMark(tr, field, val){
-  const alt = tr.querySelector(`.markbtn[aria-label="${field==='note'?'Kommentar':'Reminder'}"]`);
-  if (!alt) return;
-  const td = alt.parentNode;
-  td.outerHTML = markCell(tr.dataset.id, field, val);
+  const btn = tr.querySelector(`.markbtn[aria-label="${field==='note'?'Kommentar':'Reminder'}"]`);
+  if (btn) btn.outerHTML = markBtn(tr.dataset.id, field, val);
 }
 
 /* ---------- Zeilen ---------- */
 function viewRow(f){
-  const leer = '';
   return `<tr class="click" data-id="${f.id}" onclick="openDetail('${f.id}')" title="Flug ansehen">
-    <td class="num">${f.date ? deDate(f.date) : leer}</td>
-    <td class="num">${esc(f.time)}</td>
-    <td>${esc(KINDS[f.kind] || '')}</td>
-    <td>${f.start ? esc(placeName(f.start)) : leer}</td>
-    <td>${(!isGH(f) && f.land) ? esc(placeName(f.land)) : leer}</td>
-    <td class="num"><b>${f.mins ? fmt(f.mins) : leer}</b></td>
-    <td class="num">${f.ascM ? f.ascM.toLocaleString('de-DE') : leer}</td>
-    <td class="num">${f.ascMin ? fmt(f.ascMin) : leer}</td>
+    <td class="num">${stack(f.date ? deDate(f.date) : '', esc(f.time))}</td>
+    <td class="mid">${esc(KINDS[f.kind] || '')}</td>
+    ${routeCell(f)}
+    ${flightCell(f)}
+    ${ascCell(f)}
     ${gearCell(f)}
-    ${markCell(f.id, 'reminder', f.reminder)}
-    ${markCell(f.id, 'note', f.note)}
+    ${noteCell(f.id, f)}
   </tr>`;
 }
 
 function editRow(f, neu){
   const id = neu ? f.key : f.id;
   const gh = f.kind === 'gh';
+  const am = ascMode(f);
+  const zuFuss = am !== 'car' && am !== 'lift';
   return `<tr data-id="${id}"${neu ? ' data-draft="1"' : ''}
       data-note="${esc(f.note||'')}" data-rem="${esc(f.reminder||'')}">
-    <td><input type="date" class="c-date" value="${f.date||''}" aria-label="Datum"></td>
-    <td><input type="time" class="c-time" value="${f.time||''}" aria-label="Startzeit"></td>
+    <td class="stackcell">
+      <input type="date" class="c-date" value="${f.date||''}" aria-label="Datum">
+      <input type="time" class="c-time" value="${f.time||''}" aria-label="Startzeit"></td>
     <td><select class="c-kind" aria-label="Art" onchange="kindChanged(this)">${kindOpts(f.kind)}</select></td>
-    <td><select class="c-start" aria-label="Startplatz">${placeOpts('start', f.kind, f.start)}</select></td>
-    <td><select class="c-land" aria-label="Landeplatz"${gh?' disabled':''}>${placeOpts('land', f.kind, f.land)}</select></td>
-    <td><input type="time" class="c-dur" value="${f.mins?m2t(f.mins):''}" aria-label="Dauer"></td>
-    <td><input type="number" class="c-ascm" min="0" step="10" value="${f.ascM||''}" aria-label="Aufstieg Höhenmeter"></td>
-    <td><input type="time" class="c-asct" value="${f.ascMin?m2t(f.ascMin):''}" aria-label="Aufstieg Dauer"></td>
-    <td class="gearcell">
+    <td class="stackcell">
+      <select class="c-start" aria-label="Startplatz">${placeOpts('start', f.kind, f.start)}</select>
+      <select class="c-land" aria-label="Landeplatz"${gh?' disabled':''}>${placeOpts('land', f.kind, f.land)}</select></td>
+    <td class="stackcell">
+      <input type="time" class="c-dur" value="${f.mins?m2t(f.mins):''}" aria-label="Flugdauer">
+      ${HAS.dist ? `<input type="text" inputmode="decimal" class="c-dist"
+        value="${f.dist ? nk(f.dist) : ''}" placeholder="km"
+        aria-label="Flugstrecke in Kilometer">` : ''}</td>
+    <td class="stackcell asccell">
+      ${HAS.asc ? `<select class="c-asc" aria-label="Aufstieg" onchange="ascChanged(this)">${ascOpts(am)}</select>` : ''}
+      <span class="zufuss"${zuFuss?'':' hidden'}>
+        <input type="number" class="c-ascm" min="0" step="10" value="${f.ascM||''}"
+          placeholder="hm" aria-label="Aufstieg Höhenmeter">
+        <input type="time" class="c-asct" value="${f.ascMin?m2t(f.ascMin):''}" aria-label="Aufstieg Dauer">
+      </span></td>
+    <td class="stackcell">
       <select class="c-glider" aria-label="Schirm">${gearOpts('glider', f.glider, '— Schirm —')}</select>
       <select class="c-harness" aria-label="Gurtzeug">${gearOpts('harness', f.harness, '— Gurtzeug —')}</select></td>
-    ${markCell(id, 'reminder', f.reminder)}
-    ${markCell(id, 'note', f.note)}
+    ${noteCell(id, f)}
     <td class="mark"><button class="del" title="Flug löschen"
       onclick="${neu ? `dropDraft('${id}')` : `askDelete('${id}')`}">×</button></td>
   </tr>`;
 }
 
-/* Groundhandling hat nur einen Ort — dann bleibt die Spalte Landung leer. */
+/* Groundhandling hat nur einen Ort — dann bleibt die Zeile Landeplatz leer. */
 window.kindChanged = sel => {
   const tr = sel.closest('tr'), kind = sel.value;
   const st = tr.querySelector('.c-start'), la = tr.querySelector('.c-land');
@@ -795,6 +852,12 @@ window.kindChanged = sel => {
   st.innerHTML = placeOpts('start', kind, sv);
   la.innerHTML = placeOpts('land', kind, lv);
   la.disabled = kind === 'gh';
+};
+
+/* Höhenmeter und Aufstiegsdauer gibt es nur zu Fuß. */
+window.ascChanged = sel => {
+  const box = sel.closest('td').querySelector('.zufuss');
+  box.hidden = sel.value === 'car' || sel.value === 'lift';
 };
 
 function renderTable(){
@@ -805,8 +868,7 @@ function renderTable(){
       + 'Klick oben rechts auf <b>+</b> und trag den ersten ein.</div>';
     return;
   }
-  const head = ['Datum','Zeit','Art','Start','Landung','Dauer','Aufstieg Hm','Aufstieg Zeit',
-                'Ausrüstung','Reminder','Kommentar']
+  const head = ['Datum','Art','Strecke','Flug','Aufstieg','Ausrüstung','Notiz']
     .map(h=>`<th>${h}</th>`).join('') + (editMode ? '<th></th>' : '');
   el.innerHTML = `<div class="tablewrap"><table class="flights" id="flighttable">
     <thead><tr>${head}</tr></thead>
@@ -833,7 +895,7 @@ window.addRow = () => {
   const tb = document.querySelector('#flighttable tbody');
   if (!tb) return;
   const neu = { key:'neu:'+(++draftSeq), date:new Date().toISOString().slice(0,10), time:'',
-                kind:KINDDEF, start:'', land:'', mins:0, ascM:0, ascMin:0,
+                kind:KINDDEF, start:'', land:'', mins:0, dist:'', asc:'', ascM:0, ascMin:0,
                 glider:'', harness:'', note:'', reminder:'' };
   tb.insertAdjacentHTML('afterbegin', editRow(neu, true));
   const tr = tb.firstElementChild;
@@ -851,21 +913,33 @@ window.dropDraft = key => {
 function readRow(tr){
   const v = c => { const el = tr.querySelector('.'+c); return el ? el.value : ''; };
   const kind = v('c-kind') || KINDDEF;
-  return {
+  const am = HAS.asc ? v('c-asc') : '';
+  /* Mit Auto oder Bahn gibt es keinen Aufstieg zu Fuß — dann bleiben Hm und Dauer leer. */
+  const mitFahrt = am === 'car' || am === 'lift';
+  const r = {
     flight_date: v('c-date') || null,
     start_time:  v('c-time') || null,
     kind,
     start_place: v('c-start') || null,
     land_place:  kind === 'gh' ? null : (v('c-land') || null),
     mins:    t2m(v('c-dur')),
-    asc_m:   +v('c-ascm') || 0,
-    asc_min: t2m(v('c-asct')),
+    asc_m:   mitFahrt ? 0 : (+v('c-ascm') || 0),
+    asc_min: mitFahrt ? 0 : t2m(v('c-asct')),
     glider:  v('c-glider')  || null,
     harness: v('c-harness') || null
   };
+  /* Kilometer dürfen mit Komma oder Punkt getippt werden. */
+  if (HAS.dist){
+    const km = parseFloat(String(v('c-dist')).trim().replace(',', '.'));
+    r.dist_km = (isFinite(km) && km > 0) ? km : null;
+  }
+  /* Sind Höhenmeter oder Aufstiegsdauer da, war es zu Fuß — auch ohne eigene Auswahl. */
+  if (HAS.asc)  r.ascent  = am || ((r.asc_m || r.asc_min) ? 'foot' : null);
+  return r;
 }
 const blankRow = r => !r.flight_date && !r.start_time && !r.start_place && !r.land_place
-  && !r.mins && !r.asc_m && !r.asc_min && !r.glider && !r.harness;
+  && !r.mins && !r.asc_m && !r.asc_min && !r.glider && !r.harness
+  && !r.dist_km && !r.ascent;
 const sameRow = (f, r) =>
      (f.date||'')    === (r.flight_date||'')
   && (f.time||'')    === (r.start_time||'')
@@ -876,7 +950,9 @@ const sameRow = (f, r) =>
   && (f.ascM||0)     === r.asc_m
   && (f.ascMin||0)   === r.asc_min
   && (f.glider||'')  === (r.glider||'')
-  && (f.harness||'') === (r.harness||'');
+  && (f.harness||'') === (r.harness||'')
+  && (!HAS.dist || (f.dist||'') === (r.dist_km ?? ''))
+  && (!HAS.asc  || (f.asc||'')  === (r.ascent || ''));
 
 function pendingChanges(){
   return [...document.querySelectorAll('#flighttable tr[data-id]')].some(tr => {
@@ -1024,8 +1100,10 @@ window.saveText = async () => {
 window.openDetail = id => {
   const f = S.flights.find(x=>x.id===id); if (!f) return;
   const row = (t,v) => v ? `<dt>${t}</dt><dd>${v}</dd>` : '';
-  const auf = [f.ascM?f.ascM.toLocaleString('de-DE')+' Höhenmeter':'', f.ascMin?fmt(f.ascMin)+' h':'']
-                .filter(Boolean).join(' · ');
+  const am = ascMode(f);
+  const auf = [am ? ASCLBL[am] : '',
+               (am==='foot' && f.ascM)   ? f.ascM.toLocaleString('de-DE')+' Höhenmeter' : '',
+               (am==='foot' && f.ascMin) ? fmt(f.ascMin)+' h' : ''].filter(Boolean).join(' · ');
   document.getElementById('d-title').firstChild.textContent =
     KINDS[f.kind] + (f.date ? ' am ' + deDate(f.date) : ' — ohne Datum');
   document.getElementById('d-body').innerHTML = `
@@ -1033,6 +1111,7 @@ window.openDetail = id => {
       ${row('Datum', [deDate(f.date), f.time?`${f.time} Uhr`:''].filter(Boolean).join(', '))}
       ${row(isGH(f)?'Ort':'Strecke', routeHTML(f))}
       ${row(isGH(f)?'Dauer':'Flugzeit', f.mins ? '<b class="num">'+fmt(f.mins)+' h</b>' : '')}
+      ${row('Flugstrecke', f.dist ? nk(f.dist)+' km' : '')}
       ${row('Aufstieg', auf)}
       ${row('Schirm', esc(f.glider))}
       ${row('Gurtzeug', esc(f.harness))}
@@ -1092,6 +1171,13 @@ function renderAll(){
 
   renderTable();
   setTools();
+
+  document.getElementById('needcols').textContent = (HAS.dist && HAS.asc) ? ''
+    : 'Noch nicht freigeschaltet: '
+      + [HAS.dist ? '' : 'Flugstrecke', HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)']
+        .filter(Boolean).join(' und ')
+      + '. Wie du das in Supabase einmalig einschaltest, steht in der README '
+      + 'unter „Flugstrecke und Aufstiegsart“.';
 
   document.getElementById('placelist').innerHTML = S.places.length ? `<table>
     <tr><th>Name</th><th>Art</th><th>Flüge</th><th></th></tr>
@@ -1254,15 +1340,16 @@ async function doRestore(d){
 window.exportCSV = () => {
   if (!S.flights.length){ toast('Es sind noch keine Flüge zum Exportieren da.'); return; }
   const head = ['Datum','Startzeit','Art','Startplatz','Start Breite','Start Länge','Landeplatz',
-    'Land Breite','Land Länge','Dauer (min)','Dauer (h:mm)','Aufstieg (hm)','Aufstieg (min)',
-    'Schirm','Gurtzeug','Notiz','Reminder'];
+    'Land Breite','Land Länge','Dauer (min)','Dauer (h:mm)','Strecke (km)','Aufstieg',
+    'Aufstieg (hm)','Aufstieg (min)','Schirm','Gurtzeug','Notiz','Reminder'];
   const q = v => '"' + String(v??'').replace(/"/g,'""') + '"';
   const P = id => S.places.find(p=>p.id===id) || {name:'',lat:'',lng:''};
   const rows = [...S.flights].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(f=>{
     const s = f.start ? P(f.start) : {name:'',lat:'',lng:''};
     const l = (isGH(f) || !f.land) ? {name:'',lat:'',lng:''} : P(f.land);
+    const am = ascMode(f);
     return [deDate(f.date), f.time, KINDS[f.kind], s.name, s.lat, s.lng, l.name, l.lat, l.lng,
-            f.mins||'', f.mins?fmt(f.mins):'', f.ascM||'', f.ascMin||'',
+            f.mins||'', f.mins?fmt(f.mins):'', f.dist||'', am?ASCLBL[am]:'', f.ascM||'', f.ascMin||'',
             f.glider, f.harness, f.note, f.reminder].map(q).join(';');
   });
   download('flugbuch-'+new Date().toISOString().slice(0,10)+'.csv',
@@ -1273,7 +1360,6 @@ window.exportCSV = () => {
 /* ══════════ START ══════════ */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  closePop();
   if (document.getElementById('confirm').classList.contains('on')) closeConfirm();
   else if (document.getElementById('textbox').classList.contains('on')) closeText();
   else if (document.getElementById('detail').classList.contains('on')) closeDetail();
