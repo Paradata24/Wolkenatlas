@@ -55,6 +55,28 @@ alter table flights alter column start_place drop not null;
 
 Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
+## Die Startseite
+
+Oben die Kennzahlen, darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug,
+alle Angaben nebeneinander. Sortiert nach Datum und Startzeit, neueste zuerst;
+Flüge ohne Datum stehen ganz oben. Fehlt eine Angabe, bleibt die Zelle leer.
+
+Oben rechts an der Tabelle sitzen zwei Knöpfe:
+
+- **Stift** — alle Zellen werden zu Eingabefeldern. Ändern, was du willst, dann *Speichern*.
+  *Abbrechen* verwirft alles Ungespeicherte (mit Rückfrage). Im Bearbeiten-Zustand
+  steht am Zeilenende auch das × zum Löschen des Flugs.
+- **Plus** — legt oben eine leere Zeile an, in die du einen neuen Flug einträgst.
+  Ein eigenes Eingabeformular gibt es nicht mehr, die Tabelle *ist* das Formular.
+
+Ganz rechts in jeder Zeile zwei runde Knöpfe: der **rote** öffnet den Reminder,
+der daneben den **Kommentar** (in der Datenbank die Spalte `note`). Ein Kreis bedeutet
+leer, ein Punkt heißt: da steht schon etwas drin. Bei einem gespeicherten Flug wird der
+Text sofort gespeichert, bei einer neuen Zeile zusammen mit der Zeile.
+
+Der Reiter **Reminder** ist das Tagebuch: dort stehen alle Kommentare und Reminder
+untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
+
 ## Festgelegte Regeln
 
 Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
@@ -65,12 +87,13 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
 - Bei `kind = 'gh'` wird nur *ein* Ort erfasst; er steht in `start_place`, `land_place` bleibt leer.
 - Aufstiegsfelder dürfen leer sein — das bedeutet: mit Bahn oder Auto zum Startplatz.
 - **Jede Angabe darf leer bleiben, auch Datum, Orte und Dauer.** Ein Flug wird immer
-  gespeichert und kann später ergänzt werden. Leere Werte erscheinen in Listen als „—“,
-  Flüge ohne Datum stehen in der Liste ganz oben und tauchen in der Jahresstatistik
-  nicht auf, weil sie keinem Jahr zugeordnet werden können.
+  gespeichert und kann später ergänzt werden. Leere Werte lassen die Zelle in der
+  Flugtabelle einfach leer, Flüge ohne Datum stehen ganz oben und tauchen in der
+  Jahresstatistik nicht auf, weil sie keinem Jahr zugeordnet werden können.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
-- Notizen sind tagebuchlang und erscheinen nur in der Detailansicht, nie in der Liste.
+- Kommentare und Reminder sind tagebuchlang. In der Flugtabelle steht dafür nur ein
+  kleiner Knopf, der ganze Text steht im Reiter „Reminder“ und im Detailfenster.
 
 ## Sicherung
 

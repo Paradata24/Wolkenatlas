@@ -16,7 +16,7 @@
   html,body{margin:0;padding:0}
   body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;
     line-height:1.45;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1180px;margin:0 auto;padding:20px 18px 60px}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 18px 60px}
 
   /* ---------- Anmeldung ---------- */
   #login{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
@@ -140,6 +140,8 @@
   .overlay{position:fixed;inset:0;background:rgba(21,32,43,.45);z-index:500;
     display:none;align-items:center;justify-content:center;padding:18px}
   .overlay.on{display:flex}
+  /* Die Rückfrage liegt immer ganz oben — auch über einem offenen Textfenster. */
+  #confirm{z-index:600}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
     width:100%;max-width:560px;max-height:86vh;overflow:auto}
   .modal h2{position:sticky;top:0;background:var(--panel);z-index:1}
@@ -162,6 +164,53 @@
     opacity:0;transition:.28s ease;pointer-events:none;z-index:9999;max-width:90vw}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.bad{background:var(--start)}
+  /* ---------- Flugtabelle ---------- */
+  .tools{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .iconbtn{background:none;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;
+    color:var(--muted);padding:5px 7px;line-height:0;display:inline-flex;align-items:center}
+  .iconbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .iconbtn svg{width:15px;height:15px;display:block}
+  .tablewrap{overflow-x:auto}
+  table.flights{min-width:880px}
+  table.flights th{padding:11px 7px 7px;white-space:normal;line-height:1.35}
+  table.flights td{padding:6px 7px;vertical-align:middle;white-space:nowrap}
+  table.flights input,table.flights select{font-size:13px;padding:4px 4px;
+    background:#F7F9FB;border-color:#E4EBF1}
+  table.flights input:focus,table.flights select:focus{background:#fff}
+  table.flights .c-date{width:114px}
+  table.flights .c-time,table.flights .c-dur,table.flights .c-asct{width:84px}
+  table.flights .c-ascm{width:62px}
+  table.flights .c-kind,table.flights .c-start,table.flights .c-land,
+  table.flights .c-glider,table.flights .c-harness{width:96px;min-width:96px}
+  table.flights select{text-overflow:ellipsis}
+  td.mark{text-align:center;padding:6px 5px;width:1%}
+  .markbtn{width:25px;height:25px;border-radius:50%;border:1px dashed var(--line);background:none;
+    cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:15px;line-height:1;padding:0}
+  .markbtn:hover{border-style:solid;border-color:var(--ink);color:var(--ink);background:#EAEFF4}
+  .markbtn.red{color:var(--start)}
+  .markbtn.red:hover{border-color:var(--start);color:var(--start);background:#FCEEF3}
+  .markbtn.has{border-style:solid;border-color:currentColor;background:#EAEFF4;font-size:11px}
+  .markbtn.red.has{background:#FCEEF3}
+  tr.editing td{background:#FFFCEF}
+  .edithint{font-size:12.5px;color:var(--muted);padding:11px 15px;border-top:1px solid var(--line);
+    background:#FBFCFD}
+
+  /* ---------- Tagebuch ---------- */
+  .entry{padding:16px 17px;border-bottom:1px solid var(--line)}
+  .entry:last-child{border-bottom:none}
+  .entryhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    margin-bottom:2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .entryhead .d{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;font-weight:600}
+  .entryhead .r{font-size:13.5px;color:var(--muted)}
+  .entryhead .open{margin-left:auto}
+  .entry .blk{margin-top:11px;padding-left:12px;border-left:2px solid var(--line)}
+  .entry .blk.remblk{border-left-color:var(--start)}
+  .entry .blk h4{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);font-weight:400;margin:0 0 4px}
+  .entry .blk.remblk h4{color:var(--start)}
+  .entry .blk .txt{white-space:pre-wrap;font-size:15px;line-height:1.6}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -209,60 +258,28 @@
 
   <!-- ---------- FLÜGE ---------- -->
   <section class="view on" id="v-flug">
-    <div class="cols">
-      <div class="card"><h2>Flüge</h2><div id="flightlist"></div></div>
-      <div class="card">
-        <h2 id="formtitle">Flug eintragen</h2>
-        <div class="body">
-          <div class="pair">
-            <div class="field"><label for="f-date">Datum</label><input type="date" id="f-date"></div>
-            <div class="field"><label for="f-time">Startzeit <span class="opt">optional</span></label><input type="time" id="f-time"></div>
-          </div>
-          <div class="field"><label for="f-kind">Art des Flugs</label>
-            <select id="f-kind">
-              <option value="hikefly">Hike &amp; Fly</option>
-              <option value="thermik" selected>Thermik/Soaring</option>
-              <option value="schule">Flugschule</option>
-              <option value="siv">SIV</option>
-              <option value="gh">Groundhandling</option>
-            </select>
-          </div>
-          <div id="fly-places">
-            <div class="field"><label for="f-start">Startplatz</label><select id="f-start"></select></div>
-            <div class="field"><label for="f-land">Landeplatz</label><select id="f-land"></select></div>
-          </div>
-          <div id="gh-place" style="display:none">
-            <div class="field"><label for="f-place">Ort</label><select id="f-place"></select></div>
-          </div>
-          <div class="pair">
-            <div class="field"><label for="f-dur">Dauer Flug</label><input type="time" id="f-dur"></div>
-            <div class="group">
-              <span class="grouplbl">Aufstieg</span>
-              <div class="sub"><input type="number" id="f-asc-m" min="0" step="10" placeholder="0"><span>Hm</span></div>
-              <div class="sub"><input type="time" id="f-asc-t"><span>Dauer</span></div>
-            </div>
-          </div>
-          <p class="note" style="margin:-4px 0 14px">Aufstieg leer lassen, wenn du mit Bahn oder Auto zum Startplatz bist.</p>
-          <div class="field"><label for="f-glider">Schirm</label><select id="f-glider"></select></div>
-          <div class="field"><label for="f-harness">Gurtzeug</label><select id="f-harness"></select></div>
-          <div class="field"><label for="f-note">Notiz</label><textarea id="f-note" placeholder="Bedingungen, Besonderheiten …"></textarea></div>
-          <div class="field"><label for="f-rem">Reminder!</label><textarea id="f-rem" placeholder="Was nimmst du aus diesem Flug mit?"></textarea></div>
-          <div class="rowend" style="margin-top:0">
-            <button class="btn" id="savebtn" onclick="saveFlight()">Flug speichern</button>
-            <button class="btn ghost" id="cancelbtn" style="display:none" onclick="resetForm()">Abbrechen</button>
-          </div>
-          <p class="note">Kein Feld ist Pflicht. Was du gerade nicht weißt, lässt du leer —
-            der Flug wird trotzdem gespeichert und du kannst ihn später über „Bearbeiten“ ergänzen.</p>
-          <p class="note" id="noplaces"></p>
-        </div>
-      </div>
+    <div class="card">
+      <h2><span id="flugtitle">Flüge</span>
+        <span class="tools">
+          <button class="btn small" id="tablesave" style="display:none" onclick="saveTable()">Speichern</button>
+          <button class="btn small ghost" id="tablecancel" style="display:none" onclick="cancelEdit()">Abbrechen</button>
+          <button class="iconbtn" id="editbtn" onclick="toggleEdit()"
+            title="Flüge bearbeiten" aria-label="Flüge bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+          <button class="iconbtn" id="addbtn" onclick="addRow()"
+            title="Neuen Flug eintragen" aria-label="Neuen Flug eintragen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+        </span>
+      </h2>
+      <div id="flightlist"></div>
+      <p class="edithint" id="edithint" style="display:none">Änder, was du willst, und drück dann
+        <b>Speichern</b>. Kein Feld ist Pflicht — was du leer lässt, bleibt leer.</p>
+      <p class="note" id="noplaces" style="padding:0 15px;margin:10px 0"></p>
     </div>
   </section>
 
   <!-- ---------- REMINDER ---------- -->
   <section class="view" id="v-rem">
     <div class="cols one"><div class="card">
-      <h2>Reminder — neueste zuerst</h2><div id="remlist"></div>
+      <h2>Tagebuch — Kommentare und Reminder, neueste zuerst</h2><div id="remlist"></div>
     </div></div>
   </section>
 
@@ -384,6 +401,20 @@
   </div>
 </div>
 
+<div class="overlay" id="textbox" onclick="if(event.target===this)closeText()">
+  <div class="modal" style="max-width:540px" role="dialog" aria-modal="true" aria-labelledby="tb-title">
+    <h2 id="tb-title">Kommentar<button class="x" title="Schließen" onclick="closeText()">×</button></h2>
+    <div class="sec" style="border-top:none">
+      <p class="note" id="tb-meta" style="margin:0 0 9px"></p>
+      <textarea id="tb-text" style="min-height:170px"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn" id="tb-save" onclick="saveText()">Speichern</button>
+      <button class="btn ghost" onclick="closeText()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -402,7 +433,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------- Zustand ---------- */
 let S = { places: [], gear: [], flights: [] };
-let map, layer, armed = false, pending = null, editId = null;
+let map, layer, armed = false, pending = null;
 
 const pad = n => String(n).padStart(2,'0');
 const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
@@ -412,7 +443,6 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 /* Alle Angaben eines Flugs dürfen leer sein — darum überall auf Leerwerte gefasst sein. */
 const deDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); return d+'.'+m+'.'+y; };
 const dateLbl = iso => deDate(iso) || 'ohne Datum';
-const dur = m => m ? fmt(m) : '—';
 
 const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Flugschule', siv:'SIV', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
@@ -469,7 +499,6 @@ window.logout = async () => { await sb.auth.signOut(); location.reload(); };
 async function startApp(session){
   document.getElementById('whoami').textContent = session.user.email;
   document.getElementById('app').classList.add('on');
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
   initMap();
   await loadAll();
 }
@@ -593,82 +622,333 @@ window.delGear = (id) => {
   });
 };
 
-/* ══════════ FLÜGE ══════════ */
-function updateKindUI(){
-  const gh = document.getElementById('f-kind').value === 'gh';
-  document.getElementById('fly-places').style.display = gh ? 'none' : 'block';
-  document.getElementById('gh-place').style.display  = gh ? 'block' : 'none';
+/* ══════════ FLÜGE — DIE TABELLE IST DAS FORMULAR ══════════
+   Stift oben rechts: alle Zellen werden zu Eingabefeldern.
+   Plus oben rechts: eine leere Zeile oben in der Tabelle für einen neuen Flug.
+   Die beiden runden Knöpfe ganz rechts öffnen Reminder und Kommentar.
+   Nichts ist Pflicht — was leer bleibt, bleibt leer.                       */
+
+let editMode = false, draftSeq = 0;
+const KINDDEF = 'thermik';
+const placeName = id => (S.places.find(p=>p.id===id)||{}).name || '';
+
+/* Sortiert nach Datum, bei gleichem Datum nach Startzeit — neueste zuerst.
+   Flüge ohne Datum stehen ganz oben, damit sie nicht vergessen gehen. */
+const sortKey = f => (f.date || '9999-99-99') + ' ' + (f.time || '');
+const sortedFlights = () => [...S.flights].sort((x,y)=> sortKey(y).localeCompare(sortKey(x)));
+
+/* ---------- Auswahllisten ---------- */
+function kindOpts(cur){
+  return Object.entries(KINDS).map(([k,t])=>
+    `<option value="${k}"${k===cur?' selected':''}>${esc(t)}</option>`).join('');
 }
-document.getElementById('f-kind').addEventListener('change', updateKindUI);
-
-/* Nichts ist Pflicht: Ein Flug lässt sich auch halb oder gar nicht ausgefüllt speichern
-   und später über „Bearbeiten“ ergänzen. */
-window.saveFlight = async () => {
-  const btn = document.getElementById('savebtn');
-  const d = document.getElementById('f-date').value;
-  const kind = document.getElementById('f-kind').value, gh = kind === 'gh';
-  const s = gh ? document.getElementById('f-place').value : document.getElementById('f-start').value;
-  const l = gh ? '' : document.getElementById('f-land').value;
-  const mins = t2m(document.getElementById('f-dur').value);
-
-  const row = {
-    flight_date: d || null,
-    start_time: document.getElementById('f-time').value || null,
-    kind, start_place: s || null, land_place: l || null, mins,
-    asc_m:   +document.getElementById('f-asc-m').value || 0,
-    asc_min: t2m(document.getElementById('f-asc-t').value),
-    glider:  document.getElementById('f-glider').value || null,
-    harness: document.getElementById('f-harness').value || null,
-    note:    document.getElementById('f-note').value.trim() || null,
-    reminder:document.getElementById('f-rem').value.trim() || null
-  };
-
-  btn.disabled = true;
-  const { error } = editId ? await sb.from('flights').update(row).eq('id', editId)
-                           : await sb.from('flights').insert(row);
-  btn.disabled = false;
-  if (error){
-    /* 23502 = die Datenbank verlangt für diese Spalte noch einen Wert. */
-    if (error.code === '23502') return toast(
-      'Die Datenbank lässt dieses Feld noch nicht leer. In Supabase einmalig freigeben '
-      + '(siehe README, Abschnitt „Leere Felder“).', true);
-    return oops(error);
+function placeOpts(which, kind, cur){
+  let list = kind === 'gh' ? S.places
+    : S.places.filter(p => which === 'start' ? (p.type==='start'||p.type==='both')
+                                             : (p.type==='land' ||p.type==='both'));
+  if (cur && !list.some(p=>p.id===cur)){
+    const p = S.places.find(x=>x.id===cur); if (p) list = [p, ...list];
   }
-  toast(editId ? 'Änderungen gespeichert.' : 'Flug gespeichert.');
-  resetForm(); await loadAll();
+  return '<option value=""></option>' + list.map(p=>
+    `<option value="${p.id}"${p.id===cur?' selected':''}>${esc(p.name)}</option>`).join('');
+}
+function gearOpts(kind, cur){
+  let names = gearOf(kind);
+  if (cur && !names.includes(cur)) names = [cur, ...names];
+  return '<option value=""></option>' + names.map(n=>
+    `<option${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+}
+
+/* ---------- Die beiden Knöpfe ganz rechts ---------- */
+function markCell(id, field, val){
+  const rot = field === 'reminder';
+  const wort = rot ? 'Reminder' : 'Kommentar';
+  const da = !!(val && val.trim());
+  const kurz = da ? val.trim().replace(/\s+/g,' ').slice(0,90) : '';
+  return `<td class="mark"><button class="markbtn${rot?' red':''}${da?' has':''}"
+    title="${da ? esc(wort + ': ' + kurz) : wort + ' schreiben'}"
+    aria-label="${wort}" onclick="event.stopPropagation();openText('${id}','${field}')"
+    >${da ? '●' : '+'}</button></td>`;
+}
+function refreshMark(tr, field, val){
+  const alt = tr.querySelector(`.markbtn[aria-label="${field==='note'?'Kommentar':'Reminder'}"]`);
+  if (!alt) return;
+  const td = alt.parentNode;
+  td.outerHTML = markCell(tr.dataset.id, field, val);
+}
+
+/* ---------- Zeilen ---------- */
+function viewRow(f){
+  const leer = '';
+  return `<tr class="click" data-id="${f.id}" onclick="openDetail('${f.id}')" title="Flug ansehen">
+    <td class="num">${f.date ? deDate(f.date) : leer}</td>
+    <td class="num">${esc(f.time)}</td>
+    <td>${esc(KINDS[f.kind] || '')}</td>
+    <td>${f.start ? esc(placeName(f.start)) : leer}</td>
+    <td>${(!isGH(f) && f.land) ? esc(placeName(f.land)) : leer}</td>
+    <td class="num"><b>${f.mins ? fmt(f.mins) : leer}</b></td>
+    <td class="num">${f.ascM ? f.ascM.toLocaleString('de-DE') : leer}</td>
+    <td class="num">${f.ascMin ? fmt(f.ascMin) : leer}</td>
+    <td>${esc(f.glider)}</td>
+    <td>${esc(f.harness)}</td>
+    ${markCell(f.id, 'reminder', f.reminder)}
+    ${markCell(f.id, 'note', f.note)}
+  </tr>`;
+}
+
+function editRow(f, neu){
+  const id = neu ? f.key : f.id;
+  const gh = f.kind === 'gh';
+  return `<tr data-id="${id}"${neu ? ' data-draft="1"' : ''}
+      data-note="${esc(f.note||'')}" data-rem="${esc(f.reminder||'')}">
+    <td><input type="date" class="c-date" value="${f.date||''}" aria-label="Datum"></td>
+    <td><input type="time" class="c-time" value="${f.time||''}" aria-label="Startzeit"></td>
+    <td><select class="c-kind" aria-label="Art" onchange="kindChanged(this)">${kindOpts(f.kind)}</select></td>
+    <td><select class="c-start" aria-label="Startplatz">${placeOpts('start', f.kind, f.start)}</select></td>
+    <td><select class="c-land" aria-label="Landeplatz"${gh?' disabled':''}>${placeOpts('land', f.kind, f.land)}</select></td>
+    <td><input type="time" class="c-dur" value="${f.mins?m2t(f.mins):''}" aria-label="Dauer"></td>
+    <td><input type="number" class="c-ascm" min="0" step="10" value="${f.ascM||''}" aria-label="Aufstieg Höhenmeter"></td>
+    <td><input type="time" class="c-asct" value="${f.ascMin?m2t(f.ascMin):''}" aria-label="Aufstieg Dauer"></td>
+    <td><select class="c-glider" aria-label="Schirm">${gearOpts('glider', f.glider)}</select></td>
+    <td><select class="c-harness" aria-label="Gurtzeug">${gearOpts('harness', f.harness)}</select></td>
+    ${markCell(id, 'reminder', f.reminder)}
+    ${markCell(id, 'note', f.note)}
+    <td class="mark"><button class="del" title="Flug löschen"
+      onclick="${neu ? `dropDraft('${id}')` : `askDelete('${id}')`}">×</button></td>
+  </tr>`;
+}
+
+/* Groundhandling hat nur einen Ort — dann bleibt die Spalte Landung leer. */
+window.kindChanged = sel => {
+  const tr = sel.closest('tr'), kind = sel.value;
+  const st = tr.querySelector('.c-start'), la = tr.querySelector('.c-land');
+  const sv = st.value, lv = kind === 'gh' ? '' : la.value;
+  st.innerHTML = placeOpts('start', kind, sv);
+  la.innerHTML = placeOpts('land', kind, lv);
+  la.disabled = kind === 'gh';
 };
 
-window.resetForm = () => {
-  editId = null;
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
-  ['f-time','f-dur','f-asc-m','f-asc-t','f-note','f-rem',
-   'f-start','f-land','f-place','f-glider','f-harness'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('formtitle').textContent = 'Flug eintragen';
-  document.getElementById('savebtn').textContent = 'Flug speichern';
-  document.getElementById('cancelbtn').style.display = 'none';
+function renderTable(){
+  const el = document.getElementById('flightlist');
+  const rows = sortedFlights();
+  if (!rows.length && !editMode){
+    el.innerHTML = '<div class="empty"><b>Noch keine Flüge erfasst.</b><br>'
+      + 'Klick oben rechts auf <b>+</b> und trag den ersten ein.</div>';
+    return;
+  }
+  const head = ['Datum','Zeit','Art','Start','Landung','Dauer','Aufstieg Hm','Aufstieg Zeit',
+                'Schirm','Gurtzeug','Reminder','Kommentar']
+    .map(h=>`<th>${h}</th>`).join('') + (editMode ? '<th></th>' : '');
+  el.innerHTML = `<div class="tablewrap"><table class="flights" id="flighttable">
+    <thead><tr>${head}</tr></thead>
+    <tbody>${rows.map(f => editMode ? editRow(f) : viewRow(f)).join('')}</tbody></table></div>`;
+}
+
+/* ---------- Stift, Plus, Speichern ---------- */
+function setTools(){
+  document.getElementById('flugtitle').textContent = editMode ? 'Flüge — bearbeiten' : 'Flüge';
+  document.getElementById('editbtn').style.display     = editMode ? 'none' : '';
+  document.getElementById('tablesave').style.display   = editMode ? '' : 'none';
+  document.getElementById('tablecancel').style.display = editMode ? '' : 'none';
+  document.getElementById('edithint').style.display    = editMode ? '' : 'none';
+}
+
+window.toggleEdit = () => {
+  if (editMode) return;
+  if (!S.flights.length){ toast('Es gibt noch keinen Flug zum Bearbeiten. Nimm das Plus.'); return; }
+  editMode = true; setTools(); renderTable();
 };
 
+window.addRow = () => {
+  if (!editMode){ editMode = true; setTools(); renderTable(); }
+  const tb = document.querySelector('#flighttable tbody');
+  if (!tb) return;
+  const neu = { key:'neu:'+(++draftSeq), date:new Date().toISOString().slice(0,10), time:'',
+                kind:KINDDEF, start:'', land:'', mins:0, ascM:0, ascMin:0,
+                glider:'', harness:'', note:'', reminder:'' };
+  tb.insertAdjacentHTML('afterbegin', editRow(neu, true));
+  const tr = tb.firstElementChild;
+  tr.classList.add('editing');
+  tr.scrollIntoView({behavior:'smooth', block:'center'});
+  const el = tr.querySelector('.c-time'); if (el) el.focus();
+};
+
+window.dropDraft = key => {
+  const tr = document.querySelector(`#flighttable tr[data-id="${key}"]`);
+  if (tr) tr.remove();
+};
+
+/* Liest eine Zeile so aus, wie sie in die Datenbank gehört. */
+function readRow(tr){
+  const v = c => { const el = tr.querySelector('.'+c); return el ? el.value : ''; };
+  const kind = v('c-kind') || KINDDEF;
+  return {
+    flight_date: v('c-date') || null,
+    start_time:  v('c-time') || null,
+    kind,
+    start_place: v('c-start') || null,
+    land_place:  kind === 'gh' ? null : (v('c-land') || null),
+    mins:    t2m(v('c-dur')),
+    asc_m:   +v('c-ascm') || 0,
+    asc_min: t2m(v('c-asct')),
+    glider:  v('c-glider')  || null,
+    harness: v('c-harness') || null
+  };
+}
+const blankRow = r => !r.flight_date && !r.start_time && !r.start_place && !r.land_place
+  && !r.mins && !r.asc_m && !r.asc_min && !r.glider && !r.harness;
+const sameRow = (f, r) =>
+     (f.date||'')    === (r.flight_date||'')
+  && (f.time||'')    === (r.start_time||'')
+  && f.kind          === r.kind
+  && (f.start||'')   === (r.start_place||'')
+  && (f.land||'')    === (r.land_place||'')
+  && (f.mins||0)     === r.mins
+  && (f.ascM||0)     === r.asc_m
+  && (f.ascMin||0)   === r.asc_min
+  && (f.glider||'')  === (r.glider||'')
+  && (f.harness||'') === (r.harness||'');
+
+function pendingChanges(){
+  return [...document.querySelectorAll('#flighttable tr[data-id]')].some(tr => {
+    const r = readRow(tr);
+    if (tr.dataset.draft) return !blankRow(r) || !!tr.dataset.note || !!tr.dataset.rem;
+    const f = S.flights.find(x=>x.id===tr.dataset.id);
+    return f && !sameRow(f, r);
+  });
+}
+
+/* 23502 = die Datenbank verlangt für diese Spalte noch einen Wert. */
+function dbErr(e){
+  if (e && e.code === '23502') return toast(
+    'Die Datenbank lässt dieses Feld noch nicht leer. In Supabase einmalig freigeben '
+    + '(siehe README, Abschnitt „Leere Felder“).', true);
+  oops(e);
+}
+
+window.saveTable = async () => {
+  const btn = document.getElementById('tablesave');
+  const neu = [], geaendert = [];
+  for (const tr of document.querySelectorAll('#flighttable tr[data-id]')){
+    const r = readRow(tr);
+    if (tr.dataset.draft){
+      const leer = blankRow(r) && !tr.dataset.note && !tr.dataset.rem;
+      if (leer) continue;
+      r.note     = tr.dataset.note || null;
+      r.reminder = tr.dataset.rem  || null;
+      neu.push(r);
+    } else {
+      const f = S.flights.find(x=>x.id===tr.dataset.id);
+      if (f && !sameRow(f, r)) geaendert.push({id:f.id, r});
+    }
+  }
+  if (!neu.length && !geaendert.length){ endEdit(); toast('Nichts geändert.'); return; }
+  btn.disabled = true;
+  try {
+    for (const u of geaendert){
+      const { error } = await sb.from('flights').update(u.r).eq('id', u.id);
+      if (error) throw error;
+    }
+    if (neu.length){
+      const { error } = await sb.from('flights').insert(neu);
+      if (error) throw error;
+    }
+  } catch(e){ btn.disabled = false; return dbErr(e); }
+  btn.disabled = false;
+  editMode = false; setTools();
+  await loadAll();
+  const teile = [];
+  if (neu.length)       teile.push(neu.length + (neu.length===1 ? ' Flug neu' : ' Flüge neu'));
+  if (geaendert.length) teile.push(geaendert.length + ' geändert');
+  toast(teile.join(', ') + '.');
+};
+
+function endEdit(){ editMode = false; setTools(); renderTable(); }
+
+window.cancelEdit = () => {
+  if (pendingChanges()){
+    ask('Alles, was du gerade eingetippt und noch nicht gespeichert hast, geht verloren.',
+        () => { closeConfirm(); endEdit(); }, 'Änderungen verwerfen?', 'Ja, verwerfen');
+    return;
+  }
+  endEdit();
+};
+
+/* Aus dem Detailfenster heraus: Tabelle in den Bearbeiten-Zustand und zur Zeile springen. */
 window.editFlight = id => {
+  closeDetail(); show('flug');
+  if (!editMode){ editMode = true; setTools(); renderTable(); }
+  const tr = document.querySelector(`#flighttable tr[data-id="${id}"]`);
+  if (!tr) return;
+  tr.classList.add('editing');
+  tr.scrollIntoView({behavior:'smooth', block:'center'});
+  const el = tr.querySelector('.c-date'); if (el) el.focus();
+};
+
+/* ---------- Kommentar und Reminder ---------- */
+let textCtx = null;
+
+window.openText = (id, field) => {
+  const tr = document.querySelector(`#flighttable tr[data-id="${id}"]`);
+  const neu = !!(tr && tr.dataset.draft);
+  let val = '', meta = '';
+  if (neu){
+    val  = (field === 'note' ? tr.dataset.note : tr.dataset.rem) || '';
+    meta = 'Neuer Flug — wird zusammen mit der Zeile gespeichert.';
+  } else {
+    const f = S.flights.find(x=>x.id===id); if (!f) return;
+    val  = (field === 'note' ? f.note : f.reminder) || '';
+    meta = [dateLbl(f.date), f.time ? f.time + ' Uhr' : '', routeTxt(f)].filter(Boolean).join(' · ');
+  }
+  textCtx = {id, field, neu};
+  document.getElementById('tb-title').firstChild.textContent =
+    field === 'note' ? 'Kommentar' : 'Reminder';
+  document.getElementById('tb-meta').textContent = meta;
+  const ta = document.getElementById('tb-text');
+  ta.placeholder = field === 'note' ? 'Bedingungen, Besonderheiten, wie war der Tag …'
+                                    : 'Was nimmst du aus diesem Flug mit?';
+  ta.value = val;
+  ta.style.borderLeft = field === 'note' ? '' : '3px solid var(--start)';
+  document.getElementById('textbox').classList.add('on');
+  ta.focus();
+};
+
+window.closeText = () => {
+  document.getElementById('textbox').classList.remove('on');
+  textCtx = null;
+};
+
+window.saveText = async () => {
+  if (!textCtx) return;
+  const {id, field, neu} = textCtx;
+  const txt = document.getElementById('tb-text').value.trim();
+  const wort = field === 'note' ? 'Kommentar' : 'Reminder';
+  const tr = document.querySelector(`#flighttable tr[data-id="${id}"]`);
+
+  if (neu){
+    if (field === 'note') tr.dataset.note = txt; else tr.dataset.rem = txt;
+    refreshMark(tr, field, txt);
+    closeText(); return;
+  }
+
   const f = S.flights.find(x=>x.id===id); if (!f) return;
-  closeDetail(); editId = id;
-  document.getElementById('f-date').value = f.date || '';
-  document.getElementById('f-time').value = f.time || '';
-  document.getElementById('f-kind').value = f.kind;
-  updateKindUI();
-  if (isGH(f)) document.getElementById('f-place').value = f.start || '';
-  else { document.getElementById('f-start').value = f.start || ''; document.getElementById('f-land').value = f.land || ''; }
-  document.getElementById('f-dur').value = f.mins ? m2t(f.mins) : '';
-  document.getElementById('f-asc-m').value = f.ascM || '';
-  document.getElementById('f-asc-t').value = f.ascMin ? m2t(f.ascMin) : '';
-  document.getElementById('f-glider').value = f.glider || '';
-  document.getElementById('f-harness').value = f.harness || '';
-  document.getElementById('f-note').value = f.note || '';
-  document.getElementById('f-rem').value = f.reminder || '';
-  document.getElementById('formtitle').textContent = 'Flug bearbeiten';
-  document.getElementById('savebtn').textContent = 'Änderungen speichern';
-  document.getElementById('cancelbtn').style.display = 'inline-block';
-  show('flug');
-  document.getElementById('formtitle').scrollIntoView({behavior:'smooth', block:'center'});
+  const alt = (field === 'note' ? f.note : f.reminder) || '';
+  const schreib = async () => {
+    const { error } = await sb.from('flights')
+      .update({[field === 'note' ? 'note' : 'reminder']: txt || null}).eq('id', id);
+    if (error) return oops(error);
+    if (field === 'note') f.note = txt; else f.reminder = txt;
+    if (tr) refreshMark(tr, field, txt);
+    renderDiary(); closeText();
+    toast(txt ? wort + ' gespeichert.' : wort + ' gelöscht.');
+  };
+  /* Vor jedem Löschen kommt eine Rückfrage. */
+  if (alt && !txt){
+    ask(`<b>${wort} wirklich löschen?</b><br><br>Der bisherige Text wird entfernt.`,
+        async () => { closeConfirm(); await schreib(); });
+    return;
+  }
+  await schreib();
 };
 
 /* ---------- Detailfenster ---------- */
@@ -698,11 +978,15 @@ window.openDetail = id => {
 window.closeDetail = () => document.getElementById('detail').classList.remove('on');
 
 /* ---------- Rückfrage ---------- */
-function ask(html, onYes){
+function ask(html, onYes, titel, jaText){
+  document.getElementById('c-title').textContent = titel || 'Wirklich löschen?';
+  const yes = document.getElementById('c-yes');
+  yes.textContent = jaText || 'Ja, löschen';
+  yes.disabled = false;
   document.getElementById('c-text').innerHTML = html;
-  document.getElementById('c-yes').onclick = onYes;
+  yes.onclick = onYes;
   document.getElementById('confirm').classList.add('on');
-  document.getElementById('c-yes').focus();
+  yes.focus();
 }
 window.closeConfirm = () => document.getElementById('confirm').classList.remove('on');
 
@@ -716,15 +1000,12 @@ window.askDelete = id => {
     async () => {
       const { error } = await sb.from('flights').delete().eq('id', id);
       if (error) return oops(error);
-      if (editId===id) resetForm();
       closeConfirm(); closeDetail(); await loadAll(); toast('Flug gelöscht.');
     });
 };
 
 /* ══════════ RENDERN ══════════ */
 function renderAll(){
-  /* Flüge ohne Datum stehen oben, damit man sie nicht vergisst. */
-  const sorted = [...S.flights].sort((a,b)=> (b.date||'9999').localeCompare(a.date||'9999'));
   const now = new Date(), yr = now.getFullYear(), mo = pad(now.getMonth()+1);
   const sum = a => a.reduce((t,f)=>t+(f.mins||0), 0);
   const inTime = (f, p) => f.date && f.date.startsWith(p);
@@ -737,41 +1018,11 @@ function renderAll(){
   document.getElementById('r-max').innerHTML = fmt(air.length ? Math.max(...air.map(f=>f.mins||0)) : 0)+'<small>h</small>';
   document.getElementById('r-gh').innerHTML = fmt(sum(gnd))+'<small>h</small>';
 
-  const fill = (el, opts, leer) => {
-    const keep = el.value;
-    el.innerHTML = `<option value="">${leer}</option>` + opts;
-    el.value = keep;
-  };
-  const opt = list => list.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  const optN = names => names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  fill(document.getElementById('f-start'), opt(S.places.filter(p=>p.type==='start'||p.type==='both')), '— wählen —');
-  fill(document.getElementById('f-land'),  opt(S.places.filter(p=>p.type==='land' ||p.type==='both')), '— wählen —');
-  fill(document.getElementById('f-place'), opt(S.places), '— wählen —');
-  fill(document.getElementById('f-glider'),  optN(gearOf('glider')),  '— kein Schirm gewählt —');
-  fill(document.getElementById('f-harness'), optN(gearOf('harness')), '— kein Gurtzeug gewählt —');
-  updateKindUI();
-
   document.getElementById('noplaces').textContent = S.places.length ? ''
     : 'Start- und Landeplätze legst du unter „Orte“ auf der Karte an.';
 
-  document.getElementById('flightlist').innerHTML = sorted.length ? `<table>
-    <tr><th>Datum</th><th>Art</th><th>Strecke</th><th>Dauer</th><th>Schirm</th><th></th></tr>
-    ${sorted.map(f=>`<tr class="click" onclick="openDetail('${f.id}')" title="Flug öffnen">
-      <td class="num">${f.date ? deDate(f.date) : '<span style="color:var(--muted)">ohne Datum</span>'}${
-        f.time?`<br><span style="color:var(--muted);font-size:12px">${f.time}</span>`:''}</td>
-      <td><span class="tag ${isGH(f)?'g':'k'}">${esc(KINDS[f.kind])}</span></td>
-      <td>${routeHTML(f) || '<span style="color:var(--line)">—</span>'}</td>
-      <td class="num"><b>${dur(f.mins)}</b>${(f.ascM||f.ascMin)?`<br><span style="color:var(--contour);font-size:11.5px">↑ ${
-        [f.ascM?f.ascM+' hm':'', f.ascMin?fmt(f.ascMin)+' h':''].filter(Boolean).join(' · ')}</span>`:''}</td>
-      <td>${esc(f.glider)||'<span style="color:var(--line)">—</span>'}
-        ${f.harness?`<br><span style="color:var(--muted);font-size:12.5px">${esc(f.harness)}</span>`:''}
-        ${(f.note||f.reminder)?`<br><span style="display:inline-flex;gap:5px;margin-top:5px">
-          ${f.note?'<span class="tag k">Notiz</span>':''}
-          ${f.reminder?'<span class="tag s">Reminder</span>':''}</span>`:''}</td>
-      <td style="text-align:right"><button class="del" title="Flug löschen"
-        onclick="event.stopPropagation();askDelete('${f.id}')">×</button></td>
-    </tr>`).join('')}</table>`
-    : '<div class="empty">Noch keine Flüge erfasst.<br>Der erste kommt rechts ins Formular.</div>';
+  renderTable();
+  setTools();
 
   document.getElementById('placelist').innerHTML = S.places.length ? `<table>
     <tr><th>Name</th><th>Art</th><th>Flüge</th><th></th></tr>
@@ -785,14 +1036,7 @@ function renderAll(){
       </tr>`;}).join('')}</table>`
     : '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>';
 
-  const rems = sorted.filter(f=>f.reminder);
-  document.getElementById('remlist').innerHTML = rems.length
-    ? rems.map(f=>`<div class="rem" onclick="openDetail('${f.id}')" title="Flug öffnen">
-        <div class="meta"><span>${dateLbl(f.date)}</span><span>${esc(KINDS[f.kind])}</span>
-          ${routeTxt(f)?`<span>${esc(routeTxt(f))}</span>`:''}
-          ${f.glider?`<span>${esc(f.glider)}</span>`:''}</div>
-        <div class="txt">${esc(f.reminder)}</div></div>`).join('')
-    : '<div class="empty"><b>Noch keine Reminder.</b><br>Schreib beim nächsten Flug ins Feld „Reminder!“,<br>was du dir merken willst.</div>';
+  renderDiary();
 
   const gearTable = kind => {
     const list = S.gear.filter(g=>g.kind===kind);
@@ -810,6 +1054,26 @@ function renderAll(){
   document.getElementById('harnesslist').innerHTML = gearTable('harness');
 
   drawPlaces();
+}
+
+/* ══════════ TAGEBUCH ══════════
+   Alles, was du zu einem Flug geschrieben hast: Kommentar und Reminder,
+   mit Datum und Strecke darüber, neueste zuerst. */
+function renderDiary(){
+  const list = sortedFlights().filter(f => f.note || f.reminder);
+  document.getElementById('remlist').innerHTML = list.length ? list.map(f => `
+    <article class="entry">
+      <div class="entryhead">
+        <span class="d">${dateLbl(f.date)}${f.time ? ' · ' + esc(f.time) + ' Uhr' : ''}</span>
+        ${routeTxt(f) ? `<span class="r">${routeHTML(f)}</span>` : ''}
+        <button class="btn small ghost open" onclick="openDetail('${f.id}')">Flug ansehen</button>
+      </div>
+      ${f.note ? `<div class="blk"><h4>Kommentar</h4><div class="txt">${esc(f.note)}</div></div>` : ''}
+      ${f.reminder ? `<div class="blk remblk"><h4>Reminder</h4><div class="txt">${esc(f.reminder)}</div></div>` : ''}
+    </article>`).join('')
+    : '<div class="empty"><b>Noch nichts notiert.</b><br>In der Flugliste öffnest du rechts mit dem '
+      + 'roten Plus einen Reminder und mit dem Plus daneben einen Kommentar.<br>'
+      + 'Beides erscheint dann hier.</div>';
 }
 
 function renderStats(){
@@ -941,6 +1205,7 @@ window.exportCSV = () => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (document.getElementById('confirm').classList.contains('on')) closeConfirm();
+  else if (document.getElementById('textbox').classList.contains('on')) closeText();
   else if (document.getElementById('detail').classList.contains('on')) closeDetail();
 });
 
