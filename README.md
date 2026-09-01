@@ -134,6 +134,27 @@ der Zeile.
 Der Reiter **Reminder** ist das Tagebuch: dort stehen alle Kommentare und Reminder
 untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 
+## Der Reiter „Orte“
+
+Links die Karte, rechts die Liste aller Orte.
+
+- **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
+- **Ändern:** der **Stift** in der Liste — oder einfach auf den Punkt in der Karte klicken.
+  Das Formular öffnet sich mit den bisherigen Angaben. Name und Art lassen sich überschreiben,
+  und ein Klick in die Karte verschiebt den Ort an eine neue Stelle. Solange du bearbeitest,
+  ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
+  *Abbrechen* verwirft es.
+- **Löschen:** das × — nur, wenn keine Flüge mehr an dem Ort hängen, und immer mit Rückfrage.
+
+Flüge merken sich den Ort über seine `id`, nicht über den Namen. Ein umbenannter oder
+verschobener Ort ändert sich deshalb sofort überall mit, auch in alten Flügen — es geht
+nichts verloren und nichts muss nachgetragen werden.
+
+Wird die **Art** so geändert, dass sie nicht mehr zu vorhandenen Flügen passt (etwa ein
+Startplatz, der nur noch Landeplatz sein soll, obwohl er in Flügen als Start steht), kommt
+eine Rückfrage. Sagst du ja, bleiben die alten Flüge unverändert; der Ort steht dort weiter
+drin und ist nur bei neuen Flügen an dieser Stelle nicht mehr in der Auswahl.
+
 ## Festgelegte Regeln
 
 Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
@@ -167,4 +188,3 @@ Der CSV-Export ist zum Auswerten in Excel gedacht, **nicht** zum Wiederherstelle
 - IGC-Dateien importieren (Vario/XCTrack), damit Flugzeit und Koordinaten automatisch entstehen
 - Reminder abhaken können
 - Höhenmeter-Feld nur bei Hike & Fly einblenden
-- Orte nachträglich auf der Karte verschieben

@@ -324,6 +324,7 @@
       <div class="card">
         <h2>Orte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
         <div class="body" id="placeform" style="display:none">
+          <p class="note" id="p-title" style="margin:0 0 12px;font-weight:550;color:var(--ink)">Neuer Ort</p>
           <div class="field"><label for="p-name">Name</label><input type="text" id="p-name" placeholder="z. B. Monte Baldo Nord"></div>
           <div class="field"><label for="p-type">Art</label>
             <select id="p-type">
@@ -332,9 +333,10 @@
               <option value="both">Start und Landung</option>
               <option value="ground">Übungsgelände</option>
             </select></div>
-          <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly></div>
+          <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly>
+            <p class="note" id="p-coordhint" style="margin-top:5px"></p></div>
           <div class="rowend" style="margin-top:0">
-            <button class="btn" onclick="savePlace()">Ort speichern</button>
+            <button class="btn" id="p-save" onclick="savePlace()">Ort speichern</button>
             <button class="btn ghost" onclick="cancelPlace()">Abbrechen</button>
           </div>
         </div>
@@ -475,6 +477,9 @@ let HAS = { dist:false, asc:false, gclass:false };
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
 let map, layer, armed = false, pending = null;
+/* Wird ein Ort nachträglich bearbeitet, steht seine id in `editId`;
+   `pending` hält dann die (eventuell verschobene) Stelle. */
+let editId = null;
 
 const pad = n => String(n).padStart(2,'0');
 const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
@@ -604,17 +609,20 @@ function initMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {maxZoom:18, attribution:'© OpenStreetMap'}).addTo(map);
   layer = L.layerGroup().addTo(map);
+  /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe. */
+  document.getElementById('p-type').addEventListener('change', drawPlaces);
   map.on('click', e => {
-    if (!armed) return;
+    if (!armed && !editId) return;
     pending = {lat:e.latlng.lat, lng:e.latlng.lng};
     document.getElementById('p-coord').value = pending.lat.toFixed(5)+', '+pending.lng.toFixed(5);
     document.getElementById('placeform').style.display = 'block';
-    document.getElementById('p-name').focus();
+    if (!editId) document.getElementById('p-name').focus();
     drawPlaces();
   });
 }
 
 window.toggleArm = () => {
+  if (editId) endEditPlace();          /* ein offenes Bearbeiten zuerst schließen */
   armed = !armed;
   document.getElementById('armbtn').textContent = armed ? 'Abbrechen' : 'Ort hinzufügen';
   const h = document.getElementById('hint');
@@ -628,19 +636,107 @@ window.toggleArm = () => {
 function drawPlaces(){
   if (!layer) return;
   layer.clearLayers();
-  S.places.forEach(p => L.circleMarker([p.lat,p.lng],
-    {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
-    .bindTooltip(p.name+' · '+TYPEN[p.type], {direction:'top'}).addTo(layer));
-  if (pending) L.circleMarker([pending.lat,pending.lng],
-    {radius:9, color:'#15202B', weight:2, dashArray:'3 3', fillColor:'#15202B', fillOpacity:.15}).addTo(layer);
+  S.places.forEach(p => {
+    /* Der Ort, der gerade bearbeitet wird, steht unten als gestrichelter Punkt. */
+    if (editId === p.id && pending) return;
+    L.circleMarker([p.lat,p.lng],
+      {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
+      .bindTooltip(p.name+' · '+TYPEN[p.type]+' · zum Bearbeiten anklicken', {direction:'top'})
+      /* Klick auf den Punkt öffnet den Ort zum Bearbeiten — außer man legt gerade einen an. */
+      .on('click', () => { if (!armed && !editId) editPlace(p.id); })
+      .addTo(layer);
+  });
+  if (pending){
+    const typ = document.getElementById('p-type').value;
+    const nm  = document.getElementById('p-name').value.trim();
+    L.circleMarker([pending.lat,pending.lng],
+      {radius:9, color: editId ? (COLOR[typ]||'#15202B') : '#15202B', weight:2.5,
+       dashArray:'3 3', fillColor: editId ? (COLOR[typ]||'#15202B') : '#15202B', fillOpacity:.2})
+      .bindTooltip((nm || 'Neuer Ort') + ' · wird gerade bearbeitet', {direction:'top'})
+      .addTo(layer);
+  }
+}
+
+/* Einen vorhandenen Ort bearbeiten: Name, Art und Stelle auf der Karte. */
+window.editPlace = id => {
+  const p = S.places.find(x=>x.id===id); if (!p) return;
+  if (armed) toggleArm();                 /* „Ort hinzufügen“ zuerst beenden */
+  editId  = id;
+  pending = {lat:p.lat, lng:p.lng};
+  document.getElementById('p-name').value  = p.name;
+  document.getElementById('p-type').value  = p.type;
+  document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  document.getElementById('placeform').style.display = 'block';
+  placeFormLabels();
+  if (map){
+    map.getContainer().style.cursor = 'crosshair';
+    map.setView([p.lat, p.lng], Math.max(map.getZoom(), 12));
+  }
+  drawPlaces();
+  show('orte');
+  document.getElementById('p-name').focus();
+};
+
+/* Beschriftungen des Formulars — je nachdem, ob ein Ort neu ist oder bearbeitet wird. */
+function placeFormLabels(){
+  document.getElementById('p-title').textContent =
+    editId ? 'Ort bearbeiten' : 'Neuer Ort';
+  document.getElementById('p-save').textContent =
+    editId ? 'Änderungen speichern' : 'Ort speichern';
+  document.getElementById('p-coordhint').textContent =
+    editId ? 'Zum Verschieben einfach an die neue Stelle in der Karte klicken.' : '';
+  const h = document.getElementById('hint');
+  if (editId){
+    h.classList.add('armed');
+    h.textContent = 'Du bearbeitest einen Ort. Ein Klick in die Karte verschiebt ihn.';
+  } else if (!armed){
+    h.classList.remove('armed');
+    h.textContent = 'Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.';
+  }
+}
+
+/* Bearbeiten beenden, ohne etwas zu speichern. */
+function endEditPlace(){
+  editId = null;
+  if (map) map.getContainer().style.cursor = armed ? 'crosshair' : '';
+  cancelPlace();
 }
 
 window.savePlace = async () => {
   const name = document.getElementById('p-name').value.trim();
+  const type = document.getElementById('p-type').value;
   if (!pending){ toast('Bitte zuerst in die Karte klicken.'); return; }
   if (!name){ toast('Der Ort braucht einen Namen.'); document.getElementById('p-name').focus(); return; }
+
+  if (editId){
+    const schreib = async () => {
+      const { error } = await sb.from('places').update({
+        name, type, lat: pending.lat, lng: pending.lng }).eq('id', editId);
+      if (error) return oops(error);
+      endEditPlace();
+      await loadAll(); toast(name + ' geändert.');
+    };
+    /* Warnen, wenn die neue Art nicht mehr zu den Flügen passt, die den Ort benutzen. */
+    const alsStart = S.flights.filter(f=>f.start===editId && !isGH(f)).length;
+    const alsLand  = S.flights.filter(f=>f.land===editId).length;
+    const passt = { start:['start'], land:['land'], both:['start','land'], ground:[] }[type] || [];
+    const flg = n => n === 1 ? '1 Flug' : n + ' Flügen';
+    const kaputt = [ (alsStart && !passt.includes('start')) ? 'bei '+flg(alsStart)+' als Startplatz' : '',
+                     (alsLand  && !passt.includes('land'))  ? 'bei '+flg(alsLand) +' als Landeplatz'  : '' ]
+                   .filter(Boolean);
+    if (kaputt.length){
+      ask(`<b>${esc(name)}</b> steht noch ${esc(kaputt.join(' und '))}.`
+        + `<br><br>Als „${esc(TYPEN[type])}“ passt der Ort dort nicht mehr. Die Flüge bleiben`
+        + ' unverändert, der Ort steht bei ihnen weiter drin — er lässt sich nur bei neuen'
+        + ' Flügen nicht mehr an dieser Stelle auswählen.',
+        async () => { closeConfirm(); await schreib(); }, 'Art trotzdem ändern?', 'Ja, ändern');
+      return;
+    }
+    return schreib();
+  }
+
   const { error } = await sb.from('places').insert({
-    name, type: document.getElementById('p-type').value, lat: pending.lat, lng: pending.lng });
+    name, type, lat: pending.lat, lng: pending.lng });
   if (error) return oops(error);
   cancelPlace(); if (armed) toggleArm();
   await loadAll(); toast(name + ' gespeichert.');
@@ -648,8 +744,13 @@ window.savePlace = async () => {
 
 window.cancelPlace = () => {
   pending = null;
+  editId  = null;
   document.getElementById('placeform').style.display = 'none';
   document.getElementById('p-name').value = '';
+  document.getElementById('p-type').value = 'start';
+  document.getElementById('p-coord').value = '';
+  placeFormLabels();
+  if (map && !armed) map.getContainer().style.cursor = '';
   drawPlaces();
 };
 
@@ -1239,7 +1340,10 @@ function renderAll(){
         <td>${esc(p.name)}<br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></td>
         <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span></td>
         <td class="num">${n}</td>
-        <td style="text-align:right"><button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
+            onclick="editPlace('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+          <button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
       </tr>`;}).join('')}</table>`
     : '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>';
 
