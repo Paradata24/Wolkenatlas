@@ -29,13 +29,18 @@ sodass jedes Konto nur eigene Zeilen sieht.
 `type`: `start` | `land` | `both` | `ground` (Übungsgelände)
 
 **`gear`** — Ausrüstung
-`id, user_id, kind, name, created_at` · `kind`: `glider` | `harness`
-Flüge speichern den Namen als Text, nicht die id.
+`id, user_id, kind, name, gclass, created_at` · `kind`: `glider` | `harness`
+`gclass`: Schirmklasse `A` | `B low` | `B high` | `C` | `D` | `CCC` — nur bei Schirmen,
+darf leer sein. Steht bei einem Schirm noch eine Klasse, die es in der Liste nicht mehr
+gibt, bleibt sie erhalten, bis du sie selbst umstellst.
+Flüge speichern den Namen als Text, nicht die id. Die Klasse hängt am Schirm, nicht am
+Flug: einmal eingestellt, gilt sie für jeden Flug mit diesem Schirm.
 
 **`flights`** — Flüge
 `id, user_id, flight_date, start_time, kind, start_place, land_place, mins,
 dist_km, ascent, asc_m, asc_min, glider, harness, note, reminder, created_at`
-`kind`: `hikefly` | `thermik` | `schule` | `siv` | `gh` (Groundhandling)
+`kind`: `hikefly` | `thermik` | `schule` (heißt in der Anzeige **Ausbildung**) |
+`siv` | `comp` (Wettkampf) | `gh` (Groundhandling)
 `ascent`: `foot` (zu Fuß) | `car` (Auto) | `lift` (Bahn) — leer heißt: nicht erfasst
 
 `dist_km` und `ascent` sind später dazugekommen. Fehlen sie in der Datenbank, lässt das
@@ -59,21 +64,34 @@ alter table flights alter column start_place drop not null;
 
 Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
-### Flugstrecke und Aufstiegsart
+### Später dazugekommene Felder
 
-Zwei Angaben kamen später dazu: die geflogene **Strecke in Kilometern** und die
-**Aufstiegsart** (zu Fuß, mit dem Auto, mit der Bahn). Solange die passenden Spalten
-in Supabase fehlen, zeigt das Flugbuch unter der Tabelle einen Hinweis und lässt die
-beiden Felder einfach weg — alles andere funktioniert normal weiter. Zum Freischalten
-in Supabase unter **SQL Editor** einmalig ausführen:
+Drei Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
+**Aufstiegsart** (zu Fuß, Auto, Bahn) und die **Schirmklasse**. Solange die passenden
+Spalten in Supabase fehlen, zeigt das Flugbuch unter der Flugtabelle einen Hinweis und
+lässt die betroffenen Felder einfach weg — alles andere funktioniert normal weiter.
+Zum Freischalten in Supabase unter **SQL Editor** einmalig ausführen:
 
 ```sql
 alter table flights add column if not exists dist_km numeric;
 alter table flights add column if not exists ascent text;
+alter table gear    add column if not exists gclass text;
 ```
 
 Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt das Flugbuch „zu Fuß“
 daran, dass Höhenmeter oder Aufstiegsdauer eingetragen sind.
+
+**Falls die Art „Wettkampf“ beim Speichern abgelehnt wird:** Manche Datenbanken lassen
+für `kind` nur eine feste Liste von Werten zu, in der `comp` noch fehlt. Erscheint beim
+Speichern die Meldung, die Datenbank kenne „Wettkampf“ noch nicht, dann einmalig:
+
+```sql
+alter table flights drop constraint if exists flights_kind_check;
+alter table flights add constraint flights_kind_check
+  check (kind in ('hikefly','thermik','schule','siv','comp','gh'));
+```
+
+Ohne diese Meldung ist nichts zu tun.
 
 ## Die Startseite
 
@@ -88,12 +106,16 @@ Damit sie kompakt bleibt, stehen zusammengehörende Angaben **übereinander** in
 | Strecke | Startplatz | Landeplatz, mit `↳` davor |
 | Flug | Flugdauer | Flugstrecke in km |
 | Aufstieg | Symbol: zu Fuß, Auto oder Bahn | bei „zu Fuß“ Höhenmeter und Dauer |
-| Ausrüstung | Schirm | Gurtzeug |
+| Ausrüstung | Schirm, dahinter die Schirmklasse | Gurtzeug |
 | Notiz | Knopf für den Kommentar | roter Knopf für den Reminder |
 
 Sortiert nach Datum und Startzeit, neueste zuerst; Flüge ohne Datum stehen ganz oben.
 Fehlt eine Angabe, bleibt die Zelle leer. Lange Namen bei der Ausrüstung werden
 abgeschnitten — der ganze Name steht im Fenster, das ein Klick auf die Zeile öffnet.
+
+Die **Schirmklasse** wird nicht pro Flug eingetragen, sondern einmal beim Schirm im
+Reiter „Ausrüstung“. In der Flugtabelle steht sie als kleines Kürzel hinter dem
+Schirmnamen und lässt sich dort nicht ändern.
 
 Oben rechts an der Tabelle sitzen zwei Knöpfe:
 

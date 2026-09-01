@@ -191,6 +191,10 @@
   table.flights td.gear .a,table.flights td.gear .b{overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
   .pfeil{color:var(--muted);opacity:.6}
+  .klass{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;font-weight:600;
+    border:1px solid var(--line);border-radius:2px;padding:1px 4px;color:var(--chart);
+    vertical-align:2px;white-space:nowrap}
+  .klasspick{width:auto;min-width:88px;font-size:13px;padding:3px 6px}
   .ascbox{display:inline-flex;align-items:center;gap:7px}
   .ascbox .ico{color:var(--contour);line-height:0;flex:none}
   .ascbox .ico svg{width:20px;height:20px;display:block}
@@ -344,8 +348,12 @@
     <div class="cols even">
       <div class="card"><h2>Schirme</h2>
         <div class="body">
-          <div class="field"><label for="g-glider">Neuer Schirm</label>
-            <input type="text" id="g-glider" placeholder="z. B. Advance Epsilon 9"></div>
+          <div class="pair">
+            <div class="field"><label for="g-glider">Neuer Schirm</label>
+              <input type="text" id="g-glider" placeholder="z. B. Advance Epsilon 9"></div>
+            <div class="field" id="g-classfield"><label for="g-class">Schirmklasse</label>
+              <select id="g-class"></select></div>
+          </div>
           <button class="btn small" onclick="addGear('glider','g-glider')">Schirm hinzufügen</button>
         </div><div id="gliderlist"></div></div>
       <div class="card"><h2>Gurtzeuge</h2>
@@ -462,7 +470,10 @@ let S = { places: [], gear: [], flights: [] };
 /* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
    siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
-let HAS = { dist:false, asc:false };
+let HAS = { dist:false, asc:false, gclass:false };
+
+/* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
+const KLASSEN = ['A','B low','B high','C','D','CCC'];
 let map, layer, armed = false, pending = null;
 
 const pad = n => String(n).padStart(2,'0');
@@ -476,7 +487,10 @@ const dateLbl = iso => deDate(iso) || 'ohne Datum';
 /* Kilometer deutsch: 12.4 wird zu 12,4 */
 const nk = v => (typeof v === 'number' ? v : parseFloat(v)).toLocaleString('de-DE');
 
-const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Flugschule', siv:'SIV', gh:'Groundhandling'};
+/* Die Schluessel stehen so in der Datenbank und bleiben, wie sie sind — nur die
+   Beschriftung von `schule` heisst jetzt Ausbildung. `comp` ist neu dazugekommen. */
+const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildung',
+               siv:'SIV', comp:'Wettkampf', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
 const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
 const isGH = f => f.kind === 'gh';
@@ -495,6 +509,13 @@ const routeHTML = f => {
     + (f.land ? esc(pname(f.land)) : '—');
 };
 const gearOf = kind => S.gear.filter(g=>g.kind===kind).map(g=>g.name);
+/* Flüge speichern den Schirm als Namen — die Klasse steht am Schirm selbst. */
+const klasseOf = name => {
+  if (!name || !HAS.gclass) return '';
+  const g = S.gear.find(x => x.kind === 'glider' && x.name === name);
+  return (g && g.gclass) || '';
+};
+const klasseTag = k => k ? `<span class="klass" title="Schirmklasse ${esc(k)}">${esc(k)}</span>` : '';
 
 function toast(msg, bad){
   const t = document.getElementById('toast');
@@ -538,12 +559,14 @@ async function startApp(session){
 
 /* ══════════ DATEN LADEN ══════════ */
 async function checkCols(){
-  const [d, a] = await Promise.all([
+  const [d, a, g] = await Promise.all([
     sb.from('flights').select('dist_km').limit(1),
-    sb.from('flights').select('ascent').limit(1)
+    sb.from('flights').select('ascent').limit(1),
+    sb.from('gear').select('gclass').limit(1)
   ]);
-  HAS.dist = !d.error;
-  HAS.asc  = !a.error;
+  HAS.dist   = !d.error;
+  HAS.asc    = !a.error;
+  HAS.gclass = !g.error;
 }
 
 async function loadAll(){
@@ -644,14 +667,34 @@ window.delPlace = id => {
 
 /* ══════════ AUSRÜSTUNG ══════════ */
 const GEARLBL = {glider:'Schirm', harness:'Gurtzeug'};
+/* Steht bei einem Schirm noch eine Klasse, die es so nicht mehr gibt (etwa das
+   frühere schlichte „B“), bleibt sie in der Liste stehen und geht nicht verloren. */
+const klasseOpts = cur => {
+  const liste = (cur && !KLASSEN.includes(cur)) ? [cur, ...KLASSEN] : KLASSEN;
+  return '<option value="">— keine —</option>'
+    + liste.map(k=>`<option${k===cur?' selected':''}>${esc(k)}</option>`).join('');
+};
 
 window.addGear = async (kind, inputId) => {
   const el = document.getElementById(inputId), name = el.value.trim();
   if (!name){ toast(GEARLBL[kind]+' braucht einen Namen.'); el.focus(); return; }
   if (gearOf(kind).includes(name)){ toast(name+' steht schon in der Liste.'); return; }
-  const { error } = await sb.from('gear').insert({kind, name});
+  const row = {kind, name};
+  if (kind === 'glider' && HAS.gclass) row.gclass = document.getElementById('g-class').value || null;
+  const { error } = await sb.from('gear').insert(row);
   if (error) return oops(error);
-  el.value = ''; await loadAll(); toast(name+' hinzugefügt.');
+  el.value = '';
+  if (kind === 'glider' && HAS.gclass) document.getElementById('g-class').value = '';
+  await loadAll(); toast(name+' hinzugefügt.');
+};
+
+/* Die Klasse lässt sich jederzeit umstellen und wird sofort gespeichert. */
+window.setKlasse = async (id, wert) => {
+  const { error } = await sb.from('gear').update({gclass: wert || null}).eq('id', id);
+  if (error) return oops(error);
+  const g = S.gear.find(x=>x.id===id); if (g) g.gclass = wert;
+  renderAll();
+  toast(wert ? 'Klasse ' + wert + ' gespeichert.' : 'Klasse entfernt.');
 };
 
 window.delGear = (id) => {
@@ -698,8 +741,10 @@ function placeOpts(which, kind, cur){
 function gearOpts(kind, cur, leer){
   let names = gearOf(kind);
   if (cur && !names.includes(cur)) names = [cur, ...names];
-  return `<option value="">${esc(leer||'')}</option>` + names.map(n=>
-    `<option${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+  return `<option value="">${esc(leer||'')}</option>` + names.map(n=>{
+    const k = kind === 'glider' ? klasseOf(n) : '';
+    return `<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}${k?' ('+esc(k)+')':''}</option>`;
+  }).join('');
 }
 
 /* ---------- Aufstieg: Auto, Bahn oder zu Fuss ----------
@@ -770,11 +815,11 @@ function ascCell(f){
 /* Lange Namen werden abgeschnitten; der ganze Name steht im Tooltip
    und im Fenster, das beim Klick auf die Zeile aufgeht. */
 function gearCell(f){
-  const g = esc(f.glider), h = esc(f.harness);
+  const g = esc(f.glider), h = esc(f.harness), k = klasseOf(f.glider);
   if (!g && !h) return '<td></td>';
-  const t = [f.glider ? 'Schirm: '+f.glider : '', f.harness ? 'Gurtzeug: '+f.harness : '']
-              .filter(Boolean).join(' · ');
-  return `<td class="gear" title="${esc(t)}">${stack(g, h)}</td>`;
+  const t = [f.glider ? 'Schirm: '+f.glider + (k ? ' (Klasse '+k+')' : '') : '',
+             f.harness ? 'Gurtzeug: '+f.harness : ''].filter(Boolean).join(' · ');
+  return `<td class="gear" title="${esc(t)}">${stack(g + (k ? ' ' + klasseTag(k) : ''), h)}</td>`;
 }
 
 /* ---------- Kommentar und Reminder ---------- */
@@ -965,6 +1010,10 @@ function pendingChanges(){
 
 /* 23502 = die Datenbank verlangt für diese Spalte noch einen Wert. */
 function dbErr(e){
+  /* 23514 = die Datenbank erlaubt für `kind` diesen Wert noch nicht (z. B. Wettkampf). */
+  if (e && (e.code === '23514' || e.code === '22P02')) return toast(
+    'Die Datenbank kennt die Art „Wettkampf“ noch nicht. Wie du sie freischaltest, '
+    + 'steht in der README unter „Später dazugekommene Felder“.', true);
   if (e && e.code === '23502') return toast(
     'Die Datenbank lässt dieses Feld noch nicht leer. In Supabase einmalig freigeben '
     + '(siehe README, Abschnitt „Leere Felder“).', true);
@@ -1113,7 +1162,8 @@ window.openDetail = id => {
       ${row(isGH(f)?'Dauer':'Flugzeit', f.mins ? '<b class="num">'+fmt(f.mins)+' h</b>' : '')}
       ${row('Flugstrecke', f.dist ? nk(f.dist)+' km' : '')}
       ${row('Aufstieg', auf)}
-      ${row('Schirm', esc(f.glider))}
+      ${row('Schirm', f.glider ? esc(f.glider) + (klasseOf(f.glider) ? ' <span class="klass">'
+        + esc(klasseOf(f.glider)) + '</span>' : '') : '')}
       ${row('Gurtzeug', esc(f.harness))}
     </dl></div>
     ${f.note ? `<div class="sec"><h3>Notiz</h3><div class="diary">${esc(f.note)}</div></div>` : ''}
@@ -1172,12 +1222,14 @@ function renderAll(){
   renderTable();
   setTools();
 
-  document.getElementById('needcols').textContent = (HAS.dist && HAS.asc) ? ''
-    : 'Noch nicht freigeschaltet: '
-      + [HAS.dist ? '' : 'Flugstrecke', HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)']
-        .filter(Boolean).join(' und ')
+  const fehlt = [HAS.dist ? '' : 'Flugstrecke',
+                 HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)',
+                 HAS.gclass ? '' : 'Schirmklasse'].filter(Boolean);
+  document.getElementById('needcols').textContent = fehlt.length
+    ? 'Noch nicht freigeschaltet: ' + fehlt.join(', ')
       + '. Wie du das in Supabase einmalig einschaltest, steht in der README '
-      + 'unter „Flugstrecke und Aufstiegsart“.';
+      + 'unter „Später dazugekommene Felder“.'
+    : '';
 
   document.getElementById('placelist').innerHTML = S.places.length ? `<table>
     <tr><th>Name</th><th>Art</th><th>Flüge</th><th></th></tr>
@@ -1196,10 +1248,15 @@ function renderAll(){
   const gearTable = kind => {
     const list = S.gear.filter(g=>g.kind===kind);
     const field = kind==='glider' ? 'glider' : 'harness';
-    return list.length ? `<table><tr><th>Name</th><th>Flüge</th><th>Zeit</th><th></th></tr>
+    const mitKlasse = kind === 'glider' && HAS.gclass;
+    return list.length ? `<table>
+      <tr><th>Name</th>${mitKlasse?'<th>Klasse</th>':''}<th>Flüge</th><th>Zeit</th><th></th></tr>
       ${list.map(g=>{
         const used = S.flights.filter(f=>f[field]===g.name);
-        return `<tr><td>${esc(g.name)}</td><td class="num">${used.length}</td>
+        return `<tr><td>${esc(g.name)}</td>
+          ${mitKlasse ? `<td><select class="klasspick" aria-label="Schirmklasse von ${esc(g.name)}"
+            onchange="setKlasse('${g.id}', this.value)">${klasseOpts(g.gclass)}</select></td>` : ''}
+          <td class="num">${used.length}</td>
           <td class="num"><b>${fmt(used.reduce((t,f)=>t+(f.mins||0),0))}</b></td>
           <td style="text-align:right"><button class="del" title="Löschen" onclick="delGear('${g.id}')">×</button></td>
         </tr>`;}).join('')}</table>`
@@ -1207,6 +1264,15 @@ function renderAll(){
   };
   document.getElementById('gliderlist').innerHTML  = gearTable('glider');
   document.getElementById('harnesslist').innerHTML = gearTable('harness');
+
+  /* Ohne die Spalte `gclass` in der Datenbank gibt es das Feld gar nicht erst. */
+  const kf = document.getElementById('g-classfield');
+  kf.style.display = HAS.gclass ? '' : 'none';
+  if (HAS.gclass){
+    const sel = document.getElementById('g-class'), keep = sel.value;
+    sel.innerHTML = klasseOpts(keep);
+    sel.value = keep;
+  }
 
   drawPlaces();
 }
@@ -1341,7 +1407,7 @@ window.exportCSV = () => {
   if (!S.flights.length){ toast('Es sind noch keine Flüge zum Exportieren da.'); return; }
   const head = ['Datum','Startzeit','Art','Startplatz','Start Breite','Start Länge','Landeplatz',
     'Land Breite','Land Länge','Dauer (min)','Dauer (h:mm)','Strecke (km)','Aufstieg',
-    'Aufstieg (hm)','Aufstieg (min)','Schirm','Gurtzeug','Notiz','Reminder'];
+    'Aufstieg (hm)','Aufstieg (min)','Schirm','Schirmklasse','Gurtzeug','Notiz','Reminder'];
   const q = v => '"' + String(v??'').replace(/"/g,'""') + '"';
   const P = id => S.places.find(p=>p.id===id) || {name:'',lat:'',lng:''};
   const rows = [...S.flights].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(f=>{
@@ -1350,7 +1416,7 @@ window.exportCSV = () => {
     const am = ascMode(f);
     return [deDate(f.date), f.time, KINDS[f.kind], s.name, s.lat, s.lng, l.name, l.lat, l.lng,
             f.mins||'', f.mins?fmt(f.mins):'', f.dist||'', am?ASCLBL[am]:'', f.ascM||'', f.ascMin||'',
-            f.glider, f.harness, f.note, f.reminder].map(q).join(';');
+            f.glider, klasseOf(f.glider), f.harness, f.note, f.reminder].map(q).join(';');
   });
   download('flugbuch-'+new Date().toISOString().slice(0,10)+'.csv',
            '\uFEFF' + [head.map(q).join(';'), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
