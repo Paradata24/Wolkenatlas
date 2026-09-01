@@ -34,8 +34,12 @@ Flüge speichern den Namen als Text, nicht die id.
 
 **`flights`** — Flüge
 `id, user_id, flight_date, start_time, kind, start_place, land_place, mins,
-asc_m, asc_min, glider, harness, note, reminder, created_at`
+dist_km, ascent, asc_m, asc_min, glider, harness, note, reminder, created_at`
 `kind`: `hikefly` | `thermik` | `schule` | `siv` | `gh` (Groundhandling)
+`ascent`: `foot` (zu Fuß) | `car` (Auto) | `lift` (Bahn) — leer heißt: nicht erfasst
+
+`dist_km` und `ascent` sind später dazugekommen. Fehlen sie in der Datenbank, lässt das
+Flugbuch die beiden Felder von selbst weg (siehe „Flugstrecke und Aufstiegsart“).
 
 `start_place` und `land_place` verweisen auf `places` mit `on delete restrict`:
 Ein Ort, an dem noch Flüge hängen, lässt sich nicht löschen.
@@ -55,6 +59,59 @@ alter table flights alter column start_place drop not null;
 
 Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
+### Flugstrecke und Aufstiegsart
+
+Zwei Angaben kamen später dazu: die geflogene **Strecke in Kilometern** und die
+**Aufstiegsart** (zu Fuß, mit dem Auto, mit der Bahn). Solange die passenden Spalten
+in Supabase fehlen, zeigt das Flugbuch unter der Tabelle einen Hinweis und lässt die
+beiden Felder einfach weg — alles andere funktioniert normal weiter. Zum Freischalten
+in Supabase unter **SQL Editor** einmalig ausführen:
+
+```sql
+alter table flights add column if not exists dist_km numeric;
+alter table flights add column if not exists ascent text;
+```
+
+Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt das Flugbuch „zu Fuß“
+daran, dass Höhenmeter oder Aufstiegsdauer eingetragen sind.
+
+## Die Startseite
+
+Oben die Kennzahlen, darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug.
+Damit sie kompakt bleibt, stehen zusammengehörende Angaben **übereinander** in einer Zelle
+(oben die wichtigere, darunter kleiner und grau die zweite):
+
+| Spalte | oben | darunter |
+| --- | --- | --- |
+| Datum | Datum | Startzeit |
+| Art | Art des Flugs, mittig | — |
+| Strecke | Startplatz | Landeplatz, mit `↳` davor |
+| Flug | Flugdauer | Flugstrecke in km |
+| Aufstieg | Symbol: zu Fuß, Auto oder Bahn | bei „zu Fuß“ Höhenmeter und Dauer |
+| Ausrüstung | Schirm | Gurtzeug |
+| Notiz | Knopf für den Kommentar | roter Knopf für den Reminder |
+
+Sortiert nach Datum und Startzeit, neueste zuerst; Flüge ohne Datum stehen ganz oben.
+Fehlt eine Angabe, bleibt die Zelle leer. Lange Namen bei der Ausrüstung werden
+abgeschnitten — der ganze Name steht im Fenster, das ein Klick auf die Zeile öffnet.
+
+Oben rechts an der Tabelle sitzen zwei Knöpfe:
+
+- **Stift** — alle Zellen werden zu Eingabefeldern. Ändern, was du willst, dann *Speichern*.
+  *Abbrechen* verwirft alles Ungespeicherte (mit Rückfrage). Im Bearbeiten-Zustand
+  steht am Zeilenende auch das × zum Löschen des Flugs.
+- **Plus** — legt oben eine leere Zeile an, in die du einen neuen Flug einträgst.
+  Ein eigenes Eingabeformular gibt es nicht mehr, die Tabelle *ist* das Formular.
+
+In der Spalte **Notiz** ganz rechts stehen zwei runde Knöpfe übereinander: oben der
+**Kommentar** (in der Datenbank die Spalte `note`), darunter der **rote** für den Reminder.
+Ein Kreis mit `+` heißt leer, ein Punkt heißt: da steht schon etwas drin. Bei einem
+gespeicherten Flug wird der Text sofort gespeichert, bei einer neuen Zeile zusammen mit
+der Zeile.
+
+Der Reiter **Reminder** ist das Tagebuch: dort stehen alle Kommentare und Reminder
+untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
+
 ## Festgelegte Regeln
 
 Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
@@ -63,14 +120,16 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
   nicht in der Flugzahl. Grund: offizielle Flugbücher zählen es nicht als Luftzeit.
 - **Aufstiegszeit zählt nicht zur Flugzeit.** Gleicher Grund.
 - Bei `kind = 'gh'` wird nur *ein* Ort erfasst; er steht in `start_place`, `land_place` bleibt leer.
-- Aufstiegsfelder dürfen leer sein — das bedeutet: mit Bahn oder Auto zum Startplatz.
+- Höhenmeter und Aufstiegsdauer gibt es nur bei „zu Fuß“. Wer Auto oder Bahn wählt,
+  bei dem werden beide Felder ausgeblendet und beim Speichern geleert.
 - **Jede Angabe darf leer bleiben, auch Datum, Orte und Dauer.** Ein Flug wird immer
-  gespeichert und kann später ergänzt werden. Leere Werte erscheinen in Listen als „—“,
-  Flüge ohne Datum stehen in der Liste ganz oben und tauchen in der Jahresstatistik
-  nicht auf, weil sie keinem Jahr zugeordnet werden können.
+  gespeichert und kann später ergänzt werden. Leere Werte lassen die Zelle in der
+  Flugtabelle einfach leer, Flüge ohne Datum stehen ganz oben und tauchen in der
+  Jahresstatistik nicht auf, weil sie keinem Jahr zugeordnet werden können.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
-- Notizen sind tagebuchlang und erscheinen nur in der Detailansicht, nie in der Liste.
+- Kommentare und Reminder sind tagebuchlang. In der Flugtabelle steht dafür nur ein
+  kleiner Knopf, der ganze Text steht im Reiter „Reminder“ und im Detailfenster.
 
 ## Sicherung
 
