@@ -181,7 +181,27 @@
   table.flights .c-time,table.flights .c-dur,table.flights .c-asct{width:84px}
   table.flights .c-ascm{width:62px}
   table.flights .c-kind,table.flights .c-start,table.flights .c-land,
-  table.flights .c-glider,table.flights .c-harness{width:96px;min-width:96px}
+  table.flights .c-glider,table.flights .c-harness{width:112px;min-width:112px}
+  td.gearcell{padding:5px 7px}
+  td.gearcell select{display:block}
+  td.gearcell select+select{margin-top:4px}
+  .gearbtn{width:26px;height:26px;border:1px solid var(--line);border-radius:var(--r);background:none;
+    cursor:pointer;color:var(--muted);padding:0;display:inline-flex;align-items:center;justify-content:center}
+  .gearbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .gearbtn.on{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .gearbtn svg{width:18px;height:18px;display:block}
+
+  /* kleines Fenster, das den Namen von Schirm und Gurtzeug zeigt */
+  /* nimmt keine Klicks an: ein Klick geht durch auf das Symbol darunter */
+  #pop{position:fixed;z-index:700;display:none;pointer-events:none;
+    background:var(--panel);border:1px solid var(--ink);
+    border-radius:var(--r);padding:10px 13px;max-width:250px;
+    box-shadow:0 6px 20px rgba(21,32,43,.17)}
+  #pop.on{display:block}
+  #pop .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted)}
+  #pop .v{font-size:14.5px;margin:1px 0 8px;white-space:normal}
+  #pop .v:last-child{margin-bottom:0}
   table.flights select{text-overflow:ellipsis}
   td.mark{text-align:center;padding:6px 5px;width:1%}
   .markbtn{width:25px;height:25px;border-radius:50%;border:1px dashed var(--line);background:none;
@@ -414,6 +434,8 @@
     </div>
   </div>
 </div>
+
+<div id="pop" role="dialog" aria-label="Ausrüstung"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -652,12 +674,59 @@ function placeOpts(which, kind, cur){
   return '<option value=""></option>' + list.map(p=>
     `<option value="${p.id}"${p.id===cur?' selected':''}>${esc(p.name)}</option>`).join('');
 }
-function gearOpts(kind, cur){
+function gearOpts(kind, cur, leer){
   let names = gearOf(kind);
   if (cur && !names.includes(cur)) names = [cur, ...names];
-  return '<option value=""></option>' + names.map(n=>
+  return `<option value="">${esc(leer||'')}</option>` + names.map(n=>
     `<option${n===cur?' selected':''}>${esc(n)}</option>`).join('');
 }
+
+/* ---------- Ausrüstung: ein Symbol, das den Namen zeigt ---------- */
+const WING = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" '
+  + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M2.2 7.4C4 4.6 7.7 3 12 3s8 1.6 9.8 4.4"></path>'
+  + '<path d="M2.2 7.4 5.7 10.2 8.9 8 12 10.2 15.1 8 18.3 10.2 21.8 7.4"></path>'
+  + '<path d="M5.7 10.2 12 18.6M18.3 10.2 12 18.6"></path>'
+  + '<circle cx="12" cy="19.8" r="1.5" fill="currentColor" stroke="none"></circle></svg>';
+
+/* Leer bleibt leer: ohne Schirm und Gurtzeug steht in der Zelle nichts. */
+function gearCell(f){
+  const g = f.glider || '', h = f.harness || '';
+  if (!g && !h) return '<td class="mark"></td>';
+  const t = [g ? 'Schirm: '+g : '', h ? 'Gurtzeug: '+h : ''].filter(Boolean).join(' · ');
+  return `<td class="mark"><button class="gearbtn" title="${esc(t)}" aria-label="${esc(t)}"
+    onclick="event.stopPropagation();showGear(event,'${f.id}')">${WING}</button></td>`;
+}
+
+window.showGear = (ev, id) => {
+  const f = S.flights.find(x=>x.id===id); if (!f) return;
+  const pop = document.getElementById('pop');
+  const btn = ev.currentTarget;
+  if (pop.classList.contains('on') && pop.dataset.for === id) return closePop();
+  document.querySelectorAll('.gearbtn.on').forEach(b=>b.classList.remove('on'));
+  pop.innerHTML = [f.glider ? ['Schirm', f.glider] : null, f.harness ? ['Gurtzeug', f.harness] : null]
+    .filter(Boolean).map(([k,v])=>`<div class="k">${k}</div><div class="v">${esc(v)}</div>`).join('');
+  pop.dataset.for = id;
+  pop.classList.add('on');
+  btn.classList.add('on');
+  const r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  let left = r.left + r.width/2 - w/2;
+  left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+  let top = r.bottom + 7;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 7);
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+};
+
+function closePop(){
+  const pop = document.getElementById('pop');
+  pop.classList.remove('on'); pop.dataset.for = '';
+  document.querySelectorAll('.gearbtn.on').forEach(b=>b.classList.remove('on'));
+}
+window.closePop = closePop;
+/* Ein Klick irgendwo anders, Scrollen oder Escape schließt das Fenster wieder. */
+document.addEventListener('click', () => closePop());
+window.addEventListener('resize', closePop);
+document.addEventListener('scroll', closePop, true);
 
 /* ---------- Die beiden Knöpfe ganz rechts ---------- */
 function markCell(id, field, val){
@@ -689,8 +758,7 @@ function viewRow(f){
     <td class="num"><b>${f.mins ? fmt(f.mins) : leer}</b></td>
     <td class="num">${f.ascM ? f.ascM.toLocaleString('de-DE') : leer}</td>
     <td class="num">${f.ascMin ? fmt(f.ascMin) : leer}</td>
-    <td>${esc(f.glider)}</td>
-    <td>${esc(f.harness)}</td>
+    ${gearCell(f)}
     ${markCell(f.id, 'reminder', f.reminder)}
     ${markCell(f.id, 'note', f.note)}
   </tr>`;
@@ -709,8 +777,9 @@ function editRow(f, neu){
     <td><input type="time" class="c-dur" value="${f.mins?m2t(f.mins):''}" aria-label="Dauer"></td>
     <td><input type="number" class="c-ascm" min="0" step="10" value="${f.ascM||''}" aria-label="Aufstieg Höhenmeter"></td>
     <td><input type="time" class="c-asct" value="${f.ascMin?m2t(f.ascMin):''}" aria-label="Aufstieg Dauer"></td>
-    <td><select class="c-glider" aria-label="Schirm">${gearOpts('glider', f.glider)}</select></td>
-    <td><select class="c-harness" aria-label="Gurtzeug">${gearOpts('harness', f.harness)}</select></td>
+    <td class="gearcell">
+      <select class="c-glider" aria-label="Schirm">${gearOpts('glider', f.glider, '— Schirm —')}</select>
+      <select class="c-harness" aria-label="Gurtzeug">${gearOpts('harness', f.harness, '— Gurtzeug —')}</select></td>
     ${markCell(id, 'reminder', f.reminder)}
     ${markCell(id, 'note', f.note)}
     <td class="mark"><button class="del" title="Flug löschen"
@@ -737,7 +806,7 @@ function renderTable(){
     return;
   }
   const head = ['Datum','Zeit','Art','Start','Landung','Dauer','Aufstieg Hm','Aufstieg Zeit',
-                'Schirm','Gurtzeug','Reminder','Kommentar']
+                'Ausrüstung','Reminder','Kommentar']
     .map(h=>`<th>${h}</th>`).join('') + (editMode ? '<th></th>' : '');
   el.innerHTML = `<div class="tablewrap"><table class="flights" id="flighttable">
     <thead><tr>${head}</tr></thead>
@@ -1204,6 +1273,7 @@ window.exportCSV = () => {
 /* ══════════ START ══════════ */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  closePop();
   if (document.getElementById('confirm').classList.contains('on')) closeConfirm();
   else if (document.getElementById('textbox').classList.contains('on')) closeText();
   else if (document.getElementById('detail').classList.contains('on')) closeDetail();

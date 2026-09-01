@@ -58,8 +58,14 @@ Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 ## Die Startseite
 
 Oben die Kennzahlen, darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug,
-alle Angaben nebeneinander. Sortiert nach Datum und Startzeit, neueste zuerst;
-Flüge ohne Datum stehen ganz oben. Fehlt eine Angabe, bleibt die Zelle leer.
+alle Angaben nebeneinander: Datum · Zeit · Art · Start · Landung · Dauer · Aufstieg Hm ·
+Aufstieg Zeit · Ausrüstung · Reminder · Kommentar. Sortiert nach Datum und Startzeit,
+neueste zuerst; Flüge ohne Datum stehen ganz oben. Fehlt eine Angabe, bleibt die Zelle leer.
+
+Schirm und Gurtzeug teilen sich die Spalte **Ausrüstung**, damit die Tabelle kompakt bleibt:
+dort steht nur ein kleines Gleitschirm-Symbol, ein Klick darauf zeigt die Namen. Ist beides
+leer, steht in der Zelle nichts. Beim Bearbeiten sitzen die zwei Auswahlfelder untereinander
+in derselben Zelle.
 
 Oben rechts an der Tabelle sitzen zwei Knöpfe:
 
