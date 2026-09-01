@@ -30,7 +30,9 @@ sodass jedes Konto nur eigene Zeilen sieht.
 
 **`gear`** — Ausrüstung
 `id, user_id, kind, name, gclass, created_at` · `kind`: `glider` | `harness`
-`gclass`: Schirmklasse `A` | `B` | `C` | `D` | `CCC` — nur bei Schirmen, darf leer sein.
+`gclass`: Schirmklasse `A` | `B low` | `B high` | `C` | `D` | `CCC` — nur bei Schirmen,
+darf leer sein. Steht bei einem Schirm noch eine Klasse, die es in der Liste nicht mehr
+gibt, bleibt sie erhalten, bis du sie selbst umstellst.
 Flüge speichern den Namen als Text, nicht die id. Die Klasse hängt am Schirm, nicht am
 Flug: einmal eingestellt, gilt sie für jeden Flug mit diesem Schirm.
 

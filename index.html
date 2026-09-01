@@ -473,7 +473,7 @@ let S = { places: [], gear: [], flights: [] };
 let HAS = { dist:false, asc:false, gclass:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
-const KLASSEN = ['A','B','C','D','CCC'];
+const KLASSEN = ['A','B low','B high','C','D','CCC'];
 let map, layer, armed = false, pending = null;
 
 const pad = n => String(n).padStart(2,'0');
@@ -667,8 +667,13 @@ window.delPlace = id => {
 
 /* ══════════ AUSRÜSTUNG ══════════ */
 const GEARLBL = {glider:'Schirm', harness:'Gurtzeug'};
-const klasseOpts = cur => '<option value="">— keine —</option>'
-  + KLASSEN.map(k=>`<option${k===cur?' selected':''}>${k}</option>`).join('');
+/* Steht bei einem Schirm noch eine Klasse, die es so nicht mehr gibt (etwa das
+   frühere schlichte „B“), bleibt sie in der Liste stehen und geht nicht verloren. */
+const klasseOpts = cur => {
+  const liste = (cur && !KLASSEN.includes(cur)) ? [cur, ...KLASSEN] : KLASSEN;
+  return '<option value="">— keine —</option>'
+    + liste.map(k=>`<option${k===cur?' selected':''}>${esc(k)}</option>`).join('');
+};
 
 window.addGear = async (kind, inputId) => {
   const el = document.getElementById(inputId), name = el.value.trim();
