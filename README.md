@@ -25,8 +25,12 @@ Drei Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security
 sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
-`id, user_id, name, type, lat, lng, created_at`
+`id, user_id, name, type, lat, lng, dirs, created_at`
 `type`: `start` | `land` | `both` | `ground` (Übungsgelände)
+`dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
+Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es nur
+bei Orten mit Start (`start` und `both`); bei `land` und `ground` wird das Feld geleert.
+`dirs` ist später dazugekommen (siehe „Später dazugekommene Felder“).
 
 **`gear`** — Ausrüstung
 `id, user_id, kind, name, gclass, created_at` · `kind`: `glider` | `harness`
@@ -66,16 +70,18 @@ Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
 ### Später dazugekommene Felder
 
-Drei Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
-**Aufstiegsart** (zu Fuß, Auto, Bahn) und die **Schirmklasse**. Solange die passenden
-Spalten in Supabase fehlen, zeigt das Flugbuch unter der Flugtabelle einen Hinweis und
-lässt die betroffenen Felder einfach weg — alles andere funktioniert normal weiter.
+Vier Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
+**Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse** und die **Startrichtungen**
+an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
+der Flugtabelle einen Hinweis und lässt die betroffenen Felder einfach weg — alles andere
+funktioniert normal weiter.
 Zum Freischalten in Supabase unter **SQL Editor** einmalig ausführen:
 
 ```sql
 alter table flights add column if not exists dist_km numeric;
 alter table flights add column if not exists ascent text;
 alter table gear    add column if not exists gclass text;
+alter table places  add column if not exists dirs text;
 ```
 
 Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt das Flugbuch „zu Fuß“
@@ -145,6 +151,23 @@ Links die Karte, rechts die Liste aller Orte.
   ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
   *Abbrechen* verwirft es.
 - **Löschen:** das × — nur, wenn keine Flüge mehr an dem Ort hängen, und immer mit Rückfrage.
+
+### Startrichtungen — die Windrose
+
+Sobald die Art **Startplatz** oder **Start und Landung** gewählt ist, erscheint im Formular
+eine **Windrose mit acht Feldern** (N, NO, O, SO, S, SW, W, NW, im Uhrzeigersinn ab Norden
+oben). Jedes angetippte Feld heißt: bei diesem Wind lässt sich hier starten. Nochmal
+antippen nimmt die Richtung wieder weg, mehrere gleichzeitig sind der Normalfall. Unter der
+Windrose steht die aktuelle Auswahl noch einmal als Text. Gespeichert wird sie zusammen mit
+dem Ort über *Ort speichern* beziehungsweise *Änderungen speichern*.
+
+Die gewählten Richtungen stehen danach in der Ortsliste unter der Art und im Kästchen, das
+beim Zeigen auf den Punkt in der Karte aufgeht. Wird ein Ort auf **Landeplatz** oder
+**Übungsgelände** umgestellt, verschwindet die Windrose und die Richtungen werden beim
+Speichern geleert — dort gibt es keine Startrichtung.
+
+Fehlt die Spalte `dirs` in der Datenbank noch, steht an der Stelle der Windrose ein Hinweis,
+und alles andere funktioniert unverändert weiter.
 
 Flüge merken sich den Ort über seine `id`, nicht über den Namen. Ein umbenannter oder
 verschobener Ort ändert sich deshalb sofort überall mit, auch in alten Flügen — es geht
