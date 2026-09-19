@@ -240,6 +240,25 @@
   .entry .blk.remblk h4{color:var(--start)}
   .entry .blk .txt{white-space:pre-wrap;font-size:15px;line-height:1.6}
 
+  /* ---------- Windrose: mögliche Startrichtungen ---------- */
+  .rose{display:block;width:100%;max-width:236px;margin:2px auto 0;touch-action:manipulation}
+  .rose .seg{cursor:pointer}
+  .rose .seg path{fill:#F2F5F8;stroke:var(--line);stroke-width:1;transition:fill .15s ease}
+  .rose .seg text{font-family:var(--mono);font-size:13px;letter-spacing:.04em;fill:var(--muted);
+    text-anchor:middle;pointer-events:none;user-select:none}
+  .rose .seg:hover path{fill:#E4EBF1}
+  .rose .seg.on path{fill:var(--start);stroke:var(--start)}
+  .rose .seg.on text{fill:#fff;font-weight:600}
+  /* Angeklickt bleibt kein Kasten stehen; mit der Tastatur wird das Stück umrandet. */
+  .rose .seg:focus{outline:none}
+  .rose .seg:focus-visible path{stroke:var(--ink);stroke-width:2.5}
+  .rose .mitte{fill:var(--muted)}
+  .dirsum{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);text-align:center;margin:8px 0 0}
+  .dirsum.hat{color:var(--start)}
+  .dirlist{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--start);
+    display:block;margin-top:3px}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -333,6 +352,15 @@
               <option value="both">Start und Landung</option>
               <option value="ground">Übungsgelände</option>
             </select></div>
+          <div class="field" id="p-dirfield" style="display:none">
+            <label>Mögliche Startrichtungen</label>
+            <div id="p-rosewrap">
+              <svg class="rose" id="p-rose" viewBox="0 0 200 200" role="group"
+                   aria-label="Windrose: mögliche Startrichtungen"></svg>
+              <p class="dirsum" id="p-dirtext"></p>
+            </div>
+            <p class="note" id="p-dirmiss" style="display:none;margin-top:0"></p>
+          </div>
           <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly>
             <p class="note" id="p-coordhint" style="margin-top:5px"></p></div>
           <div class="rowend" style="margin-top:0">
@@ -472,11 +500,25 @@ let S = { places: [], gear: [], flights: [] };
 /* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
    siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
-let HAS = { dist:false, asc:false, gclass:false };
+let HAS = { dist:false, asc:false, gclass:false, dirs:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
+/* Windrose: acht Richtungen im Uhrzeigersinn ab Norden. Sie stehen als Text in der
+   Datenbank, durch Komma getrennt — zum Beispiel „N,NO,SO“. */
+const RICHTUNGEN = ['N','NO','O','SO','S','SW','W','NW'];
+const RICHTNAME = {N:'Nord', NO:'Nordost', O:'Ost', SO:'Südost',
+                   S:'Süd', SW:'Südwest', W:'West', NW:'Nordwest'};
+/* Richtungen gibt es nur da, wo auch gestartet wird. */
+const startet = t => t === 'start' || t === 'both';
+const dirsIn  = v => String(v ?? '').split(',').map(x=>x.trim()).filter(x=>RICHTUNGEN.includes(x));
+/* Immer in der Reihenfolge der Windrose anzeigen, egal wie angeklickt wurde. */
+const dirSort = list => RICHTUNGEN.filter(d => list.includes(d));
+const dirTxt  = v => dirSort(dirsIn(v)).join(', ');
+
 let map, layer, armed = false, pending = null;
+/* Die angeklickten Startrichtungen des Orts, der gerade im Formular steht. */
+let pendingDirs = [];
 /* Wird ein Ort nachträglich bearbeitet, steht seine id in `editId`;
    `pending` hält dann die (eventuell verschobene) Stelle. */
 let editId = null;
@@ -564,14 +606,16 @@ async function startApp(session){
 
 /* ══════════ DATEN LADEN ══════════ */
 async function checkCols(){
-  const [d, a, g] = await Promise.all([
+  const [d, a, g, r] = await Promise.all([
     sb.from('flights').select('dist_km').limit(1),
     sb.from('flights').select('ascent').limit(1),
-    sb.from('gear').select('gclass').limit(1)
+    sb.from('gear').select('gclass').limit(1),
+    sb.from('places').select('dirs').limit(1)
   ]);
   HAS.dist   = !d.error;
   HAS.asc    = !a.error;
   HAS.gclass = !g.error;
+  HAS.dirs   = !r.error;
 }
 
 async function loadAll(){
@@ -609,16 +653,88 @@ function initMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {maxZoom:18, attribution:'© OpenStreetMap'}).addTo(map);
   layer = L.layerGroup().addTo(map);
-  /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe. */
-  document.getElementById('p-type').addEventListener('change', drawPlaces);
+  /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
+     und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
+  document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncRose(); });
+  buildRose();
   map.on('click', e => {
     if (!armed && !editId) return;
     pending = {lat:e.latlng.lat, lng:e.latlng.lng};
     document.getElementById('p-coord').value = pending.lat.toFixed(5)+', '+pending.lng.toFixed(5);
     document.getElementById('placeform').style.display = 'block';
+    syncRose();
     if (!editId) document.getElementById('p-name').focus();
     drawPlaces();
   });
+}
+
+/* ---------- Windrose ----------
+   Acht anklickbare Kuchenstücke. Jedes steht für eine Richtung; angeklickt heißt:
+   hier lässt sich bei diesem Wind starten. Nochmal anklicken nimmt sie wieder weg. */
+function buildRose(){
+  const mitte = 100, aussen = 82, innen = 38, luft = 1.6;
+  /* Norden ist oben, weiter im Uhrzeigersinn — wie auf einer Karte. */
+  const pt = (grad, r) => {
+    const b = grad * Math.PI / 180;
+    return [(mitte + r*Math.sin(b)).toFixed(2), (mitte - r*Math.cos(b)).toFixed(2)];
+  };
+  document.getElementById('p-rose').innerHTML =
+    RICHTUNGEN.map((d,i) => {
+      const a0 = i*45 - 22.5 + luft, a1 = i*45 + 22.5 - luft;
+      const [x1,y1] = pt(a0, innen), [x2,y2] = pt(a0, aussen);
+      const [x3,y3] = pt(a1, aussen), [x4,y4] = pt(a1, innen);
+      const [tx,ty] = pt(i*45, (aussen+innen)/2);
+      return `<g class="seg" data-dir="${d}" role="checkbox" aria-checked="false" tabindex="0"
+        aria-label="${RICHTNAME[d]}">
+        <path d="M${x1} ${y1} L${x2} ${y2} A${aussen} ${aussen} 0 0 1 ${x3} ${y3}
+                 L${x4} ${y4} A${innen} ${innen} 0 0 0 ${x1} ${y1} Z"></path>
+        <text x="${tx}" y="${ty}" dy=".35em">${d}</text></g>`;
+    }).join('') + `<circle class="mitte" cx="100" cy="100" r="3.5"></circle>`;
+
+  const rose = document.getElementById('p-rose');
+  rose.addEventListener('click', e => {
+    const g = e.target.closest('.seg'); if (g) toggleDir(g.dataset.dir);
+  });
+  /* Mit der Tastatur: mit Tab auf ein Stück, dann Leertaste oder Enter. */
+  rose.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const g = e.target.closest('.seg'); if (!g) return;
+    e.preventDefault(); toggleDir(g.dataset.dir);
+  });
+}
+
+function toggleDir(d){
+  pendingDirs = pendingDirs.includes(d) ? pendingDirs.filter(x=>x!==d) : [...pendingDirs, d];
+  paintRose();
+}
+
+function paintRose(){
+  document.querySelectorAll('#p-rose .seg').forEach(g => {
+    const an = pendingDirs.includes(g.dataset.dir);
+    g.classList.toggle('on', an);
+    g.setAttribute('aria-checked', an ? 'true' : 'false');
+  });
+  const gewaehlt = dirSort(pendingDirs);
+  const t = document.getElementById('p-dirtext');
+  t.textContent = gewaehlt.length ? 'Startrichtung: ' + gewaehlt.join(', ')
+                                  : 'Noch nichts gewählt — tipp die Richtungen an, die hier gehen.';
+  t.classList.toggle('hat', gewaehlt.length > 0);
+}
+
+/* Die Windrose gibt es nur bei Start- und bei Start-und-Landeplätzen. Fehlt die
+   Spalte `dirs` in der Datenbank, steht dort stattdessen ein Hinweis. */
+function syncRose(){
+  const feld = document.getElementById('p-dirfield');
+  const zeig = startet(document.getElementById('p-type').value);
+  feld.style.display = zeig ? '' : 'none';
+  if (!zeig) return;
+  document.getElementById('p-rosewrap').style.display = HAS.dirs ? '' : 'none';
+  const miss = document.getElementById('p-dirmiss');
+  miss.style.display = HAS.dirs ? 'none' : '';
+  miss.textContent = HAS.dirs ? ''
+    : 'Startrichtungen sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
+      + 'geht, steht in der README unter „Später dazugekommene Felder“.';
+  paintRose();
 }
 
 window.toggleArm = () => {
@@ -641,7 +757,9 @@ function drawPlaces(){
     if (editId === p.id && pending) return;
     L.circleMarker([p.lat,p.lng],
       {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
-      .bindTooltip(p.name+' · '+TYPEN[p.type]+' · zum Bearbeiten anklicken', {direction:'top'})
+      .bindTooltip(p.name+' · '+TYPEN[p.type]
+        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
+        + ' · zum Bearbeiten anklicken', {direction:'top'})
       /* Klick auf den Punkt öffnet den Ort zum Bearbeiten — außer man legt gerade einen an. */
       .on('click', () => { if (!armed && !editId) editPlace(p.id); })
       .addTo(layer);
@@ -666,8 +784,10 @@ window.editPlace = id => {
   document.getElementById('p-name').value  = p.name;
   document.getElementById('p-type').value  = p.type;
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  pendingDirs = dirsIn(p.dirs);
   document.getElementById('placeform').style.display = 'block';
   placeFormLabels();
+  syncRose();
   if (map){
     map.getContainer().style.cursor = 'crosshair';
     map.setView([p.lat, p.lng], Math.max(map.getZoom(), 12));
@@ -708,10 +828,14 @@ window.savePlace = async () => {
   if (!pending){ toast('Bitte zuerst in die Karte klicken.'); return; }
   if (!name){ toast('Der Ort braucht einen Namen.'); document.getElementById('p-name').focus(); return; }
 
+  /* Bei einem reinen Lande- oder Übungsgelände werden die Richtungen geleert. */
+  const extra = HAS.dirs
+    ? { dirs: startet(type) ? (dirSort(pendingDirs).join(',') || null) : null } : {};
+
   if (editId){
     const schreib = async () => {
       const { error } = await sb.from('places').update({
-        name, type, lat: pending.lat, lng: pending.lng }).eq('id', editId);
+        name, type, lat: pending.lat, lng: pending.lng, ...extra }).eq('id', editId);
       if (error) return oops(error);
       endEditPlace();
       await loadAll(); toast(name + ' geändert.');
@@ -736,7 +860,7 @@ window.savePlace = async () => {
   }
 
   const { error } = await sb.from('places').insert({
-    name, type, lat: pending.lat, lng: pending.lng });
+    name, type, lat: pending.lat, lng: pending.lng, ...extra });
   if (error) return oops(error);
   cancelPlace(); if (armed) toggleArm();
   await loadAll(); toast(name + ' gespeichert.');
@@ -749,6 +873,9 @@ window.cancelPlace = () => {
   document.getElementById('p-name').value = '';
   document.getElementById('p-type').value = 'start';
   document.getElementById('p-coord').value = '';
+  pendingDirs = [];
+  syncRose();
+  document.getElementById('p-dirfield').style.display = 'none';
   placeFormLabels();
   if (map && !armed) map.getContainer().style.cursor = '';
   drawPlaces();
@@ -1325,7 +1452,8 @@ function renderAll(){
 
   const fehlt = [HAS.dist ? '' : 'Flugstrecke',
                  HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)',
-                 HAS.gclass ? '' : 'Schirmklasse'].filter(Boolean);
+                 HAS.gclass ? '' : 'Schirmklasse',
+                 HAS.dirs ? '' : 'Startrichtungen an den Orten'].filter(Boolean);
   document.getElementById('needcols').textContent = fehlt.length
     ? 'Noch nicht freigeschaltet: ' + fehlt.join(', ')
       + '. Wie du das in Supabase einmalig einschaltest, steht in der README '
@@ -1338,7 +1466,8 @@ function renderAll(){
       const n = S.flights.filter(f=>f.start===p.id||f.land===p.id).length;
       return `<tr>
         <td>${esc(p.name)}<br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></td>
-        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span></td>
+        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span>
+          ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
         <td class="num">${n}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
