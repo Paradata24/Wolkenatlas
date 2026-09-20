@@ -13,6 +13,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
 - **Karte:** Leaflet mit OpenStreetMap, ohne Schlüssel und ohne Konto.
+- **Höhen der Orte:** Open-Meteo Elevation API, ebenfalls ohne Schlüssel und ohne Konto.
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
 Ganz oben im `<script type="module">`-Block stehen `SUPABASE_URL` und `SUPABASE_KEY`.
@@ -177,6 +178,24 @@ Wird die **Art** so geändert, dass sie nicht mehr zu vorhandenen Flügen passt 
 Startplatz, der nur noch Landeplatz sein soll, obwohl er in Flügen als Start steht), kommt
 eine Rückfrage. Sagst du ja, bleiben die alten Flüge unverändert; der Ort steht dort weiter
 drin und ist nur bei neuen Flügen an dieser Stelle nicht mehr in der Auswahl.
+
+### Höhe über dem Meer
+
+Zu jedem Ort zeigt das Flugbuch die **Höhe über dem Meer**, berechnet allein aus den
+Koordinaten — eingetragen werden muss dafür nichts.
+
+- In der **Ortsliste** steht sie in einer eigenen Spalte „Höhe“.
+- Im **Kästchen am Kartenpunkt** steht sie hinter der Art des Orts.
+- Beim **Anlegen und Bearbeiten** steht unter den Koordinaten „Höhe: etwa 1.412 m über dem
+  Meer.“ — sie ändert sich sofort mit, wenn der Ort in der Karte verschoben wird.
+
+Die Höhe kommt von der kostenlosen [Open-Meteo Elevation API](https://open-meteo.com/en/docs/elevation-api)
+(Geländemodell mit 90 m Raster, daher „etwa“; bei steilen Startplätzen können ein paar
+Meter danebenliegen). Sie wird **nicht in Supabase gespeichert** — es gibt also keine neue
+Spalte und nichts freizuschalten. Beim Laden holt das Flugbuch alle fehlenden Höhen in
+*einer* Anfrage und merkt sie sich im Browser, sodass sie beim nächsten Öffnen sofort da
+sind. Klappt die Abfrage nicht, etwa ohne Netz, bleibt die Spalte einfach leer und alles
+andere funktioniert unverändert weiter.
 
 ## Festgelegte Regeln
 
