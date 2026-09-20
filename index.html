@@ -69,6 +69,9 @@
   .maphint{font-size:13px;color:var(--muted);padding:10px 15px;border-top:1px solid var(--line)}
   .maphint.armed{background:#FCEEF3;color:var(--start);font-weight:500}
   .leaflet-container{font-family:var(--sans)}
+  /* Die Ortspunkte sind nicht mehr anklickbar, also auch keine Zeigehand darüber;
+     beim Anlegen und Verschieben bleibt so das Fadenkreuz der Karte sichtbar. */
+  #map path.leaflet-interactive{cursor:inherit}
 
   label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;
     text-transform:uppercase;color:var(--muted);margin:0 0 4px}
@@ -761,9 +764,17 @@ async function zeigeHoehe(lat, lng, gespeichert){
 
 /* ══════════ KARTE UND ORTE ══════════ */
 function initMap(){
-  map = L.map('map', {scrollWheelZoom:false}).setView([46.05, 9.3], 8);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {maxZoom:18, attribution:'© OpenStreetMap'}).addTo(map);
+  /* Startansicht: Bozen in der Mitte, zwei Zoomstufen näher als früher.
+     Zoomen mit dem Scrollrad, sobald die Maus über der Karte ist. */
+  map = L.map('map', {scrollWheelZoom:true}).setView([46.4983, 11.3548], 10);
+
+  /* Standard ist die Topo-Karte mit Höhenlinien; Strassenkarte bleibt umschaltbar. */
+  const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    {maxZoom:17, attribution:'© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)'});
+  const strasse = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:18, attribution:'© OpenStreetMap'});
+  topo.addTo(map);
+  L.control.layers({'Topo':topo, 'Strasse':strasse}, null, {position:'topright'}).addTo(map);
   layer = L.layerGroup().addTo(map);
   /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
      und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
@@ -870,12 +881,11 @@ function drawPlaces(){
     if (editId === p.id && pending) return;
     L.circleMarker([p.lat,p.lng],
       {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
+      /* Zeigen auf den Punkt blendet die Infozeile ein. Ein Klick darauf tut nichts —
+         bearbeitet wird über den Stift in der Liste, damit nichts aus Versehen aufgeht. */
       .bindTooltip(p.name+' · '+TYPEN[p.type]
         + (hoeheTxtOrt(p) ? ' · '+hoeheTxtOrt(p) : '')
-        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
-        + ' · zum Bearbeiten anklicken', {direction:'top'})
-      /* Klick auf den Punkt öffnet den Ort zum Bearbeiten — außer man legt gerade einen an. */
-      .on('click', () => { if (!armed && !editId) editPlace(p.id); })
+        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : ''), {direction:'top'})
       .addTo(layer);
   });
   if (pending){

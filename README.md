@@ -12,7 +12,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
-- **Karte:** Leaflet mit OpenStreetMap, ohne Schlüssel und ohne Konto.
+- **Karte:** Leaflet mit OpenTopoMap (Standard) und OpenStreetMap, ohne Schlüssel und ohne Konto.
 - **Höhen der Orte:** Open-Meteo Elevation API, ebenfalls ohne Schlüssel und ohne Konto.
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
@@ -148,8 +148,15 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 
 Links die Karte, rechts die Liste aller Orte.
 
+Die Karte startet bei **Bozen** als **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
+der Karte lässt sich auf **Strasse** umschalten, die gewohnte OpenStreetMap-Ansicht. Gezoomt
+wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den Knöpfen + und −.
+Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte; wer ganz nah heran
+will, schaltet dafür kurz um.
+
 - **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
-- **Ändern:** der **Stift** in der Liste — oder einfach auf den Punkt in der Karte klicken.
+- **Ändern:** der **Stift** in der Liste. Ein Klick auf den Punkt in der Karte tut nichts —
+  so geht nicht aus Versehen etwas zum Bearbeiten auf, während du die Karte erkundest.
   Das Formular öffnet sich mit den bisherigen Angaben. Name und Art lassen sich überschreiben,
   und ein Klick in die Karte verschiebt den Ort an eine neue Stelle. Solange du bearbeitest,
   ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
