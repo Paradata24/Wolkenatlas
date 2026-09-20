@@ -12,7 +12,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
-- **Karte:** Leaflet mit OpenStreetMap, ohne Schlüssel und ohne Konto.
+- **Karte:** Leaflet mit OpenTopoMap (Standard) und OpenStreetMap, ohne Schlüssel und ohne Konto.
 - **Höhen der Orte:** Open-Meteo Elevation API, ebenfalls ohne Schlüssel und ohne Konto.
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
@@ -147,6 +147,12 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 ## Der Reiter „Orte“
 
 Links die Karte, rechts die Liste aller Orte.
+
+Die Karte startet als **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
+der Karte lässt sich auf **Strasse** umschalten, die gewohnte OpenStreetMap-Ansicht. Gezoomt
+wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den Knöpfen + und −.
+Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte; wer ganz nah heran
+will, schaltet dafür kurz um.
 
 - **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
 - **Ändern:** der **Stift** in der Liste — oder einfach auf den Punkt in der Karte klicken.
