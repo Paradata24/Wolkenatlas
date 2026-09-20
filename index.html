@@ -761,8 +761,9 @@ async function zeigeHoehe(lat, lng, gespeichert){
 
 /* ══════════ KARTE UND ORTE ══════════ */
 function initMap(){
-  /* Zoomen mit dem Scrollrad, sobald die Maus über der Karte ist. */
-  map = L.map('map', {scrollWheelZoom:true}).setView([46.05, 9.3], 8);
+  /* Startansicht: Bozen in der Mitte, zwei Zoomstufen näher als früher.
+     Zoomen mit dem Scrollrad, sobald die Maus über der Karte ist. */
+  map = L.map('map', {scrollWheelZoom:true}).setView([46.4983, 11.3548], 10);
 
   /* Standard ist die Topo-Karte mit Höhenlinien; Strassenkarte bleibt umschaltbar. */
   const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
