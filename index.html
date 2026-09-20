@@ -8,7 +8,8 @@
 <style>
   :root{
     --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
-    --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62; --r:3px;
+    --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
+    --noflight:#E07A1F; --r:3px;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -64,14 +65,16 @@
     display:flex;align-items:center;gap:10px}
   .card .body{padding:15px}
 
-  #map{height:430px;width:100%;background:#E4EAF0}
-  @media(max-width:820px){#map{height:320px}}
+  #mapwrap{position:relative}
+  #map{height:520px;width:100%;background:#E4EAF0}
+  @media(max-width:820px){#map{height:340px}}
   .maphint{font-size:13px;color:var(--muted);padding:10px 15px;border-top:1px solid var(--line)}
   .maphint.armed{background:#FCEEF3;color:var(--start);font-weight:500}
   .leaflet-container{font-family:var(--sans)}
-  /* Die Ortspunkte sind nicht mehr anklickbar, also auch keine Zeigehand darüber;
-     beim Anlegen und Verschieben bleibt so das Fadenkreuz der Karte sichtbar. */
-  #map path.leaflet-interactive{cursor:inherit}
+  /* Ein Klick auf einen Ortspunkt öffnet sein Infofeld — darum die Zeigehand.
+     Beim Anlegen und Verschieben bleibt das Fadenkreuz der Karte sichtbar. */
+  #map path.leaflet-interactive{cursor:pointer}
+  #mapwrap.setzen #map path.leaflet-interactive{cursor:crosshair}
 
   label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;
     text-transform:uppercase;color:var(--muted);margin:0 0 4px}
@@ -262,6 +265,59 @@
   .dirlist{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--start);
     display:block;margin-top:3px}
 
+
+  /* ---------- Orte: Vollbild, Infofeld, Filter ---------- */
+  #mapwrap:fullscreen,#mapwrap:-webkit-full-screen{width:100%;height:100%;background:#fff}
+  #mapwrap:fullscreen #map,#mapwrap:-webkit-full-screen #map{height:100%}
+  /* Ersatz-Vollbild für Browser, die es für einzelne Felder nicht können (iPhone). */
+  #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:#fff}
+  #mapwrap.fsfake #map{height:100%}
+  a.mapfs{display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  a.mapfs svg{width:15px;height:15px;display:block}
+
+  .placepanel{position:absolute;left:12px;bottom:26px;z-index:1000;
+    width:min(330px,calc(100% - 24px));max-height:calc(100% - 52px);overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:0 6px 24px rgba(21,32,43,.18);padding:13px 15px 13px}
+  .placepanel[hidden]{display:none}
+  .placepanel h3{margin:0 20px 3px 0;font-size:16px;font-weight:600;line-height:1.3}
+  .placepanel .x{position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;
+    color:var(--muted);font-family:var(--mono);font-size:17px;line-height:1;padding:2px 5px;border-radius:2px}
+  .placepanel .x:hover{color:var(--ink);background:#EAEFF4}
+  .placepanel .meta{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin:0}
+  .placepanel .infotxt{white-space:pre-wrap;font-size:14px;line-height:1.55;margin:10px 0 0}
+  .placepanel .lnk{display:inline-block;margin-top:10px;font-size:14px;color:var(--chart);
+    word-break:break-all}
+  .placepanel .ppact{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .placepanel .rosezeile{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--start);margin:7px 0 0}
+  /* Auf dem Handy sitzt das Infofeld unten und lässt die obere Kartenhälfte frei —
+     dort schließt ein Klick in die Karte es wieder. */
+  @media(max-width:560px){
+    .placepanel{left:8px;right:8px;bottom:22px;width:auto;max-height:52%}
+  }
+
+  .legend{display:flex;gap:6px 15px;flex-wrap:wrap;align-items:center;font-size:12.5px;
+    color:var(--muted);padding:9px 15px;border-top:1px solid var(--line)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:50%;
+    border:2.5px solid currentColor;background:#fff;flex:none}
+
+  .filterbar{border-bottom:1px solid var(--line)}
+  .filterhead{width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;
+    font:inherit;font-size:13.5px;cursor:pointer;padding:10px 15px;color:var(--ink);text-align:left}
+  .filterhead:hover{background:#F2F5F8}
+  .filterhead .st{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted)}
+  .filterhead.an{background:#FCEEF3}
+  .filterhead.an .st{color:var(--start)}
+  .filterbody{padding:13px 15px 15px;border-top:1px solid var(--line);background:#FBFCFD}
+  .rose.mini{max-width:172px}
+  .rose.mini .seg text{font-size:15px}
+  td.click{cursor:pointer}
+  td.click:hover{background:#F2F5F8}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -290,8 +346,8 @@
     <span class="sub" id="whoami"></span>
     <nav role="tablist">
       <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
-      <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-orte" aria-selected="false" onclick="show('orte')">Orte</button>
+      <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-gear" aria-selected="false" onclick="show('gear')">Ausrüstung</button>
       <button role="tab" id="t-stat" aria-selected="false" onclick="show('stat')">Statistik</button>
       <button role="tab" id="t-save" aria-selected="false" onclick="show('save')">Sicherung</button>
@@ -340,8 +396,26 @@
     <div class="cols">
       <div class="card">
         <h2>Karte</h2>
-        <div id="map"></div>
-        <div class="maphint" id="hint">Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.</div>
+        <div id="mapwrap">
+          <div id="map"></div>
+          <!-- Das Infofeld liegt in der Karte drin, damit es auch im Vollbild aufgeht. -->
+          <div class="placepanel" id="placepanel" hidden>
+            <button class="x" title="Schließen" aria-label="Infofeld schließen" onclick="closePlaceInfo()">×</button>
+            <div id="pp-body"></div>
+            <div class="ppact">
+              <button class="btn small" id="pp-edit">Bearbeiten</button>
+              <button class="btn small ghost" onclick="closePlaceInfo()">Schließen</button>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i class="dot" style="color:var(--start)"></i> Startplatz</span>
+          <span><i class="dot" style="color:var(--chart)"></i> Landeplatz</span>
+          <span><i class="dot" style="color:var(--contour)"></i> Start + Landung</span>
+          <span><i class="dot" style="color:var(--ground)"></i> Übungsgelände</span>
+          <span><i class="dot" style="color:var(--noflight)"></i> noch kein Flug eingetragen</span>
+        </div>
+        <div class="maphint" id="hint">Klick auf einen Punkt zeigt seine Infos. Neuer Ort: „Ort hinzufügen“, dann in die Karte klicken.</div>
       </div>
       <div class="card">
         <h2>Orte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
@@ -364,12 +438,41 @@
             </div>
             <p class="note" id="p-dirmiss" style="display:none;margin-top:0"></p>
           </div>
+          <div class="field" id="p-infofield"><label for="p-info">Infos <span class="opt">(freiwillig)</span></label>
+            <textarea id="p-info" placeholder="Zufahrt, Gebühren, Besonderheiten, wo man parkt …"></textarea></div>
+          <div class="field" id="p-linkfield"><label for="p-link">Link <span class="opt">(z. B. ein YouTube-Video)</span></label>
+            <input type="url" id="p-link" placeholder="https://www.youtube.com/watch?v=…"></div>
+          <p class="note" id="p-extramiss" style="display:none;margin:-4px 0 12px"></p>
           <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly>
             <p class="note" id="p-elev" style="margin-top:5px"></p>
             <p class="note" id="p-coordhint" style="margin-top:5px"></p></div>
           <div class="rowend" style="margin-top:0">
             <button class="btn" id="p-save" onclick="savePlace()">Ort speichern</button>
             <button class="btn ghost" onclick="cancelPlace()">Abbrechen</button>
+          </div>
+        </div>
+        <div class="filterbar">
+          <button class="filterhead" id="f-head" onclick="toggleFilter()" aria-expanded="false" aria-controls="f-body">
+            <span>Filter</span><span class="st" id="f-state">alle Orte</span></button>
+          <div class="filterbody" id="f-body" style="display:none">
+            <div class="pair">
+              <div class="field"><label for="f-min">Höhe ab (m)</label>
+                <input type="number" id="f-min" placeholder="z. B. 1000" step="50"></div>
+              <div class="field"><label for="f-max">Höhe bis (m)</label>
+                <input type="number" id="f-max" placeholder="z. B. 2200" step="50"></div>
+            </div>
+            <div class="field"><label for="f-log">Eintrag im Flugbuch</label>
+              <select id="f-log">
+                <option value="alle">egal</option>
+                <option value="mit">nur Orte, an denen ich schon geflogen bin</option>
+                <option value="ohne">nur Orte, an denen ich noch nicht war</option>
+              </select></div>
+            <div class="field" id="f-dirfield"><label>Startrichtung</label>
+              <svg class="rose mini" id="f-rose" viewBox="0 0 200 200" role="group"
+                   aria-label="Filter: mögliche Startrichtung"></svg>
+              <p class="dirsum" id="f-dirtext"></p></div>
+            <div class="rowend" style="margin-top:4px">
+              <button class="btn small ghost" onclick="resetFilter()">Filter zurücksetzen</button></div>
           </div>
         </div>
         <div id="placelist"></div>
@@ -504,7 +607,8 @@ let S = { places: [], gear: [], flights: [] };
 /* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
    siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
-let HAS = { dist:false, asc:false, gclass:false, dirs:false };
+let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false,
+             info:false, link:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
@@ -526,6 +630,11 @@ let pendingDirs = [];
 /* Wird ein Ort nachträglich bearbeitet, steht seine id in `editId`;
    `pending` hält dann die (eventuell verschobene) Stelle. */
 let editId = null;
+/* Der Ort, dessen Infofeld gerade in der Karte offen ist. */
+let infoId = null;
+/* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
+   Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
+const F = { min:'', max:'', log:'alle', dirs:[] };
 
 const pad = n => String(n).padStart(2,'0');
 const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
@@ -544,6 +653,23 @@ const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildu
                siv:'SIV', comp:'Wettkampf', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
 const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
+/* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
+   eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
+const KEINFLUG = '#E07A1F';
+const fluegeAn = id => S.flights.filter(f => f.start === id || f.land === id).length;
+const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
+/* Ein Link darf auch ohne „https://“ eingetippt werden. */
+const linkNorm = v => {
+  const t = String(v ?? '').trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : 'https://' + t;
+};
+const linkKurz = u => { const t = u.replace(/^https?:\/\//i,'').replace(/\/$/,'');
+  return t.length > 42 ? t.slice(0,40) + '…' : t; };
+const linkHTML = v => {
+  const u = linkNorm(v);
+  return u ? `<a class="lnk" href="${esc(u)}" target="_blank" rel="noopener">${esc(linkKurz(u))} ↗</a>` : '';
+};
 const isGH = f => f.kind === 'gh';
 const pname = id => (S.places.find(p=>p.id===id)||{}).name || '—';
 /* Strecke als Text — je nachdem, was eingetragen ist. Leer, wenn gar kein Ort drinsteht. */
@@ -610,18 +736,22 @@ async function startApp(session){
 
 /* ══════════ DATEN LADEN ══════════ */
 async function checkCols(){
-  const [d, a, g, r, h] = await Promise.all([
+  const [d, a, g, r, h, i, l] = await Promise.all([
     sb.from('flights').select('dist_km').limit(1),
     sb.from('flights').select('ascent').limit(1),
     sb.from('gear').select('gclass').limit(1),
     sb.from('places').select('dirs').limit(1),
-    sb.from('places').select('elev').limit(1)
+    sb.from('places').select('elev').limit(1),
+    sb.from('places').select('info').limit(1),
+    sb.from('places').select('link').limit(1)
   ]);
   HAS.dist   = !d.error;
   HAS.asc    = !a.error;
   HAS.gclass = !g.error;
   HAS.dirs   = !r.error;
   HAS.elev   = !h.error;
+  HAS.info   = !i.error;
+  HAS.link   = !l.error;
 }
 
 async function loadAll(){
@@ -776,34 +906,110 @@ function initMap(){
   topo.addTo(map);
   L.control.layers({'Topo':topo, 'Strasse':strasse}, null, {position:'topright'}).addTo(map);
   layer = L.layerGroup().addTo(map);
+  addVollbildKnopf();
   /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
      und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
-  document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncRose(); });
-  buildRose();
+  document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncForm(); });
+  buildRose('p-rose', toggleDir);
+  initFilter();
   map.on('click', e => {
+    /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild. */
+    if (infoId) closePlaceInfo();
     if (!armed && !editId) return;
     pending = {lat:e.latlng.lat, lng:e.latlng.lng};
     document.getElementById('p-coord').value = pending.lat.toFixed(5)+', '+pending.lng.toFixed(5);
     zeigeHoehe(pending.lat, pending.lng);
     document.getElementById('placeform').style.display = 'block';
-    syncRose();
+    syncForm();
     if (!editId) document.getElementById('p-name').focus();
     drawPlaces();
   });
 }
 
+/* ---------- Vollbild ----------
+   Der Knopf sitzt links unter dem Zoom. Im Vollbild geht die Karte über den
+   ganzen Bildschirm; das Infofeld liegt mit drin und funktioniert weiter.
+   Kann der Browser kein Vollbild für ein einzelnes Feld (ältere iPhones),
+   wird die Karte stattdessen über die ganze Seite gelegt — sieht gleich aus. */
+const FSICON = {
+  an:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>',
+  aus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"></path></svg>'
+};
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+const imVollbild = () => {
+  const el = document.getElementById('mapwrap');
+  return fsEl() === el || el.classList.contains('fsfake');
+};
+
+function addVollbildKnopf(){
+  const Knopf = L.Control.extend({
+    options: {position:'topleft'},
+    onAdd(){
+      const box = L.DomUtil.create('div', 'leaflet-bar');
+      const a = L.DomUtil.create('a', 'mapfs', box);
+      a.id = 'mapfs'; a.href = '#';
+      a.setAttribute('role', 'button');
+      a.title = 'Karte im Vollbild zeigen';
+      a.setAttribute('aria-label', 'Karte im Vollbild zeigen');
+      a.innerHTML = FSICON.an;
+      L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', toggleVollbild);
+      return box;
+    }
+  });
+  map.addControl(new Knopf());
+  document.addEventListener('fullscreenchange', nachVollbild);
+  document.addEventListener('webkitfullscreenchange', nachVollbild);
+}
+
+window.toggleVollbild = () => {
+  const el = document.getElementById('mapwrap');
+  if (imVollbild()) return verlasseVollbild();
+  const an = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (an){
+    try { Promise.resolve(an.call(el)).catch(ersatzVollbild); }
+    catch(e){ ersatzVollbild(); }
+  } else ersatzVollbild();
+};
+
+function ersatzVollbild(){
+  document.getElementById('mapwrap').classList.add('fsfake');
+  nachVollbild();
+}
+
+window.verlasseVollbild = () => {
+  const el = document.getElementById('mapwrap');
+  if (fsEl() === el){
+    const aus = document.exitFullscreen || document.webkitExitFullscreen;
+    if (aus) aus.call(document);
+  } else if (el.classList.contains('fsfake')){
+    el.classList.remove('fsfake');
+    nachVollbild();
+  }
+};
+
+function nachVollbild(){
+  const drin = imVollbild();
+  const a = document.getElementById('mapfs');
+  if (a){
+    a.innerHTML = drin ? FSICON.aus : FSICON.an;
+    const t = drin ? 'Vollbild beenden' : 'Karte im Vollbild zeigen';
+    a.title = t; a.setAttribute('aria-label', t);
+  }
+  /* Leaflet muss erfahren, dass die Karte jetzt anders groß ist. */
+  setTimeout(() => { if (map) map.invalidateSize(); }, 150);
+}
+
 /* ---------- Windrose ----------
    Acht anklickbare Kuchenstücke. Jedes steht für eine Richtung; angeklickt heißt:
    hier lässt sich bei diesem Wind starten. Nochmal anklicken nimmt sie wieder weg. */
-function buildRose(){
+function roseMarkup(){
   const mitte = 100, aussen = 82, innen = 38, luft = 1.6;
   /* Norden ist oben, weiter im Uhrzeigersinn — wie auf einer Karte. */
   const pt = (grad, r) => {
     const b = grad * Math.PI / 180;
     return [(mitte + r*Math.sin(b)).toFixed(2), (mitte - r*Math.cos(b)).toFixed(2)];
   };
-  document.getElementById('p-rose').innerHTML =
-    RICHTUNGEN.map((d,i) => {
+  return RICHTUNGEN.map((d,i) => {
       const a0 = i*45 - 22.5 + luft, a1 = i*45 + 22.5 - luft;
       const [x1,y1] = pt(a0, innen), [x2,y2] = pt(a0, aussen);
       const [x3,y3] = pt(a1, aussen), [x4,y4] = pt(a1, innen);
@@ -814,30 +1020,39 @@ function buildRose(){
                  L${x4} ${y4} A${innen} ${innen} 0 0 0 ${x1} ${y1} Z"></path>
         <text x="${tx}" y="${ty}" dy=".35em">${d}</text></g>`;
     }).join('') + `<circle class="mitte" cx="100" cy="100" r="3.5"></circle>`;
+}
 
-  const rose = document.getElementById('p-rose');
+/* Es gibt zwei Windrosen: eine im Ortsformular, eine im Filter. Beide werden
+   hier gebaut; was ein Klick bewirkt, steht jeweils daneben. */
+function buildRose(id, klick){
+  const rose = document.getElementById(id);
+  rose.innerHTML = roseMarkup();
   rose.addEventListener('click', e => {
-    const g = e.target.closest('.seg'); if (g) toggleDir(g.dataset.dir);
+    const g = e.target.closest('.seg'); if (g) klick(g.dataset.dir);
   });
   /* Mit der Tastatur: mit Tab auf ein Stück, dann Leertaste oder Enter. */
   rose.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const g = e.target.closest('.seg'); if (!g) return;
-    e.preventDefault(); toggleDir(g.dataset.dir);
+    e.preventDefault(); klick(g.dataset.dir);
+  });
+}
+
+function paintRose(id, liste){
+  document.querySelectorAll('#'+id+' .seg').forEach(g => {
+    const an = liste.includes(g.dataset.dir);
+    g.classList.toggle('on', an);
+    g.setAttribute('aria-checked', an ? 'true' : 'false');
   });
 }
 
 function toggleDir(d){
   pendingDirs = pendingDirs.includes(d) ? pendingDirs.filter(x=>x!==d) : [...pendingDirs, d];
-  paintRose();
+  paintFormRose();
 }
 
-function paintRose(){
-  document.querySelectorAll('#p-rose .seg').forEach(g => {
-    const an = pendingDirs.includes(g.dataset.dir);
-    g.classList.toggle('on', an);
-    g.setAttribute('aria-checked', an ? 'true' : 'false');
-  });
+function paintFormRose(){
+  paintRose('p-rose', pendingDirs);
   const gewaehlt = dirSort(pendingDirs);
   const t = document.getElementById('p-dirtext');
   t.textContent = gewaehlt.length ? 'Startrichtung: ' + gewaehlt.join(', ')
@@ -858,7 +1073,102 @@ function syncRose(){
   miss.textContent = HAS.dirs ? ''
     : 'Startrichtungen sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
       + 'geht, steht in der README unter „Später dazugekommene Felder“.';
-  paintRose();
+  paintFormRose();
+}
+
+/* Infos und Link gibt es nur, wenn die beiden Spalten in der Datenbank da sind. */
+function syncExtraFelder(){
+  document.getElementById('p-infofield').style.display = HAS.info ? '' : 'none';
+  document.getElementById('p-linkfield').style.display = HAS.link ? '' : 'none';
+  const miss = document.getElementById('p-extramiss');
+  const fehlt = !HAS.info || !HAS.link;
+  miss.style.display = fehlt ? '' : 'none';
+  miss.textContent = fehlt
+    ? 'Infos und Link sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
+      + 'geht, steht in der README unter „Später dazugekommene Felder“.' : '';
+}
+
+/* Alles, was sich am Formular je nach Art und Datenbank ändert. */
+function syncForm(){ syncRose(); syncExtraFelder(); }
+
+/* ---------- Filter über den Orten ---------- */
+const filterAn = () => F.min !== '' || F.max !== '' || F.log !== 'alle' || F.dirs.length > 0;
+
+function passtFilter(p){
+  const n = fluegeAn(p.id);
+  if (F.log === 'mit'  && !n) return false;
+  if (F.log === 'ohne' &&  n) return false;
+  if (F.min !== '' || F.max !== ''){
+    const m = hoeheOrt(p);
+    if (!Number.isFinite(m)) return false;          /* Höhe unbekannt — passt zu keiner Spanne */
+    if (F.min !== '' && m < +F.min) return false;
+    if (F.max !== '' && m > +F.max) return false;
+  }
+  /* Startrichtung: der Ort zählt, wenn mindestens eine der gewählten geht.
+     Orte ohne Startrichtung (Landeplatz, Übungsgelände) fallen dabei heraus. */
+  if (F.dirs.length){
+    const d = dirsIn(p.dirs);
+    if (!F.dirs.some(x => d.includes(x))) return false;
+  }
+  return true;
+}
+
+const sichtbareOrte = () => S.places.filter(passtFilter);
+
+function initFilter(){
+  ['f-min','f-max'].forEach(id =>
+    document.getElementById(id).addEventListener('input', applyFilter));
+  document.getElementById('f-log').addEventListener('change', applyFilter);
+  buildRose('f-rose', d => {
+    F.dirs = F.dirs.includes(d) ? F.dirs.filter(x=>x!==d) : [...F.dirs, d];
+    applyFilter();
+  });
+  paintFilterRose();
+}
+
+function paintFilterRose(){
+  paintRose('f-rose', F.dirs);
+  const gewaehlt = dirSort(F.dirs);
+  const t = document.getElementById('f-dirtext');
+  t.textContent = gewaehlt.length ? 'Nur Orte mit Start bei ' + gewaehlt.join(' oder ')
+                                  : 'Egal — tipp an, welche Richtung gehen soll.';
+  t.classList.toggle('hat', gewaehlt.length > 0);
+}
+
+window.applyFilter = () => {
+  F.min = document.getElementById('f-min').value.trim();
+  F.max = document.getElementById('f-max').value.trim();
+  F.log = document.getElementById('f-log').value;
+  paintFilterRose();
+  /* Ein Infofeld zu einem Ort, der jetzt weggefiltert ist, geht zu. */
+  if (infoId && !S.places.some(p => p.id === infoId && passtFilter(p))) closePlaceInfo();
+  renderPlaceList();
+  drawPlaces();
+};
+
+window.resetFilter = () => {
+  document.getElementById('f-min').value = '';
+  document.getElementById('f-max').value = '';
+  document.getElementById('f-log').value = 'alle';
+  F.dirs = [];
+  applyFilter();
+};
+
+window.toggleFilter = () => {
+  const b = document.getElementById('f-body');
+  const auf = b.style.display === 'none';
+  b.style.display = auf ? '' : 'none';
+  document.getElementById('f-head').setAttribute('aria-expanded', auf ? 'true' : 'false');
+};
+
+/* Die Zeile am Filterkopf: wie viele Orte gerade zu sehen sind. */
+function setFilterState(){
+  const alle = S.places.length, sicht = sichtbareOrte().length;
+  const an = filterAn();
+  document.getElementById('f-state').textContent =
+    an ? sicht + ' von ' + alle + ' Orten' : (alle === 1 ? '1 Ort' : 'alle ' + alle + ' Orte');
+  document.getElementById('f-head').classList.toggle('an', an);
+  document.getElementById('f-dirfield').style.display = HAS.dirs ? '' : 'none';
 }
 
 window.toggleArm = () => {
@@ -867,26 +1177,48 @@ window.toggleArm = () => {
   document.getElementById('armbtn').textContent = armed ? 'Abbrechen' : 'Ort hinzufügen';
   const h = document.getElementById('hint');
   h.classList.toggle('armed', armed);
-  h.textContent = armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz.'
-                        : 'Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.';
+  h.textContent = armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz.' : HINT_NORMAL;
   if (!armed) cancelPlace();
-  if (map) map.getContainer().style.cursor = armed ? 'crosshair' : '';
+  cursorStil();
 };
+
+/* Der Standardhinweis unter der Karte. */
+const HINT_NORMAL = 'Klick auf einen Punkt zeigt seine Infos. Neuer Ort: „Ort hinzufügen“, '
+  + 'dann in die Karte klicken.';
+
+/* Fadenkreuz, solange ein Ort gesetzt oder verschoben wird — sonst Zeigehand. */
+function cursorStil(){
+  const setzen = armed || !!editId;
+  const wrap = document.getElementById('mapwrap');
+  if (wrap) wrap.classList.toggle('setzen', setzen);
+  if (map) map.getContainer().style.cursor = setzen ? 'crosshair' : '';
+}
 
 function drawPlaces(){
   if (!layer) return;
   layer.clearLayers();
-  S.places.forEach(p => {
+  /* Ist ein Filter aktiv, stehen nur noch die passenden Orte in der Karte. */
+  sichtbareOrte().forEach(p => {
     /* Der Ort, der gerade bearbeitet wird, steht unten als gestrichelter Punkt. */
     if (editId === p.id && pending) return;
-    L.circleMarker([p.lat,p.lng],
-      {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
-      /* Zeigen auf den Punkt blendet die Infozeile ein. Ein Klick darauf tut nichts —
-         bearbeitet wird über den Stift in der Liste, damit nichts aus Versehen aufgeht. */
+    const punkt = L.circleMarker([p.lat,p.lng],
+      {radius:7, color:farbeVon(p), weight:2.5,
+       fillColor: infoId === p.id ? farbeVon(p) : '#fff',
+       fillOpacity: infoId === p.id ? .35 : 1})
+      /* Zeigen auf den Punkt blendet die kurze Infozeile ein,
+         ein Klick öffnet das Infofeld mit allem, was zum Ort gespeichert ist. */
       .bindTooltip(p.name+' · '+TYPEN[p.type]
         + (hoeheTxtOrt(p) ? ' · '+hoeheTxtOrt(p) : '')
-        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : ''), {direction:'top'})
-      .addTo(layer);
+        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
+        + (fluegeAn(p.id) ? '' : ' · noch kein Flug'), {direction:'top'});
+    punkt.on('click', ev => {
+      /* Beim Anlegen und Verschieben gilt der Klick der Karte, nicht dem Punkt —
+         so lässt sich ein Ort auch genau auf einen anderen schieben. */
+      if (armed || editId) return;
+      L.DomEvent.stopPropagation(ev);
+      openPlaceInfo(p.id);
+    });
+    punkt.addTo(layer);
   });
   if (pending){
     const typ = document.getElementById('p-type').value;
@@ -903,18 +1235,22 @@ function drawPlaces(){
 window.editPlace = id => {
   const p = S.places.find(x=>x.id===id); if (!p) return;
   if (armed) toggleArm();                 /* „Ort hinzufügen“ zuerst beenden */
+  if (imVollbild()) verlasseVollbild();   /* das Formular steht neben der Karte */
+  closePlaceInfo();
   editId  = id;
   pending = {lat:p.lat, lng:p.lng};
   document.getElementById('p-name').value  = p.name;
   document.getElementById('p-type').value  = p.type;
+  document.getElementById('p-info').value  = p.info || '';
+  document.getElementById('p-link').value  = p.link || '';
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
   zeigeHoehe(p.lat, p.lng, p.elev);
   pendingDirs = dirsIn(p.dirs);
   document.getElementById('placeform').style.display = 'block';
   placeFormLabels();
-  syncRose();
+  syncForm();
+  cursorStil();
   if (map){
-    map.getContainer().style.cursor = 'crosshair';
     map.setView([p.lat, p.lng], Math.max(map.getZoom(), 12));
   }
   drawPlaces();
@@ -936,14 +1272,14 @@ function placeFormLabels(){
     h.textContent = 'Du bearbeitest einen Ort. Ein Klick in die Karte verschiebt ihn.';
   } else if (!armed){
     h.classList.remove('armed');
-    h.textContent = 'Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.';
+    h.textContent = HINT_NORMAL;
   }
 }
 
 /* Bearbeiten beenden, ohne etwas zu speichern. */
 function endEditPlace(){
   editId = null;
-  if (map) map.getContainer().style.cursor = armed ? 'crosshair' : '';
+  cursorStil();
   cancelPlace();
 }
 
@@ -956,6 +1292,10 @@ window.savePlace = async () => {
   /* Bei einem reinen Lande- oder Übungsgelände werden die Richtungen geleert. */
   const extra = HAS.dirs
     ? { dirs: startet(type) ? (dirSort(pendingDirs).join(',') || null) : null } : {};
+
+  /* Freier Text und ein Link (etwa zu einem YouTube-Video) — beides freiwillig. */
+  if (HAS.info) extra.info = document.getElementById('p-info').value.trim() || null;
+  if (HAS.link) extra.link = linkNorm(document.getElementById('p-link').value);
 
   /* Die Höhe wird aus den Koordinaten geholt und mitgespeichert. Ist sie gerade
      nicht zu holen, bleibt bei einem unverschobenen Ort die bisherige stehen;
@@ -1007,15 +1347,60 @@ window.cancelPlace = () => {
   document.getElementById('placeform').style.display = 'none';
   document.getElementById('p-name').value = '';
   document.getElementById('p-type').value = 'start';
+  document.getElementById('p-info').value = '';
+  document.getElementById('p-link').value = '';
   document.getElementById('p-coord').value = '';
   document.getElementById('p-elev').textContent = '';
   hoehenLauf++;                       /* eine noch laufende Abfrage schreibt nichts mehr hin */
   pendingDirs = [];
-  syncRose();
+  syncForm();
   document.getElementById('p-dirfield').style.display = 'none';
   placeFormLabels();
-  if (map && !armed) map.getContainer().style.cursor = '';
+  cursorStil();
   drawPlaces();
+};
+
+/* ══════════ INFOFELD AM ORT ══════════
+   Ein Klick auf einen Punkt in der Karte öffnet dieses Feld. Es liegt in der
+   Karte drin und geht darum auch im Vollbild auf. Ein Klick auf die Karte,
+   auf „Schließen“ oder Escape macht es wieder zu. */
+function placeInfoHTML(p){
+  const n = fluegeAn(p.id);
+  const kopf = [TYPEN[p.type], hoeheTxtOrt(p),
+                n ? (n === 1 ? '1 Flug' : n + ' Flüge') : 'noch kein Flug'].filter(Boolean);
+  const dirs = dirTxt(p.dirs);
+  return `<h3>${esc(p.name)}</h3>
+    <p class="meta">${esc(kopf.join(' · '))}</p>
+    ${dirs ? `<p class="rosezeile">Start bei ${esc(dirs)}</p>` : ''}
+    ${p.info ? `<p class="infotxt">${esc(p.info)}</p>` : ''}
+    ${linkHTML(p.link)}
+    <p class="meta" style="margin-top:11px">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</p>`;
+}
+
+window.openPlaceInfo = id => {
+  const p = S.places.find(x=>x.id===id); if (!p) return;
+  infoId = id;
+  document.getElementById('pp-body').innerHTML = placeInfoHTML(p);
+  document.getElementById('pp-edit').onclick = () => editPlace(id);
+  document.getElementById('placepanel').hidden = false;
+  /* Der offene Ort wird in der Karte gefüllt gezeichnet. Erst im nächsten
+     Moment, damit der gerade angeklickte Punkt nicht mitten im Klick verschwindet. */
+  setTimeout(drawPlaces, 0);
+};
+
+window.closePlaceInfo = () => {
+  if (!infoId) return;
+  infoId = null;
+  document.getElementById('placepanel').hidden = true;
+  drawPlaces();
+};
+
+/* Aus der Liste heraus: Karte auf den Ort schieben und sein Infofeld öffnen. */
+window.zeigeOrt = id => {
+  const p = S.places.find(x=>x.id===id); if (!p) return;
+  show('orte');
+  if (map) map.setView([p.lat, p.lng], Math.max(map.getZoom(), 13));
+  openPlaceInfo(id);
 };
 
 window.delPlace = id => {
@@ -1571,22 +1956,30 @@ window.askDelete = id => {
 /* Die Liste der Orte. Steht extra, weil sie auch neu gezeichnet wird,
    sobald die Höhen aus dem Netz eingetroffen sind. */
 function renderPlaceList(){
-  document.getElementById('placelist').innerHTML = S.places.length ? `<table>
+  setFilterState();
+  const liste = sichtbareOrte();
+  const leer = !S.places.length
+    ? '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>'
+    : '<div class="empty"><b>Kein Ort passt zum Filter.</b><br>'
+      + 'Stell den Filter anders ein oder setz ihn zurück.</div>';
+  document.getElementById('placelist').innerHTML = liste.length ? `<table>
     <tr><th>Name</th><th>Art</th><th>Höhe</th><th>Flüge</th><th></th></tr>
-    ${S.places.map(p=>{
-      const n = S.flights.filter(f=>f.start===p.id||f.land===p.id).length;
+    ${liste.map(p=>{
+      const n = fluegeAn(p.id);
+      const zusatz = [p.info ? 'Infos' : '', p.link ? 'Link' : ''].filter(Boolean).join(' · ');
       return `<tr>
-        <td>${esc(p.name)}<br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></td>
+        <td class="click" onclick="zeigeOrt('${p.id}')" title="Auf der Karte zeigen">
+          <span class="dot" style="color:${farbeVon(p)}"></span> ${esc(p.name)}
+          <br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}${zusatz ? ' · '+zusatz : ''}</span></td>
         <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span>
           ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
         <td class="num">${hoeheTxtOrt(p)}</td>
-        <td class="num">${n}</td>
+        <td class="num">${n || '—'}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
             onclick="editPlace('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
           <button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
-      </tr>`;}).join('')}</table>`
-    : '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>';
+      </tr>`;}).join('')}</table>` : leer;
 }
 
 function renderAll(){
@@ -1770,6 +2163,7 @@ async function doRestore(d){
     /* Felder, die es in dieser Datenbank noch nicht gibt, werden beim Einlesen
        weggelassen — sonst würde die ganze Wiederherstellung daran scheitern. */
     const weg = [ HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
+                  HAS.info ? '' : 'info', HAS.link ? '' : 'link',
                   HAS.dist ? '' : 'dist_km', HAS.asc ? '' : 'ascent',
                   HAS.gclass ? '' : 'gclass' ].filter(Boolean);
     const clean = rows => (rows||[]).map(({user_id, ...rest}) => {
@@ -1815,6 +2209,9 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('confirm').classList.contains('on')) closeConfirm();
   else if (document.getElementById('textbox').classList.contains('on')) closeText();
   else if (document.getElementById('detail').classList.contains('on')) closeDetail();
+  else if (infoId) closePlaceInfo();
+  /* Das echte Vollbild beendet der Browser selbst; das Ersatz-Vollbild nicht. */
+  else if (document.getElementById('mapwrap').classList.contains('fsfake')) verlasseVollbild();
 });
 
 boot().catch(e => {
