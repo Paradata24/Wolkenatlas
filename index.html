@@ -659,16 +659,28 @@ window.show = v => {
 
 /* ══════════ HÖHE ÜBER DEM MEER ══════════
    Die Höhe steht nicht in der Datenbank. Sie wird aus den Koordinaten geholt
-   (Open-Meteo, kostenlos, ohne Schlüssel und ohne Konto — wie die Karte) und im
-   Browser gemerkt, damit sie beim nächsten Öffnen sofort da ist. Geht das Holen
-   schief, etwa ohne Netz, bleibt die Höhe einfach leer und alles andere
-   funktioniert unverändert weiter. In Supabase ist dafür nichts einzurichten. */
-const HOEHEN_SPEICHER = 'flugbuch-hoehen';
+   (Open Topo Data, kostenlos, ohne Schlüssel und ohne Konto — wie die Karte)
+   und im Browser gemerkt, damit sie beim nächsten Öffnen sofort da ist. Geht
+   das Holen schief, etwa ohne Netz, bleibt die Höhe einfach leer und alles
+   andere funktioniert unverändert weiter. In Supabase ist nichts einzurichten. */
+const HOEHEN_SPEICHER = 'flugbuch-hoehen-otd';   /* eigener Name je Höhenmodell */
+const HOEHEN_STAND = 'flugbuch-hoehen-stand';    /* welches Modell die Werte geliefert hat */
+const HOEHEN_MODELLSTAND = 'otd1';
 const HOEHEN = {};          /* "47.12345,11.54321" → Höhe in Metern */
+const OHNE_HOEHE = new Set();  /* hier hat es gerade nicht geklappt — erst beim Neuladen wieder versuchen */
 let hoehenLauf = 0;         /* damit ein alter Kartenklick keinen neueren überschreibt */
+let letzteAbfrage = 0;      /* Open Topo Data erlaubt nur eine Abfrage pro Sekunde */
 
-try { Object.assign(HOEHEN, JSON.parse(localStorage.getItem(HOEHEN_SPEICHER) || '{}')); }
-catch(e){ /* nichts Gemerktes da — dann wird eben neu geholt */ }
+/* Die Höhenmodelle in der Reihenfolge, in der gefragt wird: zuerst das feine
+   Europa-Modell mit 25-Meter-Raster, dann SRTM mit 30 Metern — dieselbe
+   Grundlage wie die Höhenlinien der Topo-Karte. Findet das erste Modell einen
+   Punkt nicht (es endet an der Grenze Europas), springt das zweite ein. */
+const HOEHENMODELLE = ['eudem25m', 'srtm30m'];
+
+try {
+  Object.assign(HOEHEN, JSON.parse(localStorage.getItem(HOEHEN_SPEICHER) || '{}'));
+  localStorage.removeItem('flugbuch-hoehen');    /* Werte des alten, gröberen Modells */
+} catch(e){ /* nichts Gemerktes da — dann wird eben neu geholt */ }
 
 const hoeheKey = (lat,lng) => (+lat).toFixed(5)+','+(+lng).toFixed(5);
 const hoeheVon = (lat,lng) => HOEHEN[hoeheKey(lat,lng)];
@@ -694,52 +706,98 @@ async function hoeheFuer(lat, lng){
 }
 
 /* Bei Orten, die noch keine Höhe in der Datenbank haben, wird sie einmal
-   nachgetragen — danach steht sie dort fest und muss nie wieder geholt werden. */
+   nachgetragen — danach steht sie dort fest und muss nie wieder geholt werden.
+   Wird auf ein anderes Höhenmodell gewechselt, werden die alten Werte dabei
+   einmalig durch die genaueren ersetzt. */
 async function hoehenNachtragen(){
   if (!HAS.elev) return;
-  const fehlen = S.places.filter(p => p.elev == null);
-  if (!fehlen.length) return;
-  await ladeHoehen(fehlen);
-  let n = 0;
-  for (const p of fehlen){
+  let modellNeu = true;
+  try { modellNeu = localStorage.getItem(HOEHEN_STAND) !== HOEHEN_MODELLSTAND; } catch(e){}
+  const merkeStand = () => {
+    try { localStorage.setItem(HOEHEN_STAND, HOEHEN_MODELLSTAND); } catch(e){}
+  };
+
+  const fragen = S.places.filter(p => modellNeu || p.elev == null);
+  if (!fragen.length){ merkeStand(); return; }
+  await ladeHoehen(fragen);
+  let neue = 0, geaendert = 0;
+  for (const p of fragen){
     const m = hoeheVon(p.lat, p.lng);
     if (typeof m !== 'number') continue;
-    const { error } = await sb.from('places').update({ elev: Math.round(m) }).eq('id', p.id);
+    const wert = Math.round(m);
+    if (wert === p.elev) continue;       /* gleiche Zahl wie bisher — nichts zu tun */
+    const vorher = p.elev;
+    const { error } = await sb.from('places').update({ elev: wert }).eq('id', p.id);
     if (error) continue;                 /* klappt es nicht, bleibt es beim nächsten Mal stehen */
-    p.elev = Math.round(m); n++;
+    p.elev = wert;
+    if (vorher == null) neue++; else geaendert++;
   }
-  if (!n) return;
+  if (neue || geaendert || S.places.every(p => p.elev != null)) merkeStand();
+  if (!neue && !geaendert) return;
   renderPlaceList(); drawPlaces();
-  toast(n === 1 ? 'Höhe bei 1 Ort ergänzt.' : 'Höhe bei '+n+' Orten ergänzt.');
+  const ort = n => n === 1 ? '1 Ort' : n + ' Orten';
+  toast(geaendert ? 'Höhe bei '+ort(neue+geaendert)+' neu berechnet.'
+                  : 'Höhe bei '+ort(neue)+' ergänzt.');
 }
 
-/* Holt die Höhen für alle Punkte, die noch keine haben — bis zu 100 in einer Anfrage. */
+/* Eine Abfrage beim Höhendienst. Zwischen zwei Abfragen liegt mindestens eine
+   Sekunde, weil der kostenlose Dienst nicht mehr erlaubt. Antwortet er nicht
+   oder dauert es zu lange, kommt null zurück und die nächste Quelle ist dran. */
+async function holeJSON(url){
+  const abstand = 1100 - (Date.now() - letzteAbfrage);
+  if (abstand > 0) await new Promise(r => setTimeout(r, abstand));
+  letzteAbfrage = Date.now();
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e){ return null; }     /* kein Netz oder Dienst gerade weg */
+}
+
+/* Fragt ein Höhenmodell nach bis zu 100 Punkten auf einmal. Zurück kommt für
+   jeden Punkt eine Höhe oder null, wenn das Modell dort nichts weiß. */
+async function frageModell(modell, teil){
+  const orte = teil.map(p => (+p.lat).toFixed(5)+','+(+p.lng).toFixed(5)).join('|');
+  const d = await holeJSON('https://api.opentopodata.org/v1/' + modell
+    + '?locations=' + encodeURIComponent(orte));
+  if (!d || !Array.isArray(d.results)) return null;
+  return teil.map((p,j) => {
+    const m = d.results[j] && d.results[j].elevation;
+    return typeof m === 'number' && Number.isFinite(m) ? m : null;
+  });
+}
+
+/* Holt die Höhen für alle Punkte, die noch keine haben — bis zu 100 in einer
+   Anfrage, und erst das feine Modell, dann das gröbere für alles, was übrig bleibt. */
 async function ladeHoehen(punkte, danach){
-  const offen = [], gesehen = new Set();
+  let offen = [];
+  const gesehen = new Set();
   (punkte||[]).forEach(p => {
     if (!p || p.lat == null || p.lng == null) return;
     const k = hoeheKey(p.lat, p.lng);
-    if (HOEHEN[k] === undefined && !gesehen.has(k)){ gesehen.add(k); offen.push(p); }
+    if (HOEHEN[k] === undefined && !OHNE_HOEHE.has(k) && !gesehen.has(k)){
+      gesehen.add(k); offen.push(p);
+    }
   });
   if (!offen.length) return;
   let neu = false;
-  for (let i = 0; i < offen.length; i += 100){
-    const teil = offen.slice(i, i+100);
-    try {
-      const r = await fetch('https://api.open-meteo.com/v1/elevation'
-        + '?latitude='  + teil.map(p=>(+p.lat).toFixed(5)).join(',')
-        + '&longitude=' + teil.map(p=>(+p.lng).toFixed(5)).join(','),
-        { signal: AbortSignal.timeout(8000) });   /* nach 8 Sekunden aufgeben */
-      if (!r.ok) break;
-      const d = await r.json();
-      if (!Array.isArray(d.elevation)) break;
+  for (const modell of HOEHENMODELLE){
+    if (!offen.length) break;
+    const rest = [];
+    for (let i = 0; i < offen.length; i += 100){
+      const teil = offen.slice(i, i+100);
+      const werte = await frageModell(modell, teil);
       teil.forEach((p,j) => {
-        if (typeof d.elevation[j] === 'number'){
-          HOEHEN[hoeheKey(p.lat,p.lng)] = d.elevation[j]; neu = true;
-        }
+        const m = werte ? werte[j] : null;
+        if (typeof m === 'number'){ HOEHEN[hoeheKey(p.lat,p.lng)] = m; neu = true; }
+        else rest.push(p);                /* dieses Modell weiß hier nichts — nächstes versuchen */
       });
-    } catch(e){ break; }          /* kein Netz oder API gerade weg */
+    }
+    offen = rest;
   }
+  /* Was auch das letzte Modell nicht kennt, wird in dieser Sitzung nicht noch
+     einmal gefragt; beim nächsten Laden der Seite geht es von vorne los. */
+  offen.forEach(p => OHNE_HOEHE.add(hoeheKey(p.lat,p.lng)));
   if (!neu) return;
   try { localStorage.setItem(HOEHEN_SPEICHER, JSON.stringify(HOEHEN)); } catch(e){}
   if (danach) danach();
