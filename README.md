@@ -155,7 +155,8 @@ Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte; wer gan
 will, schaltet dafür kurz um.
 
 - **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
-- **Ändern:** der **Stift** in der Liste — oder einfach auf den Punkt in der Karte klicken.
+- **Ändern:** der **Stift** in der Liste. Ein Klick auf den Punkt in der Karte tut nichts —
+  so geht nicht aus Versehen etwas zum Bearbeiten auf, während du die Karte erkundest.
   Das Formular öffnet sich mit den bisherigen Angaben. Name und Art lassen sich überschreiben,
   und ein Klick in die Karte verschiebt den Ort an eine neue Stelle. Solange du bearbeitest,
   ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
