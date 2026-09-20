@@ -362,6 +362,7 @@
             <p class="note" id="p-dirmiss" style="display:none;margin-top:0"></p>
           </div>
           <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly>
+            <p class="note" id="p-elev" style="margin-top:5px"></p>
             <p class="note" id="p-coordhint" style="margin-top:5px"></p></div>
           <div class="rowend" style="margin-top:0">
             <button class="btn" id="p-save" onclick="savePlace()">Ort speichern</button>
@@ -606,16 +607,18 @@ async function startApp(session){
 
 /* ══════════ DATEN LADEN ══════════ */
 async function checkCols(){
-  const [d, a, g, r] = await Promise.all([
+  const [d, a, g, r, h] = await Promise.all([
     sb.from('flights').select('dist_km').limit(1),
     sb.from('flights').select('ascent').limit(1),
     sb.from('gear').select('gclass').limit(1),
-    sb.from('places').select('dirs').limit(1)
+    sb.from('places').select('dirs').limit(1),
+    sb.from('places').select('elev').limit(1)
   ]);
   HAS.dist   = !d.error;
   HAS.asc    = !a.error;
   HAS.gclass = !g.error;
   HAS.dirs   = !r.error;
+  HAS.elev   = !h.error;
 }
 
 async function loadAll(){
@@ -635,6 +638,10 @@ async function loadAll(){
     glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
   }));
   renderAll(); renderStats();
+  /* Die Höhen kommen nach: sie brauchen einen Moment und sollen das Laden nicht aufhalten.
+     Orte, bei denen sie schon in der Datenbank steht, werden dabei übersprungen. */
+  const ohneHoehe = HAS.elev ? S.places.filter(p => p.elev == null) : S.places;
+  ladeHoehen(ohneHoehe, () => { renderPlaceList(); drawPlaces(); }).then(hoehenNachtragen);
 }
 
 /* ══════════ ANSICHTEN ══════════ */
@@ -646,6 +653,111 @@ window.show = v => {
   if (v==='orte' && map) setTimeout(()=>map.invalidateSize(), 60);
   if (v==='stat') renderStats();
 };
+
+/* ══════════ HÖHE ÜBER DEM MEER ══════════
+   Die Höhe steht nicht in der Datenbank. Sie wird aus den Koordinaten geholt
+   (Open-Meteo, kostenlos, ohne Schlüssel und ohne Konto — wie die Karte) und im
+   Browser gemerkt, damit sie beim nächsten Öffnen sofort da ist. Geht das Holen
+   schief, etwa ohne Netz, bleibt die Höhe einfach leer und alles andere
+   funktioniert unverändert weiter. In Supabase ist dafür nichts einzurichten. */
+const HOEHEN_SPEICHER = 'flugbuch-hoehen';
+const HOEHEN = {};          /* "47.12345,11.54321" → Höhe in Metern */
+let hoehenLauf = 0;         /* damit ein alter Kartenklick keinen neueren überschreibt */
+
+try { Object.assign(HOEHEN, JSON.parse(localStorage.getItem(HOEHEN_SPEICHER) || '{}')); }
+catch(e){ /* nichts Gemerktes da — dann wird eben neu geholt */ }
+
+const hoeheKey = (lat,lng) => (+lat).toFixed(5)+','+(+lng).toFixed(5);
+const hoeheVon = (lat,lng) => HOEHEN[hoeheKey(lat,lng)];
+const mTxt = m => Math.round(m).toLocaleString('de-DE')+' m';
+
+/* Die Höhe eines Orts: was in der Datenbank steht, gilt. Fehlt sie dort noch,
+   wird der gerade geholte Wert angezeigt. */
+const hoeheOrt = p => {
+  const ausDB = (p && p.elev != null) ? Number(p.elev) : NaN;
+  return Number.isFinite(ausDB) ? ausDB : hoeheVon(p.lat, p.lng);
+};
+const hoeheTxtOrt = p => {
+  const m = hoeheOrt(p);
+  return Number.isFinite(m) ? mTxt(m) : '';
+};
+
+/* Die Höhe eines einzelnen Punktes in ganzen Metern — oder null, wenn sie
+   gerade nicht zu holen ist. */
+async function hoeheFuer(lat, lng){
+  if (hoeheVon(lat,lng) === undefined) await ladeHoehen([{lat,lng}]);
+  const m = hoeheVon(lat,lng);
+  return typeof m === 'number' ? Math.round(m) : null;
+}
+
+/* Bei Orten, die noch keine Höhe in der Datenbank haben, wird sie einmal
+   nachgetragen — danach steht sie dort fest und muss nie wieder geholt werden. */
+async function hoehenNachtragen(){
+  if (!HAS.elev) return;
+  const fehlen = S.places.filter(p => p.elev == null);
+  if (!fehlen.length) return;
+  await ladeHoehen(fehlen);
+  let n = 0;
+  for (const p of fehlen){
+    const m = hoeheVon(p.lat, p.lng);
+    if (typeof m !== 'number') continue;
+    const { error } = await sb.from('places').update({ elev: Math.round(m) }).eq('id', p.id);
+    if (error) continue;                 /* klappt es nicht, bleibt es beim nächsten Mal stehen */
+    p.elev = Math.round(m); n++;
+  }
+  if (!n) return;
+  renderPlaceList(); drawPlaces();
+  toast(n === 1 ? 'Höhe bei 1 Ort ergänzt.' : 'Höhe bei '+n+' Orten ergänzt.');
+}
+
+/* Holt die Höhen für alle Punkte, die noch keine haben — bis zu 100 in einer Anfrage. */
+async function ladeHoehen(punkte, danach){
+  const offen = [], gesehen = new Set();
+  (punkte||[]).forEach(p => {
+    if (!p || p.lat == null || p.lng == null) return;
+    const k = hoeheKey(p.lat, p.lng);
+    if (HOEHEN[k] === undefined && !gesehen.has(k)){ gesehen.add(k); offen.push(p); }
+  });
+  if (!offen.length) return;
+  let neu = false;
+  for (let i = 0; i < offen.length; i += 100){
+    const teil = offen.slice(i, i+100);
+    try {
+      const r = await fetch('https://api.open-meteo.com/v1/elevation'
+        + '?latitude='  + teil.map(p=>(+p.lat).toFixed(5)).join(',')
+        + '&longitude=' + teil.map(p=>(+p.lng).toFixed(5)).join(','),
+        { signal: AbortSignal.timeout(8000) });   /* nach 8 Sekunden aufgeben */
+      if (!r.ok) break;
+      const d = await r.json();
+      if (!Array.isArray(d.elevation)) break;
+      teil.forEach((p,j) => {
+        if (typeof d.elevation[j] === 'number'){
+          HOEHEN[hoeheKey(p.lat,p.lng)] = d.elevation[j]; neu = true;
+        }
+      });
+    } catch(e){ break; }          /* kein Netz oder API gerade weg */
+  }
+  if (!neu) return;
+  try { localStorage.setItem(HOEHEN_SPEICHER, JSON.stringify(HOEHEN)); } catch(e){}
+  if (danach) danach();
+}
+
+/* Im Ortsformular: die Höhe der angeklickten Stelle anzeigen. */
+async function zeigeHoehe(lat, lng, gespeichert){
+  const el = document.getElementById('p-elev');
+  const lauf = ++hoehenLauf;
+  const zeig = () => {
+    if (lauf !== hoehenLauf) return;      /* inzwischen woanders hingeklickt */
+    const m = (gespeichert != null && Number.isFinite(Number(gespeichert)))
+      ? Number(gespeichert) : hoeheVon(lat,lng);
+    el.textContent = Number.isFinite(m) ? 'Höhe: etwa ' + mTxt(m) + ' über dem Meer.'
+                                        : 'Höhe: gerade nicht abrufbar.';
+  };
+  if (gespeichert != null || hoeheVon(lat,lng) !== undefined) return zeig();
+  el.textContent = 'Höhe wird geholt …';
+  await ladeHoehen([{lat,lng}]);
+  zeig();
+}
 
 /* ══════════ KARTE UND ORTE ══════════ */
 function initMap(){
@@ -668,6 +780,7 @@ function initMap(){
     if (!armed && !editId) return;
     pending = {lat:e.latlng.lat, lng:e.latlng.lng};
     document.getElementById('p-coord').value = pending.lat.toFixed(5)+', '+pending.lng.toFixed(5);
+    zeigeHoehe(pending.lat, pending.lng);
     document.getElementById('placeform').style.display = 'block';
     syncRose();
     if (!editId) document.getElementById('p-name').focus();
@@ -765,6 +878,7 @@ function drawPlaces(){
     L.circleMarker([p.lat,p.lng],
       {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
       .bindTooltip(p.name+' · '+TYPEN[p.type]
+        + (hoeheTxtOrt(p) ? ' · '+hoeheTxtOrt(p) : '')
         + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
         + ' · zum Bearbeiten anklicken', {direction:'top'})
       /* Klick auf den Punkt öffnet den Ort zum Bearbeiten — außer man legt gerade einen an. */
@@ -791,6 +905,7 @@ window.editPlace = id => {
   document.getElementById('p-name').value  = p.name;
   document.getElementById('p-type').value  = p.type;
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  zeigeHoehe(p.lat, p.lng, p.elev);
   pendingDirs = dirsIn(p.dirs);
   document.getElementById('placeform').style.display = 'block';
   placeFormLabels();
@@ -839,6 +954,16 @@ window.savePlace = async () => {
   const extra = HAS.dirs
     ? { dirs: startet(type) ? (dirSort(pendingDirs).join(',') || null) : null } : {};
 
+  /* Die Höhe wird aus den Koordinaten geholt und mitgespeichert. Ist sie gerade
+     nicht zu holen, bleibt bei einem unverschobenen Ort die bisherige stehen;
+     sonst bleibt das Feld leer und wird beim nächsten Laden nachgetragen. */
+  if (HAS.elev){
+    const bisher = editId ? (S.places.find(x=>x.id===editId) || {}) : {};
+    const gleicheStelle = bisher.lat === pending.lat && bisher.lng === pending.lng;
+    const m = await hoeheFuer(pending.lat, pending.lng);
+    extra.elev = m != null ? m : (gleicheStelle && bisher.elev != null ? bisher.elev : null);
+  }
+
   if (editId){
     const schreib = async () => {
       const { error } = await sb.from('places').update({
@@ -880,6 +1005,8 @@ window.cancelPlace = () => {
   document.getElementById('p-name').value = '';
   document.getElementById('p-type').value = 'start';
   document.getElementById('p-coord').value = '';
+  document.getElementById('p-elev').textContent = '';
+  hoehenLauf++;                       /* eine noch laufende Abfrage schreibt nichts mehr hin */
   pendingDirs = [];
   syncRose();
   document.getElementById('p-dirfield').style.display = 'none';
@@ -1438,6 +1565,27 @@ window.askDelete = id => {
 };
 
 /* ══════════ RENDERN ══════════ */
+/* Die Liste der Orte. Steht extra, weil sie auch neu gezeichnet wird,
+   sobald die Höhen aus dem Netz eingetroffen sind. */
+function renderPlaceList(){
+  document.getElementById('placelist').innerHTML = S.places.length ? `<table>
+    <tr><th>Name</th><th>Art</th><th>Höhe</th><th>Flüge</th><th></th></tr>
+    ${S.places.map(p=>{
+      const n = S.flights.filter(f=>f.start===p.id||f.land===p.id).length;
+      return `<tr>
+        <td>${esc(p.name)}<br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></td>
+        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span>
+          ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
+        <td class="num">${hoeheTxtOrt(p)}</td>
+        <td class="num">${n}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
+            onclick="editPlace('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+          <button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
+      </tr>`;}).join('')}</table>`
+    : '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>';
+}
+
 function renderAll(){
   const now = new Date(), yr = now.getFullYear(), mo = pad(now.getMonth()+1);
   const sum = a => a.reduce((t,f)=>t+(f.mins||0), 0);
@@ -1460,28 +1608,15 @@ function renderAll(){
   const fehlt = [HAS.dist ? '' : 'Flugstrecke',
                  HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)',
                  HAS.gclass ? '' : 'Schirmklasse',
-                 HAS.dirs ? '' : 'Startrichtungen an den Orten'].filter(Boolean);
+                 HAS.dirs ? '' : 'Startrichtungen an den Orten',
+                 HAS.elev ? '' : 'Höhe der Orte'].filter(Boolean);
   document.getElementById('needcols').textContent = fehlt.length
     ? 'Noch nicht freigeschaltet: ' + fehlt.join(', ')
       + '. Wie du das in Supabase einmalig einschaltest, steht in der README '
       + 'unter „Später dazugekommene Felder“.'
     : '';
 
-  document.getElementById('placelist').innerHTML = S.places.length ? `<table>
-    <tr><th>Name</th><th>Art</th><th>Flüge</th><th></th></tr>
-    ${S.places.map(p=>{
-      const n = S.flights.filter(f=>f.start===p.id||f.land===p.id).length;
-      return `<tr>
-        <td>${esc(p.name)}<br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></td>
-        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span>
-          ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
-        <td class="num">${n}</td>
-        <td style="text-align:right;white-space:nowrap">
-          <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
-            onclick="editPlace('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
-          <button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
-      </tr>`;}).join('')}</table>`
-    : '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>';
+  renderPlaceList();
 
   renderDiary();
 
@@ -1629,7 +1764,15 @@ async function doRestore(d){
       const { error } = await sb.from(t).delete().not('id','is',null);
       if (error) throw error;
     }
-    const clean = rows => (rows||[]).map(({user_id, ...rest}) => rest);
+    /* Felder, die es in dieser Datenbank noch nicht gibt, werden beim Einlesen
+       weggelassen — sonst würde die ganze Wiederherstellung daran scheitern. */
+    const weg = [ HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
+                  HAS.dist ? '' : 'dist_km', HAS.asc ? '' : 'ascent',
+                  HAS.gclass ? '' : 'gclass' ].filter(Boolean);
+    const clean = rows => (rows||[]).map(({user_id, ...rest}) => {
+      weg.forEach(k => delete rest[k]);
+      return rest;
+    });
     for (const t of ['places','gear','flights']){
       const rows = clean(d[t]);
       if (rows.length){
