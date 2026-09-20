@@ -162,13 +162,22 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 
 Der Ortsteil ist die **Sammlung aller Plätze** — die geflogenen und die, die noch auf der
 Liste stehen. Er steht darum gleich hinter „Flüge“. Links die Karte, rechts Formular,
-Filter und die Liste aller Orte.
+Suche, Filter und die Liste aller Orte.
 
-Die Karte startet bei **Bozen** als **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
+Solange dieser Reiter offen ist, zeigt die **Kennzahlenleiste oben** die Zahlen zu den Orten
+statt zu den Flügen: wie viele Orte es gibt, an wie vielen schon geflogen wurde, wie viele
+noch offen sind und wie hoch der höchste Startplatz liegt.
+
+Die Karte ist eine **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
 der Karte lässt sich auf **Strasse** umschalten, die gewohnte OpenStreetMap-Ansicht. Gezoomt
 wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den Knöpfen + und −.
 Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte; wer ganz nah heran
 will, schaltet dafür kurz um.
+
+**Der Ausschnitt richtet sich nach der Liste.** Beim ersten Öffnen zoomt die Karte so, dass
+*alle* Orte hineinpassen; wird gefiltert oder gesucht, zieht sie auf die übrig gebliebenen
+nach. Der Knopf mit dem Kartennadel-Symbol (links unter Zoom und Vollbild) holt jederzeit
+alle gerade sichtbaren Orte zurück ins Bild.
 
 ### Die Farbe der Punkte
 
@@ -176,7 +185,7 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 
 | Farbe | heißt |
 | --- | --- |
-| **Orange** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
+| **Orange, gestrichelt** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
 | **Rot** | Startplatz, an dem schon geflogen wurde |
 | **Blau** | Landeplatz mit Eintrag |
 | **Gold** | Start und Landung mit Eintrag |
@@ -185,6 +194,10 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau, gold, grün), sobald der
 erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu. Dieselben
 Farben stehen als kleiner Punkt vor dem Namen in der Liste.
+
+Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
+hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
+nicht jedes Auge trennt sie zuverlässig.
 
 ### Auf einen Ort klicken
 
@@ -198,13 +211,33 @@ anklickbaren Links. Jeder Link öffnet sich in einem neuen Fenster. Darin sitzen
 - **Schließen** — das Feld geht zu. Das tut auch ein Klick irgendwo in die Karte oder Escape.
 
 Ein Klick auf den **Namen in der Liste** schiebt die Karte auf den Ort und öffnet dasselbe
-Infofeld.
+Infofeld. Umgekehrt wird die Zeile in der Liste hervorgehoben (heller Streifen am linken
+Rand), solange das Infofeld eines Orts offen ist — Karte und Liste zeigen immer auf dasselbe.
 
 - **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
+  Das Formular geht sofort auf, damit sich die Stelle auch über die Koordinaten eintragen lässt.
 - **Ändern:** der **Stift** in der Liste oder *Bearbeiten* im Infofeld. Solange du bearbeitest,
   ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
   *Abbrechen* verwirft es.
 - **Löschen:** das × — nur, wenn keine Flüge mehr an dem Ort hängen, und immer mit Rückfrage.
+
+### Die Stelle setzen: ziehen, klicken oder eintippen
+
+Drei Wege führen zum selben Ergebnis, während ein Ort angelegt oder bearbeitet wird:
+
+- **Ziehen** — den gestrichelten Punkt in der Karte anfassen und an die neue Stelle ziehen.
+  Das ist der bequemste Weg für kleine Korrekturen.
+- **Klicken** — irgendwo in die Karte klicken setzt den Punkt dorthin.
+- **Eintippen** — ins Feld *Koordinaten* schreiben oder hineinkopieren, etwa
+  `46.50000, 11.35000` aus einer Karten-App. Komma oder Leerzeichen als Trenner, Dezimalpunkt
+  oder Dezimalkomma — beides geht. Enter übernimmt, und die Karte springt hin. Das ist der
+  Weg für Orte, an denen du noch nie warst und die du aus einer fremden Quelle übernimmst.
+
+### Nicht gespeicherte Änderungen
+
+Wer am Formular etwas ändert und dann woanders hinklickt — auf den Stift eines anderen Orts,
+auf „Ort hinzufügen“ oder auf *Abbrechen* —, bekommt eine **Rückfrage**, bevor die Eingaben
+verloren gehen. Erst *Ja, verwerfen* wirft sie weg.
 
 ### Infos und Links
 
@@ -224,9 +257,13 @@ Fehlt die Spalte `info` in der Datenbank noch, steht das Feld gar nicht da und a
 Stelle ein Hinweis — alles andere funktioniert unverändert weiter. Eine zweite Spalte braucht
 es dafür nicht; die frühere Spalte `link` wird nirgends mehr verwendet.
 
-### Filter
+### Suchen, filtern, sortieren
 
-Über der Liste sitzt der Knopf **Filter**; rechts daneben steht immer, wie viele Orte gerade
+Über der Liste steht ein **Suchfeld**. Was du hineintippst, wird sofort auf Karte und Liste
+angewendet und sucht im **Namen und im Infotext** — „seilbahn“ findet also auch den Ort, bei
+dem das nur in den Infos steht.
+
+Darunter der Knopf **Filter**; rechts daneben steht immer, wie viele Orte gerade
 zu sehen sind („alle 23 Orte“ oder „7 von 23 Orten“). Ein Klick klappt ihn auf. Gefiltert
 werden kann nach:
 
@@ -239,10 +276,20 @@ werden kann nach:
   „oder“. Weil nur Start- und Start-und-Landeplätze Startrichtungen haben, fallen
   reine Landeplätze und Übungsgelände heraus, sobald hier etwas angetippt ist.
 
-Ein aktiver Filter färbt die Kopfzeile rosa. Er gilt für Karte **und** Liste: **auf der
-Karte bleiben nur die gefilterten Orte übrig**, alle anderen verschwinden, bis
-*Filter zurücksetzen* gedrückt wird. Gespeichert wird der Filter nicht — beim nächsten
-Laden der Seite sind wieder alle Orte da.
+Ein aktiver Filter färbt die Kopfzeile rosa, und unter ihr stehen **kleine Kärtchen** mit
+dem, was gerade eingestellt ist — „ab 1500 m“, „noch nicht geflogen“, „Start bei S / SW“.
+Jedes lässt sich mit dem × einzeln wegnehmen, ohne den Filter aufklappen zu müssen.
+
+Er gilt für Karte **und** Liste: **auf der Karte bleiben nur die gefilterten Orte übrig**,
+alle anderen verschwinden, bis *Filter zurücksetzen* gedrückt wird. Gespeichert wird der
+Filter nicht — beim nächsten Laden der Seite sind wieder alle Orte da.
+
+Filterst du nach Höhe und es gibt Orte, deren Höhe noch nicht bekannt ist, sagt ein kurzer
+Satz, wie viele dabei ausgeblendet sind — sonst würden sie unbemerkt fehlen.
+
+**Sortiert** wird die Liste per Klick auf eine Spaltenüberschrift: *Name*, *Art*, *Höhe* oder
+*Flüge*. Nochmal klicken dreht die Reihenfolge um; ein kleines Dreieck zeigt, wonach gerade
+sortiert ist.
 
 ### Vollbild
 
@@ -364,6 +411,8 @@ Der CSV-Export ist zum Auswerten in Excel gedacht, **nicht** zum Wiederherstelle
 
 - Orte nach Gebiet oder Region gruppieren
 - Filter auch für die Art des Orts (nur Startplätze, nur Landeplätze)
+- Vom Infofeld direkt zu den Flügen an diesem Ort springen
+- Bei sehr vielen Orten dicht beieinander: Punkte zusammenfassen
 
 - IGC-Dateien importieren (Vario/XCTrack), damit Flugzeit und Koordinaten automatisch entstehen
 - Reminder abhaken können
