@@ -26,17 +26,20 @@ Drei Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security
 sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
-`id, user_id, name, type, lat, lng, dirs, elev, info, link, created_at`
+`id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
 `type`: `start` | `land` | `both` | `ground` (Übungsgelände)
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
 Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es nur
 bei Orten mit Start (`start` und `both`); bei `land` und `ground` wird das Feld geleert.
 `elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
 aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
-`info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten. Darf leer sein.
-`link`: eine Adresse, zum Beispiel zu einem YouTube-Video. Wird ohne `https://` eingetippt,
-ergänzt das Flugbuch es beim Speichern. Darf leer sein.
-`dirs`, `elev`, `info` und `link` sind später dazugekommen (siehe „Später dazugekommene Felder“).
+`info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten und so viele Links, wie du
+willst, mitten im Text. Darf leer sein.
+`dirs`, `elev` und `info` sind später dazugekommen (siehe „Später dazugekommene Felder“).
+
+Eine frühere Version hatte für den Link eine eigene Spalte `link`. Die wird nicht mehr
+benutzt: steht dort bei einem Ort noch etwas, hängt das Flugbuch es beim Bearbeiten hinten
+an den Text an und leert die alte Spalte beim Speichern. Löschen muss man dafür nichts.
 
 Ein Ort braucht **keinen Flug**. Orte, an denen du noch nie warst, gehören ausdrücklich
 hier hinein — sie sind auf der Karte orange statt farbig.
@@ -79,9 +82,9 @@ Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
 ### Später dazugekommene Felder
 
-Sieben Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
+Sechs Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
 **Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse**, die **Startrichtungen**,
-die **Höhe** sowie **Infos** und **Link** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
+die **Höhe** und die **Infos** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
 der Flugtabelle einen Hinweis und lässt die betroffenen Felder einfach weg — alles andere
 funktioniert normal weiter.
 Zum Freischalten in Supabase unter **SQL Editor** einmalig ausführen:
@@ -93,7 +96,6 @@ alter table gear    add column if not exists gclass text;
 alter table places  add column if not exists dirs text;
 alter table places  add column if not exists elev numeric;
 alter table places  add column if not exists info text;
-alter table places  add column if not exists link text;
 ```
 
 Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt das Flugbuch „zu Fuß“
@@ -183,12 +185,12 @@ Farben stehen als kleiner Punkt vor dem Namen in der Liste.
 ### Auf einen Ort klicken
 
 Ein **Klick auf einen Punkt** öffnet sein **Infofeld** in der Karte: Name, Art, Höhe, wie
-viele Flüge daran hängen, die Startrichtungen, der gespeicherte Text und der Link. Der Link
-öffnet sich in einem neuen Fenster. Darin sitzen zwei Knöpfe:
+viele Flüge daran hängen, die Startrichtungen und der gespeicherte Text mit seinen
+anklickbaren Links. Jeder Link öffnet sich in einem neuen Fenster. Darin sitzen zwei Knöpfe:
 
 - **Bearbeiten** — öffnet rechts das Formular mit allen Angaben. Von dort aus lässt sich der
-  Ort umbenennen, seine Art ändern, der Text und der Link ändern, und ein **Klick in die
-  Karte verschiebt ihn** an eine neue Stelle.
+  Ort umbenennen, seine Art und den Text ändern, und ein **Klick in die Karte verschiebt
+  ihn** an eine neue Stelle.
 - **Schließen** — das Feld geht zu. Das tut auch ein Klick irgendwo in die Karte oder Escape.
 
 Ein Klick auf den **Namen in der Liste** schiebt die Karte auf den Ort und öffnet dasselbe
@@ -200,19 +202,22 @@ Infofeld.
   *Abbrechen* verwirft es.
 - **Löschen:** das × — nur, wenn keine Flüge mehr an dem Ort hängen, und immer mit Rückfrage.
 
-### Infos und Link
+### Infos und Links
 
-Zu jedem Ort lassen sich zwei freiwillige Angaben speichern:
+Zu jedem Ort gibt es **ein einziges Textfeld** für alles, was du dir merken willst: Zufahrt,
+Parkplatz, Gebühren, Besonderheiten — und mittendrin so viele Links, wie du magst.
 
-- **Infos** — freier Text über mehrere Zeilen: Zufahrt, Parkplatz, Gebühren, Besonderheiten.
-- **Link** — eine Adresse, typischerweise ein YouTube-Video zum Startplatz. Das `https://`
-  darf fehlen, es wird beim Speichern ergänzt. Im Infofeld ist der Link anklickbar.
+Adressen im Text werden beim Anzeigen **von selbst erkannt und anklickbar**, ohne dass du
+etwas markieren musst. Erkannt wird alles, was mit `http://`, `https://` oder `www.` anfängt,
+dazu `youtube.com/…` und `youtu.be/…` auch ohne Vorsatz. Ein Punkt oder Komma direkt hinter
+der Adresse gehört zum Satz und nicht mehr zum Link. Angeklickt öffnet sich der Link in einem
+neuen Fenster; angezeigt wird er gekürzt (ohne `https://`) mit einem kleinen ↗ dahinter.
 
-Beides steht im Infofeld am Kartenpunkt; in der Liste steht unter dem Namen nur der kurze
-Hinweis „Infos“ beziehungsweise „Link“, damit die Tabelle schmal bleibt.
+Der Text steht im Infofeld am Kartenpunkt; in der Liste steht unter dem Namen nur der kurze
+Hinweis „Infos“, damit die Tabelle schmal bleibt.
 
-Fehlen die Spalten `info` und `link` in der Datenbank noch, stehen die beiden Felder gar
-nicht da und an ihrer Stelle ein Hinweis — alles andere funktioniert unverändert weiter.
+Fehlt die Spalte `info` in der Datenbank noch, steht das Feld gar nicht da und an seiner
+Stelle ein Hinweis — alles andere funktioniert unverändert weiter.
 
 ### Filter
 

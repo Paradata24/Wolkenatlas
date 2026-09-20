@@ -287,8 +287,8 @@
   .placepanel .meta{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
     color:var(--muted);margin:0}
   .placepanel .infotxt{white-space:pre-wrap;font-size:14px;line-height:1.55;margin:10px 0 0}
-  .placepanel .lnk{display:inline-block;margin-top:10px;font-size:14px;color:var(--chart);
-    word-break:break-all}
+  /* Lange Adressen brechen erst um, wenn sie sonst nicht passen. */
+  .placepanel .lnk{color:var(--chart);overflow-wrap:anywhere}
   .placepanel .ppact{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
   .placepanel .rosezeile{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
     text-transform:uppercase;color:var(--start);margin:7px 0 0}
@@ -438,10 +438,12 @@
             </div>
             <p class="note" id="p-dirmiss" style="display:none;margin-top:0"></p>
           </div>
-          <div class="field" id="p-infofield"><label for="p-info">Infos <span class="opt">(freiwillig)</span></label>
-            <textarea id="p-info" placeholder="Zufahrt, Gebühren, Besonderheiten, wo man parkt …"></textarea></div>
-          <div class="field" id="p-linkfield"><label for="p-link">Link <span class="opt">(z. B. ein YouTube-Video)</span></label>
-            <input type="url" id="p-link" placeholder="https://www.youtube.com/watch?v=…"></div>
+          <div class="field" id="p-infofield">
+            <label for="p-info">Infos und Links <span class="opt">(freiwillig)</span></label>
+            <textarea id="p-info" style="min-height:92px"
+              placeholder="Zufahrt, Gebühren, Besonderheiten, wo man parkt …&#10;Adressen wie youtube.com/watch?v=… werden von selbst anklickbar."></textarea>
+            <p class="note" style="margin-top:5px">Schreib rein, was du willst — so viele Links wie du magst,
+              mitten im Text. Angeklickt werden können sie später trotzdem.</p></div>
           <p class="note" id="p-extramiss" style="display:none;margin:-4px 0 12px"></p>
           <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly>
             <p class="note" id="p-elev" style="margin-top:5px"></p>
@@ -664,12 +666,40 @@ const linkNorm = v => {
   if (!t) return null;
   return /^https?:\/\//i.test(t) ? t : 'https://' + t;
 };
-const linkKurz = u => { const t = u.replace(/^https?:\/\//i,'').replace(/\/$/,'');
+const linkKurz = u => { const t = String(u).replace(/^https?:\/\//i,'').replace(/\/$/,'');
   return t.length > 42 ? t.slice(0,40) + '…' : t; };
-const linkHTML = v => {
-  const u = linkNorm(v);
-  return u ? `<a class="lnk" href="${esc(u)}" target="_blank" rel="noopener">${esc(linkKurz(u))} ↗</a>` : '';
-};
+/* Infos und Links stehen in einem einzigen Textfeld. Beim Anzeigen werden alle
+   Adressen darin erkannt und anklickbar gemacht — beliebig viele, mitten im Text.
+   Erkannt wird alles, was mit http:// oder https:// oder www. anfängt, dazu
+   youtube.com und youtu.be auch ohne Vorsatz. */
+const LINKRE = /((?:https?:\/\/|www\.)[^\s<>"']+|(?:youtu\.be|youtube\.com)\/[^\s<>"']+)/gi;
+function textMitLinks(txt){
+  const t = String(txt ?? '');
+  let out = '', ab = 0, m;
+  LINKRE.lastIndex = 0;
+  while ((m = LINKRE.exec(t)) !== null){
+    let roh = m[0];
+    /* Satzzeichen direkt hinter der Adresse gehören zum Satz, nicht zum Link. */
+    const schwanz = roh.match(/[.,;:!?)\]]+$/);
+    if (schwanz) roh = roh.slice(0, -schwanz[0].length);
+    if (!roh){ LINKRE.lastIndex = m.index + m[0].length; continue; }
+    out += esc(t.slice(ab, m.index))
+      + `<a class="lnk" href="${esc(linkNorm(roh))}" target="_blank" rel="noopener">${esc(linkKurz(roh))} ↗</a>`;
+    ab = m.index + roh.length;
+    LINKRE.lastIndex = ab;
+  }
+  return out + esc(t.slice(ab));
+}
+
+/* Der Text eines Orts. Steht bei einem älteren Ort noch etwas in der früheren
+   Spalte `link`, wird es hinten angehängt — beim nächsten Speichern steht dann
+   alles zusammen im Textfeld und die alte Spalte wird geleert. */
+function ortText(p){
+  const t = (p.info || '').trim();
+  const alt = (p.link || '').trim();
+  if (!alt || t.includes(alt)) return t;
+  return t ? t + '\n' + alt : alt;
+}
 const isGH = f => f.kind === 'gh';
 const pname = id => (S.places.find(p=>p.id===id)||{}).name || '—';
 /* Strecke als Text — je nachdem, was eingetragen ist. Leer, wenn gar kein Ort drinsteht. */
@@ -1079,13 +1109,11 @@ function syncRose(){
 /* Infos und Link gibt es nur, wenn die beiden Spalten in der Datenbank da sind. */
 function syncExtraFelder(){
   document.getElementById('p-infofield').style.display = HAS.info ? '' : 'none';
-  document.getElementById('p-linkfield').style.display = HAS.link ? '' : 'none';
   const miss = document.getElementById('p-extramiss');
-  const fehlt = !HAS.info || !HAS.link;
-  miss.style.display = fehlt ? '' : 'none';
-  miss.textContent = fehlt
-    ? 'Infos und Link sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
-      + 'geht, steht in der README unter „Später dazugekommene Felder“.' : '';
+  miss.style.display = HAS.info ? 'none' : '';
+  miss.textContent = HAS.info ? ''
+    : 'Infos und Links sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
+      + 'geht, steht in der README unter „Später dazugekommene Felder“.';
 }
 
 /* Alles, was sich am Formular je nach Art und Datenbank ändert. */
@@ -1241,8 +1269,7 @@ window.editPlace = id => {
   pending = {lat:p.lat, lng:p.lng};
   document.getElementById('p-name').value  = p.name;
   document.getElementById('p-type').value  = p.type;
-  document.getElementById('p-info').value  = p.info || '';
-  document.getElementById('p-link').value  = p.link || '';
+  document.getElementById('p-info').value  = ortText(p);
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
   zeigeHoehe(p.lat, p.lng, p.elev);
   pendingDirs = dirsIn(p.dirs);
@@ -1295,7 +1322,8 @@ window.savePlace = async () => {
 
   /* Freier Text und ein Link (etwa zu einem YouTube-Video) — beides freiwillig. */
   if (HAS.info) extra.info = document.getElementById('p-info').value.trim() || null;
-  if (HAS.link) extra.link = linkNorm(document.getElementById('p-link').value);
+  /* Die frühere zweite Spalte wird nicht mehr benutzt — ihr Inhalt steht jetzt im Text. */
+  if (HAS.link) extra.link = null;
 
   /* Die Höhe wird aus den Koordinaten geholt und mitgespeichert. Ist sie gerade
      nicht zu holen, bleibt bei einem unverschobenen Ort die bisherige stehen;
@@ -1348,7 +1376,6 @@ window.cancelPlace = () => {
   document.getElementById('p-name').value = '';
   document.getElementById('p-type').value = 'start';
   document.getElementById('p-info').value = '';
-  document.getElementById('p-link').value = '';
   document.getElementById('p-coord').value = '';
   document.getElementById('p-elev').textContent = '';
   hoehenLauf++;                       /* eine noch laufende Abfrage schreibt nichts mehr hin */
@@ -1372,8 +1399,7 @@ function placeInfoHTML(p){
   return `<h3>${esc(p.name)}</h3>
     <p class="meta">${esc(kopf.join(' · '))}</p>
     ${dirs ? `<p class="rosezeile">Start bei ${esc(dirs)}</p>` : ''}
-    ${p.info ? `<p class="infotxt">${esc(p.info)}</p>` : ''}
-    ${linkHTML(p.link)}
+    ${ortText(p) ? `<p class="infotxt">${textMitLinks(ortText(p))}</p>` : ''}
     <p class="meta" style="margin-top:11px">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</p>`;
 }
 
@@ -1966,7 +1992,7 @@ function renderPlaceList(){
     <tr><th>Name</th><th>Art</th><th>Höhe</th><th>Flüge</th><th></th></tr>
     ${liste.map(p=>{
       const n = fluegeAn(p.id);
-      const zusatz = [p.info ? 'Infos' : '', p.link ? 'Link' : ''].filter(Boolean).join(' · ');
+      const zusatz = ortText(p) ? 'Infos' : '';
       return `<tr>
         <td class="click" onclick="zeigeOrt('${p.id}')" title="Auf der Karte zeigen">
           <span class="dot" style="color:${farbeVon(p)}"></span> ${esc(p.name)}
