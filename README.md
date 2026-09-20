@@ -13,6 +13,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
 - **Karte:** Leaflet mit OpenStreetMap, ohne Schlüssel und ohne Konto.
+- **Höhen der Orte:** Open-Meteo Elevation API, ebenfalls ohne Schlüssel und ohne Konto.
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
 Ganz oben im `<script type="module">`-Block stehen `SUPABASE_URL` und `SUPABASE_KEY`.
@@ -25,12 +26,14 @@ Drei Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security
 sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
-`id, user_id, name, type, lat, lng, dirs, created_at`
+`id, user_id, name, type, lat, lng, dirs, elev, created_at`
 `type`: `start` | `land` | `both` | `ground` (Übungsgelände)
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
 Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es nur
 bei Orten mit Start (`start` und `both`); bei `land` und `ground` wird das Feld geleert.
-`dirs` ist später dazugekommen (siehe „Später dazugekommene Felder“).
+`elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
+aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
+`dirs` und `elev` sind später dazugekommen (siehe „Später dazugekommene Felder“).
 
 **`gear`** — Ausrüstung
 `id, user_id, kind, name, gclass, created_at` · `kind`: `glider` | `harness`
@@ -70,9 +73,9 @@ Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
 ### Später dazugekommene Felder
 
-Vier Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
-**Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse** und die **Startrichtungen**
-an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
+Fünf Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
+**Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse**, die **Startrichtungen**
+und die **Höhe** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
 der Flugtabelle einen Hinweis und lässt die betroffenen Felder einfach weg — alles andere
 funktioniert normal weiter.
 Zum Freischalten in Supabase unter **SQL Editor** einmalig ausführen:
@@ -82,6 +85,7 @@ alter table flights add column if not exists dist_km numeric;
 alter table flights add column if not exists ascent text;
 alter table gear    add column if not exists gclass text;
 alter table places  add column if not exists dirs text;
+alter table places  add column if not exists elev numeric;
 ```
 
 Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt das Flugbuch „zu Fuß“
@@ -177,6 +181,33 @@ Wird die **Art** so geändert, dass sie nicht mehr zu vorhandenen Flügen passt 
 Startplatz, der nur noch Landeplatz sein soll, obwohl er in Flügen als Start steht), kommt
 eine Rückfrage. Sagst du ja, bleiben die alten Flüge unverändert; der Ort steht dort weiter
 drin und ist nur bei neuen Flügen an dieser Stelle nicht mehr in der Auswahl.
+
+### Höhe über dem Meer
+
+Jeder Ort hat eine **Höhe über dem Meer**. Sie wird nicht eingetippt, sondern aus den
+Koordinaten berechnet und in der Spalte `elev` der Tabelle `places` gespeichert — zusammen
+mit Name, Art und Koordinaten. Sie steht damit auch in der Sicherung und im JSON-Export.
+
+- In der **Ortsliste** steht sie in einer eigenen Spalte „Höhe“.
+- Im **Kästchen am Kartenpunkt** steht sie hinter der Art des Orts.
+- Beim **Anlegen und Bearbeiten** steht unter den Koordinaten „Höhe: etwa 1.412 m über dem
+  Meer.“ — sie ändert sich sofort mit, wenn der Ort in der Karte verschoben wird.
+
+Wann sie geschrieben wird:
+
+- **Neuer Ort:** beim Speichern, passend zur angeklickten Stelle.
+- **Verschobener Ort:** beim Speichern neu berechnet, passend zur neuen Stelle.
+- **Nur umbenannt oder Art geändert:** die Höhe bleibt, wie sie war.
+- **Orte von früher:** beim nächsten Laden werden alle Orte ohne Höhe in *einer* Anfrage
+  nachgetragen; eine kurze Meldung sagt, bei wie vielen. Danach steht die Höhe fest in der
+  Datenbank und wird nicht mehr abgefragt.
+
+Die Zahl kommt von der kostenlosen [Open-Meteo Elevation API](https://open-meteo.com/en/docs/elevation-api)
+(Geländemodell mit 90 m Raster, daher „etwa“; bei steilen Startplätzen können ein paar
+Meter danebenliegen). Ist sie gerade nicht erreichbar, etwa ohne Netz, bleibt das Feld leer
+und wird beim nächsten Laden nachgetragen — bei einem nur umbenannten Ort bleibt die alte
+Höhe erhalten. Solange die Spalte `elev` in Supabase fehlt, zeigt das Flugbuch die Höhe
+trotzdem an, merkt sie sich aber nur im Browser, statt sie zu speichern.
 
 ## Festgelegte Regeln
 
