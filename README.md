@@ -148,7 +148,7 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 
 Links die Karte, rechts die Liste aller Orte.
 
-Die Karte startet als **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
+Die Karte startet bei **Bozen** als **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
 der Karte lässt sich auf **Strasse** umschalten, die gewohnte OpenStreetMap-Ansicht. Gezoomt
 wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den Knöpfen + und −.
 Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte; wer ganz nah heran
