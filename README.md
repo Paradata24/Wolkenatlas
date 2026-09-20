@@ -37,9 +37,13 @@ aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe 
 willst, mitten im Text. Darf leer sein.
 `dirs`, `elev` und `info` sind später dazugekommen (siehe „Später dazugekommene Felder“).
 
-Eine frühere Version hatte für den Link eine eigene Spalte `link`. Die wird nicht mehr
-benutzt: steht dort bei einem Ort noch etwas, hängt das Flugbuch es beim Bearbeiten hinten
-an den Text an und leert die alte Spalte beim Speichern. Löschen muss man dafür nichts.
+Eine frühere Version hatte für den Link eine eigene Spalte `link`. Die gibt es nicht mehr —
+Links stehen jetzt mitten im Text in `info`. Wer sie schon angelegt hat, kann sie in Supabase
+unter **SQL Editor** wieder loswerden. Nötig ist das nicht — sie stört nicht, wenn sie stehen bleibt:
+
+```sql
+alter table places drop column if exists link;
+```
 
 Ein Ort braucht **keinen Flug**. Orte, an denen du noch nie warst, gehören ausdrücklich
 hier hinein — sie sind auf der Karte orange statt farbig.
@@ -217,7 +221,8 @@ Der Text steht im Infofeld am Kartenpunkt; in der Liste steht unter dem Namen nu
 Hinweis „Infos“, damit die Tabelle schmal bleibt.
 
 Fehlt die Spalte `info` in der Datenbank noch, steht das Feld gar nicht da und an seiner
-Stelle ein Hinweis — alles andere funktioniert unverändert weiter.
+Stelle ein Hinweis — alles andere funktioniert unverändert weiter. Eine zweite Spalte braucht
+es dafür nicht; die frühere Spalte `link` wird nirgends mehr verwendet.
 
 ### Filter
 

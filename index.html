@@ -609,8 +609,7 @@ let S = { places: [], gear: [], flights: [] };
 /* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
    siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
-let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false,
-             info:false, link:false };
+let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
@@ -691,15 +690,6 @@ function textMitLinks(txt){
   return out + esc(t.slice(ab));
 }
 
-/* Der Text eines Orts. Steht bei einem älteren Ort noch etwas in der früheren
-   Spalte `link`, wird es hinten angehängt — beim nächsten Speichern steht dann
-   alles zusammen im Textfeld und die alte Spalte wird geleert. */
-function ortText(p){
-  const t = (p.info || '').trim();
-  const alt = (p.link || '').trim();
-  if (!alt || t.includes(alt)) return t;
-  return t ? t + '\n' + alt : alt;
-}
 const isGH = f => f.kind === 'gh';
 const pname = id => (S.places.find(p=>p.id===id)||{}).name || '—';
 /* Strecke als Text — je nachdem, was eingetragen ist. Leer, wenn gar kein Ort drinsteht. */
@@ -766,14 +756,13 @@ async function startApp(session){
 
 /* ══════════ DATEN LADEN ══════════ */
 async function checkCols(){
-  const [d, a, g, r, h, i, l] = await Promise.all([
+  const [d, a, g, r, h, i] = await Promise.all([
     sb.from('flights').select('dist_km').limit(1),
     sb.from('flights').select('ascent').limit(1),
     sb.from('gear').select('gclass').limit(1),
     sb.from('places').select('dirs').limit(1),
     sb.from('places').select('elev').limit(1),
-    sb.from('places').select('info').limit(1),
-    sb.from('places').select('link').limit(1)
+    sb.from('places').select('info').limit(1)
   ]);
   HAS.dist   = !d.error;
   HAS.asc    = !a.error;
@@ -781,7 +770,6 @@ async function checkCols(){
   HAS.dirs   = !r.error;
   HAS.elev   = !h.error;
   HAS.info   = !i.error;
-  HAS.link   = !l.error;
 }
 
 async function loadAll(){
@@ -1269,7 +1257,7 @@ window.editPlace = id => {
   pending = {lat:p.lat, lng:p.lng};
   document.getElementById('p-name').value  = p.name;
   document.getElementById('p-type').value  = p.type;
-  document.getElementById('p-info').value  = ortText(p);
+  document.getElementById('p-info').value  = p.info || '';
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
   zeigeHoehe(p.lat, p.lng, p.elev);
   pendingDirs = dirsIn(p.dirs);
@@ -1322,8 +1310,6 @@ window.savePlace = async () => {
 
   /* Freier Text und ein Link (etwa zu einem YouTube-Video) — beides freiwillig. */
   if (HAS.info) extra.info = document.getElementById('p-info').value.trim() || null;
-  /* Die frühere zweite Spalte wird nicht mehr benutzt — ihr Inhalt steht jetzt im Text. */
-  if (HAS.link) extra.link = null;
 
   /* Die Höhe wird aus den Koordinaten geholt und mitgespeichert. Ist sie gerade
      nicht zu holen, bleibt bei einem unverschobenen Ort die bisherige stehen;
@@ -1399,7 +1385,7 @@ function placeInfoHTML(p){
   return `<h3>${esc(p.name)}</h3>
     <p class="meta">${esc(kopf.join(' · '))}</p>
     ${dirs ? `<p class="rosezeile">Start bei ${esc(dirs)}</p>` : ''}
-    ${ortText(p) ? `<p class="infotxt">${textMitLinks(ortText(p))}</p>` : ''}
+    ${p.info ? `<p class="infotxt">${textMitLinks(p.info)}</p>` : ''}
     <p class="meta" style="margin-top:11px">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</p>`;
 }
 
@@ -1992,7 +1978,7 @@ function renderPlaceList(){
     <tr><th>Name</th><th>Art</th><th>Höhe</th><th>Flüge</th><th></th></tr>
     ${liste.map(p=>{
       const n = fluegeAn(p.id);
-      const zusatz = ortText(p) ? 'Infos' : '';
+      const zusatz = p.info ? 'Infos' : '';
       return `<tr>
         <td class="click" onclick="zeigeOrt('${p.id}')" title="Auf der Karte zeigen">
           <span class="dot" style="color:${farbeVon(p)}"></span> ${esc(p.name)}
@@ -2188,8 +2174,9 @@ async function doRestore(d){
     }
     /* Felder, die es in dieser Datenbank noch nicht gibt, werden beim Einlesen
        weggelassen — sonst würde die ganze Wiederherstellung daran scheitern. */
-    const weg = [ HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
-                  HAS.info ? '' : 'info', HAS.link ? '' : 'link',
+    const weg = [ 'link',                 /* alte Spalte, wird nicht mehr benutzt */
+                  HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
+                  HAS.info ? '' : 'info',
                   HAS.dist ? '' : 'dist_km', HAS.asc ? '' : 'ascent',
                   HAS.gclass ? '' : 'gclass' ].filter(Boolean);
     const clean = rows => (rows||[]).map(({user_id, ...rest}) => {
