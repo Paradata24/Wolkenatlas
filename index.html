@@ -8,7 +8,8 @@
 <style>
   :root{
     --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
-    --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62; --r:3px;
+    --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
+    --noflight:#E07A1F; --r:3px;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -64,14 +65,19 @@
     display:flex;align-items:center;gap:10px}
   .card .body{padding:15px}
 
-  #map{height:430px;width:100%;background:#E4EAF0}
-  @media(max-width:820px){#map{height:320px}}
+  #mapwrap{position:relative}
+  /* Die Karte wird im Browser entfärbt. Der Filter liegt nur auf den
+     Kartenbildern — die Ortspunkte darüber behalten ihre Farbe. */
+  .kartegrau{filter:grayscale(1) contrast(1.05)}
+  #map{height:520px;width:100%;background:#E4EAF0}
+  @media(max-width:820px){#map{height:340px}}
   .maphint{font-size:13px;color:var(--muted);padding:10px 15px;border-top:1px solid var(--line)}
   .maphint.armed{background:#FCEEF3;color:var(--start);font-weight:500}
   .leaflet-container{font-family:var(--sans)}
-  /* Die Ortspunkte sind nicht mehr anklickbar, also auch keine Zeigehand darüber;
-     beim Anlegen und Verschieben bleibt so das Fadenkreuz der Karte sichtbar. */
-  #map path.leaflet-interactive{cursor:inherit}
+  /* Ein Klick auf einen Ortspunkt öffnet sein Infofeld — darum die Zeigehand.
+     Beim Anlegen und Verschieben bleibt das Fadenkreuz der Karte sichtbar. */
+  #map path.leaflet-interactive{cursor:pointer}
+  #mapwrap.setzen #map path.leaflet-interactive{cursor:crosshair}
 
   label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;
     text-transform:uppercase;color:var(--muted);margin:0 0 4px}
@@ -262,6 +268,125 @@
   .dirlist{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--start);
     display:block;margin-top:3px}
 
+
+  /* ---------- Orte: Vollbild, Infofeld, Filter ---------- */
+  #mapwrap:fullscreen,#mapwrap:-webkit-full-screen{width:100%;height:100%;background:#fff}
+  #mapwrap:fullscreen #map,#mapwrap:-webkit-full-screen #map{height:100%}
+  /* Ersatz-Vollbild für Browser, die es für einzelne Felder nicht können (iPhone). */
+  #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:#fff}
+  #mapwrap.fsfake #map{height:100%}
+  a.mapfs{display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  a.mapfs svg{width:15px;height:15px;display:block}
+
+  .placepanel{position:absolute;left:12px;bottom:26px;z-index:1000;
+    width:min(330px,calc(100% - 24px));max-height:calc(100% - 52px);overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:0 6px 24px rgba(21,32,43,.18);padding:13px 15px 13px}
+  .placepanel[hidden]{display:none}
+  .placepanel h3{margin:0 20px 3px 0;font-size:16px;font-weight:600;line-height:1.3}
+  .placepanel .x{position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;
+    color:var(--muted);font-family:var(--mono);font-size:17px;line-height:1;padding:2px 5px;border-radius:2px}
+  .placepanel .x:hover{color:var(--ink);background:#EAEFF4}
+  .placepanel .meta{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin:0}
+  .placepanel .infotxt{white-space:pre-wrap;font-size:14px;line-height:1.55;margin:10px 0 0}
+  /* Lange Adressen brechen erst um, wenn sie sonst nicht passen. */
+  .placepanel .lnk{color:var(--chart);overflow-wrap:anywhere}
+  .placepanel .ppact{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .koordzeile{display:flex;align-items:center;gap:7px;margin-top:11px}
+  .kopierbtn{background:none;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;
+    color:var(--muted);padding:3px 5px;line-height:0;display:inline-flex;align-items:center;flex:none}
+  .kopierbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .kopierbtn svg{width:14px;height:14px;display:block}
+  .kopierbtn .ok{display:none}
+  .kopierbtn.fertig{color:var(--ground);border-color:var(--ground);background:#EFF6F2}
+  .kopierbtn.fertig .kop{display:none}
+  .kopierbtn.fertig .ok{display:block}
+  .placepanel .rosezeile{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--start);margin:7px 0 0}
+  /* Auf dem Handy sitzt das Infofeld unten und lässt die obere Kartenhälfte frei —
+     dort schließt ein Klick in die Karte es wieder. */
+  @media(max-width:560px){
+    .placepanel{left:8px;right:8px;bottom:22px;width:auto;max-height:52%}
+  }
+
+  /* Die Legende ist zugleich der Filter nach Art des Orts: jeder Eintrag
+     lässt sich anklicken, angeklickt bleibt nur noch diese Art übrig. */
+  .legend{display:flex;gap:4px 6px;flex-wrap:wrap;align-items:center;
+    padding:7px 11px;border-top:1px solid var(--line)}
+  .legitem{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;
+    color:var(--muted);background:none;border:1px solid transparent;border-radius:99px;
+    padding:3px 10px 3px 8px;cursor:pointer;white-space:nowrap}
+  .legitem:hover{background:#EAEFF4;color:var(--ink)}
+  .legitem[aria-pressed="true"]{background:#FCEEF3;border-color:#F2C9D9;
+    color:var(--ink);font-weight:550}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:50%;
+    border:2.5px solid currentColor;background:#fff;flex:none}
+  /* Noch kein Flug: gestrichelt statt durchgezogen — damit nicht allein die
+     Farbe den Unterschied macht (Rot und Orange liegen nah beieinander). */
+  .dot.offen{border-style:dashed}
+
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .searchrow{padding:11px 15px 0}
+  .searchrow input{font-size:14px;padding:7px 10px}
+  /* Sitzt jetzt unter der Karte, direkt hinter der Legende. */
+  .filterbar{border-top:1px solid var(--line)}
+  .filterhead .chev{flex:none;color:var(--muted);line-height:0;transition:transform .18s ease}
+  .filterhead .chev svg{width:13px;height:13px;display:block}
+  .filterhead[aria-expanded="true"] .chev{transform:rotate(90deg)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 15px 11px}
+  .chips:empty{display:none}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;
+    background:#FCEEF3;color:var(--start);border:1px solid #F2C9D9;border-radius:99px;
+    padding:3px 5px 3px 10px}
+  .chip button{background:none;border:none;cursor:pointer;color:inherit;font-family:var(--mono);
+    font-size:13px;line-height:1;padding:1px 4px;border-radius:50%;opacity:.75}
+  .chip button:hover{opacity:1;background:#F6D7E3}
+  .filterhead{width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;
+    font:inherit;font-size:13.5px;cursor:pointer;padding:10px 15px;color:var(--ink);text-align:left}
+  .filterhead:hover{background:#F2F5F8}
+  .filterhead .st{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted)}
+  .filterhead.an{background:#FCEEF3}
+  .filterhead.an .st{color:var(--start)}
+  .filterbody{padding:13px 15px 15px;border-top:1px solid var(--line);background:#FBFCFD}
+  /* Unter der Karte ist Platz: auf breiten Schirmen steht die Windrose neben
+     den übrigen Einstellungen, damit der Filter nicht so tief wird. */
+  @media(min-width:821px){
+    .filterbody{display:grid;grid-template-columns:1fr 210px;gap:0 22px;align-items:start}
+    .filterbody > *{grid-column:1}
+    .filterbody > #f-dirfield{grid-column:2;grid-row:1/span 9;margin-bottom:0}
+  }
+  .rose.mini{max-width:172px}
+  .rose.mini .seg text{font-size:15px}
+  td.click{cursor:pointer}
+  td.click:hover{background:#F2F5F8}
+  /* Die Ortsliste scrollt in sich selbst, solange sie neben der Karte steht.
+     So bleibt die Karte stehen, wenn ein angeklickter Ort weiter unten liegt. */
+  @media(min-width:821px){
+    #placelist{position:relative;overflow:auto;overscroll-behavior:contain;
+      max-height:calc(100vh - 250px)}
+    #placelist th{position:sticky;top:0;z-index:2;background:var(--panel)}
+    #placelist th.sortbar button{background:var(--panel)}
+  }
+  .placename{text-decoration:underline dotted var(--line);text-underline-offset:3px}
+  td.click:hover .placename{text-decoration-color:var(--muted)}
+  /* Die Zeile zu dem Ort, dessen Infofeld in der Karte gerade offen ist. */
+  tr.aktiv td{background:#FFFBF2}
+  tr.aktiv td:first-child{box-shadow:inset 3px 0 0 var(--start)}
+  th.sortbar{padding:0}
+  th.sortbar button{width:100%;background:none;border:none;cursor:pointer;color:inherit;
+    font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+    text-align:left;padding:0 10px 7px;display:flex;align-items:baseline;gap:4px}
+  th.sortbar button:hover{color:var(--ink)}
+  th.sortbar .pfeilchen{font-size:9px;opacity:0}
+  th.sortbar.an{color:var(--ink)}
+  th.sortbar.an .pfeilchen{opacity:1}
+  /* Der Punkt, der gerade gesetzt oder verschoben wird — er lässt sich ziehen. */
+  .pinmark{display:block;width:21px;height:21px;box-sizing:border-box;border-radius:50%;
+    border:2.5px dashed currentColor;background:rgba(255,255,255,.55);cursor:grab}
+  .leaflet-marker-draggable:active .pinmark{cursor:grabbing}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -290,21 +415,29 @@
     <span class="sub" id="whoami"></span>
     <nav role="tablist">
       <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
-      <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-orte" aria-selected="false" onclick="show('orte')">Orte</button>
+      <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-gear" aria-selected="false" onclick="show('gear')">Ausrüstung</button>
       <button role="tab" id="t-stat" aria-selected="false" onclick="show('stat')">Statistik</button>
       <button role="tab" id="t-save" aria-selected="false" onclick="show('save')">Sicherung</button>
     </nav>
   </header>
 
-  <div class="readout">
+  <div class="readout" id="readout-flug">
     <div><div class="lbl">Gesamt</div><div class="val" id="r-total">0:00<small>h</small></div></div>
     <div><div class="lbl">Dieses Jahr</div><div class="val" id="r-year">0:00<small>h</small></div></div>
     <div><div class="lbl">Dieser Monat</div><div class="val" id="r-month">0:00<small>h</small></div></div>
     <div><div class="lbl">Flüge</div><div class="val" id="r-count">0</div></div>
     <div><div class="lbl">Längster</div><div class="val" id="r-max">0:00<small>h</small></div></div>
     <div><div class="lbl">Groundhandling</div><div class="val" id="r-gh">0:00<small>h</small></div></div>
+  </div>
+
+  <!-- Im Reiter „Orte“ stehen hier die Zahlen zu den Orten statt zu den Flügen. -->
+  <div class="readout" id="readout-orte" style="display:none">
+    <div><div class="lbl">Orte</div><div class="val" id="o-total">0</div></div>
+    <div><div class="lbl">Schon geflogen</div><div class="val" id="o-flown">0</div></div>
+    <div><div class="lbl">Noch offen</div><div class="val" id="o-open">0</div></div>
+    <div><div class="lbl">Höchster Start</div><div class="val" id="o-high">—</div></div>
   </div>
 
   <!-- ---------- FLÜGE ---------- -->
@@ -340,8 +473,64 @@
     <div class="cols">
       <div class="card">
         <h2>Karte</h2>
-        <div id="map"></div>
-        <div class="maphint" id="hint">Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.</div>
+        <div id="mapwrap">
+          <div id="map"></div>
+          <!-- Das Infofeld liegt in der Karte drin, damit es auch im Vollbild aufgeht. -->
+          <div class="placepanel" id="placepanel" hidden>
+            <button class="x" title="Schließen" aria-label="Infofeld schließen" onclick="closePlaceInfo()">×</button>
+            <div id="pp-body"></div>
+            <div class="ppact">
+              <button class="btn small" id="pp-edit">Bearbeiten</button>
+              <button class="btn small ghost" onclick="closePlaceInfo()">Schließen</button>
+            </div>
+          </div>
+        </div>
+        <div class="legend" id="legend">
+          <button type="button" class="legitem" data-typ="start" aria-pressed="false"
+            title="Nur Startplätze zeigen"><i class="dot" style="color:var(--start)"></i> Startplatz</button>
+          <button type="button" class="legitem" data-typ="land" aria-pressed="false"
+            title="Nur Landeplätze zeigen"><i class="dot" style="color:var(--chart)"></i> Landeplatz</button>
+          <button type="button" class="legitem" data-typ="both" aria-pressed="false"
+            title="Nur Orte mit Start und Landung zeigen"><i class="dot" style="color:var(--contour)"></i> Start + Landung</button>
+          <button type="button" class="legitem" data-typ="ground" aria-pressed="false"
+            title="Nur Übungsgelände zeigen"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</button>
+          <button type="button" class="legitem" data-offen="1" aria-pressed="false"
+            title="Nur Orte ohne Eintrag im Flugbuch zeigen"><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug eingetragen</button>
+        </div>
+        <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
+        <div class="maphint" id="hint" style="display:none"></div>
+        <div class="filterbar">
+          <div class="searchrow">
+            <label class="sr-only" for="f-text">Ort suchen</label>
+            <input type="search" id="f-text" placeholder="Ort suchen — Name oder Infotext …" autocomplete="off">
+          </div>
+          <button class="filterhead" id="f-head" onclick="toggleFilter()" aria-expanded="false" aria-controls="f-body">
+            <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></span>
+            <span>Filter</span><span class="st" id="f-state">alle Orte</span></button>
+          <div class="chips" id="f-chips"></div>
+          <div class="filterbody" id="f-body" style="display:none">
+            <div class="pair">
+              <div class="field"><label for="f-min">Höhe ab (m)</label>
+                <input type="number" id="f-min" placeholder="z. B. 1000" step="50"></div>
+              <div class="field"><label for="f-max">Höhe bis (m)</label>
+                <input type="number" id="f-max" placeholder="z. B. 2200" step="50"></div>
+            </div>
+            <div class="field"><label for="f-log">Eintrag im Flugbuch</label>
+              <select id="f-log">
+                <option value="alle">egal</option>
+                <option value="mit">nur Orte, an denen ich schon geflogen bin</option>
+                <option value="ohne">nur Orte, an denen ich noch nicht war</option>
+              </select></div>
+            <div class="field" id="f-dirfield"><label>Startrichtung</label>
+              <svg class="rose mini" id="f-rose" viewBox="0 0 200 200" role="group"
+                   aria-label="Filter: mögliche Startrichtung"></svg>
+              <p class="dirsum" id="f-dirtext"></p></div>
+            <p class="note" id="f-ohnehoehe" style="display:none;margin:0 0 10px"></p>
+            <div class="rowend" style="margin-top:4px">
+              <button class="btn small ghost" onclick="resetFilter()">Filter zurücksetzen</button></div>
+          </div>
+        </div>
       </div>
       <div class="card">
         <h2>Orte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
@@ -364,12 +553,18 @@
             </div>
             <p class="note" id="p-dirmiss" style="display:none;margin-top:0"></p>
           </div>
-          <div class="field"><label for="p-coord">Koordinaten</label><input type="text" id="p-coord" readonly>
+          <div class="field" id="p-infofield">
+            <label for="p-info">Infos und Links <span class="opt">(freiwillig)</span></label>
+            <textarea id="p-info" style="min-height:92px"
+              placeholder="Zufahrt, Gebühren, Besonderheiten, wo man parkt …&#10;Adressen wie youtube.com/watch?v=… werden von selbst anklickbar."></textarea></div>
+          <p class="note" id="p-extramiss" style="display:none;margin:-4px 0 12px"></p>
+          <div class="field"><label for="p-coord">Koordinaten <span class="opt">(Karte oder eintippen)</span></label>
+            <input type="text" id="p-coord" inputmode="decimal" placeholder="46.50000, 11.35000">
             <p class="note" id="p-elev" style="margin-top:5px"></p>
             <p class="note" id="p-coordhint" style="margin-top:5px"></p></div>
           <div class="rowend" style="margin-top:0">
             <button class="btn" id="p-save" onclick="savePlace()">Ort speichern</button>
-            <button class="btn ghost" onclick="cancelPlace()">Abbrechen</button>
+            <button class="btn ghost" onclick="cancelPlaceAsk()">Abbrechen</button>
           </div>
         </div>
         <div id="placelist"></div>
@@ -504,7 +699,7 @@ let S = { places: [], gear: [], flights: [] };
 /* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
    siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
-let HAS = { dist:false, asc:false, gclass:false, dirs:false };
+let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
@@ -526,6 +721,18 @@ let pendingDirs = [];
 /* Wird ein Ort nachträglich bearbeitet, steht seine id in `editId`;
    `pending` hält dann die (eventuell verschobene) Stelle. */
 let editId = null;
+/* Der Ort, dessen Infofeld gerade in der Karte offen ist. */
+let infoId = null;
+/* Der Kartenausschnitt wird einmal auf alle Orte gestellt, sobald die Karte
+   das erste Mal wirklich zu sehen ist — vorher kennt sie ihre Größe nicht.
+   Danach ändert ihn nur noch, wer es selbst verlangt: durch einen Klick auf
+   einen Ort in der Liste oder auf den Knopf „Alle Orte ins Bild holen“. */
+let kartePasst = false;
+/* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
+   Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
+const F = { text:'', typen:[], min:'', max:'', log:'alle', dirs:[] };
+/* Wonach die Ortsliste sortiert ist. `ab` heißt aufsteigend. */
+let SORT = { key:'name', ab:true };
 
 const pad = n => String(n).padStart(2,'0');
 const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
@@ -544,6 +751,44 @@ const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildu
                siv:'SIV', comp:'Wettkampf', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
 const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
+/* Wie die Arten in der Legende unter der Karte heißen. */
+const ARTLBL = {start:'Startplatz', land:'Landeplatz', both:'Start + Landung', ground:'Übungsgelände'};
+/* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
+   eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
+const KEINFLUG = '#E07A1F';
+const fluegeAn = id => S.flights.filter(f => f.start === id || f.land === id).length;
+const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
+/* Ein Link darf auch ohne „https://“ eingetippt werden. */
+const linkNorm = v => {
+  const t = String(v ?? '').trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : 'https://' + t;
+};
+const linkKurz = u => { const t = String(u).replace(/^https?:\/\//i,'').replace(/\/$/,'');
+  return t.length > 42 ? t.slice(0,40) + '…' : t; };
+/* Infos und Links stehen in einem einzigen Textfeld. Beim Anzeigen werden alle
+   Adressen darin erkannt und anklickbar gemacht — beliebig viele, mitten im Text.
+   Erkannt wird alles, was mit http:// oder https:// oder www. anfängt, dazu
+   youtube.com und youtu.be auch ohne Vorsatz. */
+const LINKRE = /((?:https?:\/\/|www\.)[^\s<>"']+|(?:youtu\.be|youtube\.com)\/[^\s<>"']+)/gi;
+function textMitLinks(txt){
+  const t = String(txt ?? '');
+  let out = '', ab = 0, m;
+  LINKRE.lastIndex = 0;
+  while ((m = LINKRE.exec(t)) !== null){
+    let roh = m[0];
+    /* Satzzeichen direkt hinter der Adresse gehören zum Satz, nicht zum Link. */
+    const schwanz = roh.match(/[.,;:!?)\]]+$/);
+    if (schwanz) roh = roh.slice(0, -schwanz[0].length);
+    if (!roh){ LINKRE.lastIndex = m.index + m[0].length; continue; }
+    out += esc(t.slice(ab, m.index))
+      + `<a class="lnk" href="${esc(linkNorm(roh))}" target="_blank" rel="noopener">${esc(linkKurz(roh))} ↗</a>`;
+    ab = m.index + roh.length;
+    LINKRE.lastIndex = ab;
+  }
+  return out + esc(t.slice(ab));
+}
+
 const isGH = f => f.kind === 'gh';
 const pname = id => (S.places.find(p=>p.id===id)||{}).name || '—';
 /* Strecke als Text — je nachdem, was eingetragen ist. Leer, wenn gar kein Ort drinsteht. */
@@ -610,18 +855,20 @@ async function startApp(session){
 
 /* ══════════ DATEN LADEN ══════════ */
 async function checkCols(){
-  const [d, a, g, r, h] = await Promise.all([
+  const [d, a, g, r, h, i] = await Promise.all([
     sb.from('flights').select('dist_km').limit(1),
     sb.from('flights').select('ascent').limit(1),
     sb.from('gear').select('gclass').limit(1),
     sb.from('places').select('dirs').limit(1),
-    sb.from('places').select('elev').limit(1)
+    sb.from('places').select('elev').limit(1),
+    sb.from('places').select('info').limit(1)
   ]);
   HAS.dist   = !d.error;
   HAS.asc    = !a.error;
   HAS.gclass = !g.error;
   HAS.dirs   = !r.error;
   HAS.elev   = !h.error;
+  HAS.info   = !i.error;
 }
 
 async function loadAll(){
@@ -643,6 +890,7 @@ async function loadAll(){
   renderAll(); renderStats();
   /* Die Höhen kommen nach: sie brauchen einen Moment und sollen das Laden nicht aufhalten.
      Orte, bei denen sie schon in der Datenbank steht, werden dabei übersprungen. */
+  if (!kartePasst) passeKarteAn();
   const ohneHoehe = HAS.elev ? S.places.filter(p => p.elev == null) : S.places;
   ladeHoehen(ohneHoehe, () => { renderPlaceList(); drawPlaces(); }).then(hoehenNachtragen);
 }
@@ -653,7 +901,14 @@ window.show = v => {
     document.getElementById('v-'+k).classList.toggle('on', k===v);
     document.getElementById('t-'+k).setAttribute('aria-selected', k===v);
   });
-  if (v==='orte' && map) setTimeout(()=>map.invalidateSize(), 60);
+  /* Im Reiter „Orte“ zählen die Orte, überall sonst die Flugstunden. */
+  document.getElementById('readout-flug').style.display = v==='orte' ? 'none' : '';
+  document.getElementById('readout-orte').style.display = v==='orte' ? '' : 'none';
+  if (v==='orte' && map) setTimeout(() => {
+    map.invalidateSize();
+    /* Beim ersten Öffnen alle Orte ins Bild holen — jetzt kennt die Karte ihre Größe. */
+    if (!kartePasst) passeKarteAn();
+  }, 60);
   if (v==='stat') renderStats();
 };
 
@@ -821,47 +1076,211 @@ async function zeigeHoehe(lat, lng, gespeichert){
 }
 
 /* ══════════ KARTE UND ORTE ══════════ */
+/* Den früher gemerkten Umschalter-Stand gibt es nicht mehr — einmal aufräumen. */
+try { localStorage.removeItem('flugbuch-kartenansicht'); } catch(e){}
 function initMap(){
   /* Startansicht: Bozen in der Mitte, zwei Zoomstufen näher als früher.
      Zoomen mit dem Scrollrad, sobald die Maus über der Karte ist. */
   map = L.map('map', {scrollWheelZoom:true}).setView([46.4983, 11.3548], 10);
 
-  /* Standard ist die Topo-Karte mit Höhenlinien; Strassenkarte bleibt umschaltbar. */
-  const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    {maxZoom:17, attribution:'© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)'});
-  const strasse = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {maxZoom:18, attribution:'© OpenStreetMap'});
-  topo.addTo(map);
-  L.control.layers({'Topo':topo, 'Strasse':strasse}, null, {position:'topright'}).addTo(map);
+  /* Eine einzige Karte: die Topo-Karte mit Höhenlinien und Geländeschattierung,
+     im Browser entfärbt. Alles bleibt erhalten — Höhenlinien, Schummerung, Wege,
+     Beschriftung —, nur die bunten Wald-, Fels- und Wasserflächen treten zurück,
+     wodurch die Ortspunkte herausstechen. Der Kartendienst liefert dieselbe
+     Kachel wie in Farbe; entfärbt wird erst beim Anzeigen.
+     Die Kacheln gibt es bis Zoomstufe 17. Eine Stufe näher geht trotzdem: dann
+     wird die letzte Kachel vergrössert — etwas unschärfer, aber zum genauen
+     Setzen eines Punktes hilfreich. */
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxNativeZoom: 17, maxZoom: 18, className: 'kartegrau',
+    attribution: '© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)'
+  }).addTo(map);
   layer = L.layerGroup().addTo(map);
+  addVollbildKnopf();
+  addAlleZeigenKnopf();
   /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
      und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
-  document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncRose(); });
-  buildRose();
+  document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncForm(); });
+  buildRose('p-rose', toggleDir);
+  initFilter();
   map.on('click', e => {
+    /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild. */
+    if (infoId) closePlaceInfo();
     if (!armed && !editId) return;
-    pending = {lat:e.latlng.lat, lng:e.latlng.lng};
-    document.getElementById('p-coord').value = pending.lat.toFixed(5)+', '+pending.lng.toFixed(5);
-    zeigeHoehe(pending.lat, pending.lng);
-    document.getElementById('placeform').style.display = 'block';
-    syncRose();
-    if (!editId) document.getElementById('p-name').focus();
-    drawPlaces();
+    const neu = !pending && !editId;
+    setzePending(e.latlng.lat, e.latlng.lng);
+    if (neu) nameFokus();
   });
+
+  /* Koordinaten lassen sich auch eintippen oder hineinkopieren — praktisch für
+     Orte, an denen man noch nie war und die man aus einer Karte übernimmt. */
+  const coord = document.getElementById('p-coord');
+  coord.addEventListener('change', leseKoord);
+  coord.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); leseKoord(); } });
+}
+
+/* Die Stelle des Orts, der gerade angelegt oder bearbeitet wird. */
+function setzePending(lat, lng){
+  pending = {lat, lng};
+  document.getElementById('p-coord').value = lat.toFixed(5) + ', ' + lng.toFixed(5);
+  zeigeHoehe(lat, lng);
+  document.getElementById('placeform').style.display = 'block';
+  syncForm();
+  drawPlaces();
+}
+
+/* „46.50000, 11.35000“, „46,5 11,3“ oder aus einer Karten-App kopiert. */
+function parseKoord(text){
+  const t = String(text || '').trim();
+  let teile = t.split(/;|,\s|\s+/).filter(Boolean);
+  if (teile.length !== 2) teile = t.split(',').map(x => x.trim()).filter(Boolean);
+  if (teile.length !== 2) return null;
+  const lat = parseFloat(teile[0].replace(',', '.'));
+  const lng = parseFloat(teile[1].replace(',', '.'));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return {lat, lng};
+}
+
+function leseKoord(){
+  const feld = document.getElementById('p-coord');
+  if (!armed && !editId) return;
+  const k = parseKoord(feld.value);
+  if (!k){
+    toast('Koordinaten bitte als „46.50000, 11.35000“ eintragen.', true);
+    if (pending) feld.value = pending.lat.toFixed(5) + ', ' + pending.lng.toFixed(5);
+    return;
+  }
+  /* Steht dieselbe Stelle schon drin, passiert nichts — sonst würde das bloße
+     Verlassen des Feldes den Punkt neu setzen und ein begonnenes Ziehen abbrechen. */
+  if (pending && k.lat.toFixed(5) === pending.lat.toFixed(5)
+              && k.lng.toFixed(5) === pending.lng.toFixed(5)){
+    feld.value = pending.lat.toFixed(5) + ', ' + pending.lng.toFixed(5);
+    return;
+  }
+  setzePending(k.lat, k.lng);
+  if (map) map.setView([k.lat, k.lng], Math.max(map.getZoom(), 13));
+}
+
+/* ---------- Kartenausschnitt ----------
+   Die Karte soll zeigen, was die Liste zeigt: beim ersten Laden alle Orte,
+   und sobald gefiltert wird, genau die übrig gebliebenen. */
+/* Alle gerade sichtbaren Orte ins Bild holen. Wird beim ersten Öffnen einmal
+   von selbst aufgerufen, danach nur noch auf Knopfdruck. */
+function passeKarteAn(){
+  if (!map || map.getSize().x < 60) return;      /* Karte gerade nicht sichtbar */
+  const liste = sichtbareOrte();
+  if (!liste.length) return;
+  const rand = L.latLngBounds(liste.map(p => [p.lat, p.lng]));
+  map.fitBounds(rand, {padding:[45,45], maxZoom:14});
+  kartePasst = true;
+}
+
+function addAlleZeigenKnopf(){
+  const Knopf = L.Control.extend({
+    options: {position:'topleft'},
+    onAdd(){
+      const box = L.DomUtil.create('div', 'leaflet-bar');
+      const a = L.DomUtil.create('a', 'mapfs', box);
+      a.href = '#';
+      a.setAttribute('role', 'button');
+      a.title = 'Alle Orte ins Bild holen';
+      a.setAttribute('aria-label', 'Alle Orte ins Bild holen');
+      a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+        + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<circle cx="12" cy="10.5" r="2.6"></circle>'
+        + '<path d="M12 21.5c4-4.6 6-7.9 6-10.4a6 6 0 1 0-12 0c0 2.5 2 5.8 6 10.4Z"></path></svg>';
+      L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', () => passeKarteAn());
+      return box;
+    }
+  });
+  map.addControl(new Knopf());
+}
+
+/* ---------- Vollbild ----------
+   Der Knopf sitzt links unter dem Zoom. Im Vollbild geht die Karte über den
+   ganzen Bildschirm; das Infofeld liegt mit drin und funktioniert weiter.
+   Kann der Browser kein Vollbild für ein einzelnes Feld (ältere iPhones),
+   wird die Karte stattdessen über die ganze Seite gelegt — sieht gleich aus. */
+const FSICON = {
+  an:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>',
+  aus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"></path></svg>'
+};
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+const imVollbild = () => {
+  const el = document.getElementById('mapwrap');
+  return fsEl() === el || el.classList.contains('fsfake');
+};
+
+function addVollbildKnopf(){
+  const Knopf = L.Control.extend({
+    options: {position:'topleft'},
+    onAdd(){
+      const box = L.DomUtil.create('div', 'leaflet-bar');
+      const a = L.DomUtil.create('a', 'mapfs', box);
+      a.id = 'mapfs'; a.href = '#';
+      a.setAttribute('role', 'button');
+      a.title = 'Karte im Vollbild zeigen';
+      a.setAttribute('aria-label', 'Karte im Vollbild zeigen');
+      a.innerHTML = FSICON.an;
+      L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', toggleVollbild);
+      return box;
+    }
+  });
+  map.addControl(new Knopf());
+  document.addEventListener('fullscreenchange', nachVollbild);
+  document.addEventListener('webkitfullscreenchange', nachVollbild);
+}
+
+window.toggleVollbild = () => {
+  const el = document.getElementById('mapwrap');
+  if (imVollbild()) return verlasseVollbild();
+  const an = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (an){
+    try { Promise.resolve(an.call(el)).catch(ersatzVollbild); }
+    catch(e){ ersatzVollbild(); }
+  } else ersatzVollbild();
+};
+
+function ersatzVollbild(){
+  document.getElementById('mapwrap').classList.add('fsfake');
+  nachVollbild();
+}
+
+window.verlasseVollbild = () => {
+  const el = document.getElementById('mapwrap');
+  if (fsEl() === el){
+    const aus = document.exitFullscreen || document.webkitExitFullscreen;
+    if (aus) aus.call(document);
+  } else if (el.classList.contains('fsfake')){
+    el.classList.remove('fsfake');
+    nachVollbild();
+  }
+};
+
+function nachVollbild(){
+  const drin = imVollbild();
+  const a = document.getElementById('mapfs');
+  if (a){
+    a.innerHTML = drin ? FSICON.aus : FSICON.an;
+    const t = drin ? 'Vollbild beenden' : 'Karte im Vollbild zeigen';
+    a.title = t; a.setAttribute('aria-label', t);
+  }
+  /* Leaflet muss erfahren, dass die Karte jetzt anders groß ist. */
+  setTimeout(() => { if (map) map.invalidateSize(); }, 150);
 }
 
 /* ---------- Windrose ----------
    Acht anklickbare Kuchenstücke. Jedes steht für eine Richtung; angeklickt heißt:
    hier lässt sich bei diesem Wind starten. Nochmal anklicken nimmt sie wieder weg. */
-function buildRose(){
+function roseMarkup(){
   const mitte = 100, aussen = 82, innen = 38, luft = 1.6;
   /* Norden ist oben, weiter im Uhrzeigersinn — wie auf einer Karte. */
   const pt = (grad, r) => {
     const b = grad * Math.PI / 180;
     return [(mitte + r*Math.sin(b)).toFixed(2), (mitte - r*Math.cos(b)).toFixed(2)];
   };
-  document.getElementById('p-rose').innerHTML =
-    RICHTUNGEN.map((d,i) => {
+  return RICHTUNGEN.map((d,i) => {
       const a0 = i*45 - 22.5 + luft, a1 = i*45 + 22.5 - luft;
       const [x1,y1] = pt(a0, innen), [x2,y2] = pt(a0, aussen);
       const [x3,y3] = pt(a1, aussen), [x4,y4] = pt(a1, innen);
@@ -872,30 +1291,39 @@ function buildRose(){
                  L${x4} ${y4} A${innen} ${innen} 0 0 0 ${x1} ${y1} Z"></path>
         <text x="${tx}" y="${ty}" dy=".35em">${d}</text></g>`;
     }).join('') + `<circle class="mitte" cx="100" cy="100" r="3.5"></circle>`;
+}
 
-  const rose = document.getElementById('p-rose');
+/* Es gibt zwei Windrosen: eine im Ortsformular, eine im Filter. Beide werden
+   hier gebaut; was ein Klick bewirkt, steht jeweils daneben. */
+function buildRose(id, klick){
+  const rose = document.getElementById(id);
+  rose.innerHTML = roseMarkup();
   rose.addEventListener('click', e => {
-    const g = e.target.closest('.seg'); if (g) toggleDir(g.dataset.dir);
+    const g = e.target.closest('.seg'); if (g) klick(g.dataset.dir);
   });
   /* Mit der Tastatur: mit Tab auf ein Stück, dann Leertaste oder Enter. */
   rose.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const g = e.target.closest('.seg'); if (!g) return;
-    e.preventDefault(); toggleDir(g.dataset.dir);
+    e.preventDefault(); klick(g.dataset.dir);
+  });
+}
+
+function paintRose(id, liste){
+  document.querySelectorAll('#'+id+' .seg').forEach(g => {
+    const an = liste.includes(g.dataset.dir);
+    g.classList.toggle('on', an);
+    g.setAttribute('aria-checked', an ? 'true' : 'false');
   });
 }
 
 function toggleDir(d){
   pendingDirs = pendingDirs.includes(d) ? pendingDirs.filter(x=>x!==d) : [...pendingDirs, d];
-  paintRose();
+  paintFormRose();
 }
 
-function paintRose(){
-  document.querySelectorAll('#p-rose .seg').forEach(g => {
-    const an = pendingDirs.includes(g.dataset.dir);
-    g.classList.toggle('on', an);
-    g.setAttribute('aria-checked', an ? 'true' : 'false');
-  });
+function paintFormRose(){
+  paintRose('p-rose', pendingDirs);
   const gewaehlt = dirSort(pendingDirs);
   const t = document.getElementById('p-dirtext');
   t.textContent = gewaehlt.length ? 'Startrichtung: ' + gewaehlt.join(', ')
@@ -916,69 +1344,340 @@ function syncRose(){
   miss.textContent = HAS.dirs ? ''
     : 'Startrichtungen sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
       + 'geht, steht in der README unter „Später dazugekommene Felder“.';
-  paintRose();
+  paintFormRose();
 }
 
-window.toggleArm = () => {
+/* Infos und Link gibt es nur, wenn die beiden Spalten in der Datenbank da sind. */
+function syncExtraFelder(){
+  document.getElementById('p-infofield').style.display = HAS.info ? '' : 'none';
+  const miss = document.getElementById('p-extramiss');
+  miss.style.display = HAS.info ? 'none' : '';
+  miss.textContent = HAS.info ? ''
+    : 'Infos und Links sind in der Datenbank noch nicht freigeschaltet. Wie das einmalig '
+      + 'geht, steht in der README unter „Später dazugekommene Felder“.';
+}
+
+/* Alles, was sich am Formular je nach Art und Datenbank ändert. */
+function syncForm(){ syncRose(); syncExtraFelder(); }
+
+/* ---------- Filter über den Orten ---------- */
+const filterAn = () => F.text !== '' || F.typen.length > 0 || F.min !== '' || F.max !== ''
+                    || F.log !== 'alle' || F.dirs.length > 0;
+
+function passtFilter(p){
+  const n = fluegeAn(p.id);
+  /* Art des Orts — angeklickt wird sie in der Legende unter der Karte.
+     Mehrere Arten gleichzeitig heißen „oder“. */
+  if (F.typen.length && !F.typen.includes(p.type)) return false;
+  /* Die Suche schaut in den Namen und in den Infotext. */
+  if (F.text){
+    const wo = ((p.name || '') + ' ' + (p.info || '')).toLowerCase();
+    if (!wo.includes(F.text)) return false;
+  }
+  if (F.log === 'mit'  && !n) return false;
+  if (F.log === 'ohne' &&  n) return false;
+  if (F.min !== '' || F.max !== ''){
+    const m = hoeheOrt(p);
+    if (!Number.isFinite(m)) return false;          /* Höhe unbekannt — passt zu keiner Spanne */
+    if (F.min !== '' && m < +F.min) return false;
+    if (F.max !== '' && m > +F.max) return false;
+  }
+  /* Startrichtung: der Ort zählt, wenn dort *mindestens eine* der gewählten
+     Richtungen geht. Gedacht für die Windvorhersage — kommt der Wind aus Ost,
+     tippt man NO, O und SO an und sieht alles, was bei einer davon startbar
+     ist. Orte ohne Startrichtung (Landeplatz, Übungsgelände) fallen heraus. */
+  if (F.dirs.length){
+    const d = dirsIn(p.dirs);
+    if (!F.dirs.some(x => d.includes(x))) return false;
+  }
+  return true;
+}
+
+const sichtbareOrte = () => S.places.filter(passtFilter);
+
+function initFilter(){
+  /* Die Legende unter der Karte ist zugleich der Filter nach Art des Orts. */
+  document.getElementById('legend').addEventListener('click', e => {
+    const b = e.target.closest('.legitem'); if (!b) return;
+    if (b.dataset.offen){
+      /* „noch kein Flug“ schaltet denselben Filter wie die Auswahlliste. */
+      const an = F.log !== 'ohne';
+      document.getElementById('f-log').value = an ? 'ohne' : 'alle';
+    } else {
+      const t = b.dataset.typ;
+      F.typen = F.typen.includes(t) ? F.typen.filter(x => x !== t) : [...F.typen, t];
+    }
+    applyFilter();
+  });
+  ['f-min','f-max','f-text'].forEach(id =>
+    document.getElementById(id).addEventListener('input', applyFilter));
+  document.getElementById('f-log').addEventListener('change', applyFilter);
+  buildRose('f-rose', d => {
+    F.dirs = F.dirs.includes(d) ? F.dirs.filter(x=>x!==d) : [...F.dirs, d];
+    applyFilter();
+  });
+  paintFilterRose();
+}
+
+/* „N“, „N oder W“, „N, W oder NW“ — Aufzählung wie in normalem Deutsch. */
+const oderListe = l => l.length < 2 ? (l[0] || '')
+  : l.slice(0, -1).join(', ') + ' oder ' + l[l.length - 1];
+
+function paintFilterRose(){
+  paintRose('f-rose', F.dirs);
+  const gewaehlt = dirSort(F.dirs);
+  const t = document.getElementById('f-dirtext');
+  t.textContent = gewaehlt.length
+    ? 'Nur Orte mit Start bei ' + oderListe(gewaehlt)
+    : 'Egal — tipp an, aus welcher Richtung der Wind kommt.';
+  t.classList.toggle('hat', gewaehlt.length > 0);
+}
+
+window.applyFilter = () => {
+  F.text = document.getElementById('f-text').value.trim().toLowerCase();
+  F.min = document.getElementById('f-min').value.trim();
+  F.max = document.getElementById('f-max').value.trim();
+  F.log = document.getElementById('f-log').value;
+  paintFilterRose();
+  /* Ein Infofeld zu einem Ort, der jetzt weggefiltert ist, geht zu. */
+  if (infoId && !S.places.some(p => p.id === infoId && passtFilter(p))) closePlaceInfo();
+  renderPlaceList();
+  drawPlaces();
+  /* Der Kartenausschnitt bleibt beim Filtern, wie er ist — sonst springt der
+     Zoom bei jeder Änderung. Wer die Treffer ins Bild holen will, nimmt den
+     Knopf mit der Kartennadel links in der Karte. */
+};
+
+window.resetFilter = () => {
+  F.typen = [];
+  document.getElementById('f-text').value = '';
+  document.getElementById('f-min').value = '';
+  document.getElementById('f-max').value = '';
+  document.getElementById('f-log').value = 'alle';
+  F.dirs = [];
+  applyFilter();
+};
+
+/* Die Kärtchen unter dem Filterkopf: was gerade eingestellt ist, auf einen Blick
+   und einzeln wieder wegklickbar — ohne den Filter erst aufklappen zu müssen. */
+function renderChips(){
+  const c = [];
+  if (F.text) c.push(['text', '„' + F.text + '“']);
+  ['start','land','both','ground'].filter(t => F.typen.includes(t))
+    .forEach(t => c.push(['typ:' + t, ARTLBL[t]]));
+  if (F.min !== '') c.push(['min', 'ab ' + F.min + ' m']);
+  if (F.max !== '') c.push(['max', 'bis ' + F.max + ' m']);
+  if (F.log !== 'alle') c.push(['log', F.log === 'mit' ? 'schon geflogen' : 'noch nicht geflogen']);
+  if (F.dirs.length) c.push(['dirs', 'Start bei ' + dirSort(F.dirs).join(' / ')]);
+  document.getElementById('f-chips').innerHTML = c.map(([k, t]) =>
+    `<span class="chip">${esc(t)}<button onclick="chipWeg('${k}')" title="Diesen Filter entfernen"
+      aria-label="Filter ${esc(t)} entfernen">×</button></span>`).join('');
+}
+
+window.chipWeg = was => {
+  if (was.startsWith('typ:')) F.typen = F.typen.filter(t => t !== was.slice(4));
+  if (was === 'text') document.getElementById('f-text').value = '';
+  if (was === 'min')  document.getElementById('f-min').value = '';
+  if (was === 'max')  document.getElementById('f-max').value = '';
+  if (was === 'log')  document.getElementById('f-log').value = 'alle';
+  if (was === 'dirs') F.dirs = [];
+  applyFilter();
+};
+
+window.toggleFilter = () => {
+  const b = document.getElementById('f-body');
+  const auf = b.style.display === 'none';
+  b.style.display = auf ? '' : 'none';
+  document.getElementById('f-head').setAttribute('aria-expanded', auf ? 'true' : 'false');
+};
+
+/* Die Zeile am Filterkopf: wie viele Orte gerade zu sehen sind. */
+function setFilterState(){
+  const alle = S.places.length, sicht = sichtbareOrte().length;
+  const an = filterAn();
+  document.getElementById('f-state').textContent =
+    an ? sicht + ' von ' + alle + ' Orten' : (alle === 1 ? '1 Ort' : 'alle ' + alle + ' Orte');
+  document.getElementById('f-head').classList.toggle('an', an);
+  document.querySelectorAll('#legend .legitem').forEach(b => {
+    const gedrueckt = b.dataset.offen ? F.log === 'ohne' : F.typen.includes(b.dataset.typ);
+    b.setAttribute('aria-pressed', gedrueckt ? 'true' : 'false');
+  });
+  document.getElementById('f-dirfield').style.display = HAS.dirs ? '' : 'none';
+  renderChips();
+  /* Wer nach Höhe filtert, verliert Orte, deren Höhe noch nicht bekannt ist —
+     das soll nicht unbemerkt passieren. */
+  const ohne = (F.min !== '' || F.max !== '')
+    ? S.places.filter(p => !Number.isFinite(hoeheOrt(p))).length : 0;
+  const hinweis = document.getElementById('f-ohnehoehe');
+  hinweis.style.display = ohne ? '' : 'none';
+  hinweis.textContent = ohne
+    ? (ohne === 1 ? '1 Ort ohne bekannte Höhe ist dabei ausgeblendet.'
+                  : ohne + ' Orte ohne bekannte Höhe sind dabei ausgeblendet.') : '';
+}
+
+/* Die Kennzahlen über der Seite, solange der Reiter „Orte“ offen ist. */
+function renderOrteZahlen(){
+  const alle = S.places.length;
+  const geflogen = S.places.filter(p => fluegeAn(p.id)).length;
+  const hoch = S.places.filter(p => startet(p.type))
+    .map(hoeheOrt).filter(Number.isFinite);
+  document.getElementById('o-total').textContent = alle;
+  document.getElementById('o-flown').textContent = geflogen;
+  document.getElementById('o-open').textContent  = alle - geflogen;
+  document.getElementById('o-high').innerHTML = hoch.length
+    ? Math.round(Math.max(...hoch)).toLocaleString('de-DE') + '<small>m</small>' : '—';
+}
+
+window.toggleArm = () => mitRueckfrage(armUm);
+
+function armUm(){
   if (editId) endEditPlace();          /* ein offenes Bearbeiten zuerst schließen */
   armed = !armed;
   document.getElementById('armbtn').textContent = armed ? 'Abbrechen' : 'Ort hinzufügen';
-  const h = document.getElementById('hint');
-  h.classList.toggle('armed', armed);
-  h.textContent = armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz.'
-                        : 'Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.';
+  setzeHint(armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz — '
+                  + 'oder trag rechts die Koordinaten ein.' : '');
   if (!armed) cancelPlace();
-  if (map) map.getContainer().style.cursor = armed ? 'crosshair' : '';
-};
+  else {
+    /* Gleich das Formular zeigen: so lassen sich Koordinaten auch einfügen,
+       ohne vorher in die Karte zu klicken. */
+    document.getElementById('placeform').style.display = 'block';
+    syncForm(); placeFormLabels(); formMerken();
+    nameFokus();
+  }
+  cursorStil();
+}
+
+/* Auf dem Handy stehen Karte und Formular untereinander. Dort springt der
+   Blick nicht ins Formular, sonst rutscht die Karte aus dem Bild — und genau
+   die braucht man als Nächstes, um den Punkt zu setzen oder zu ziehen. */
+const schmal = () => window.matchMedia('(max-width:820px)').matches;
+const nameFokus = () => { if (!schmal()) document.getElementById('p-name').focus(); };
+
+/* Die Zeile unter der Karte. Sie erscheint nur, solange etwas zu tun ist —
+   beim Anlegen und beim Verschieben. Sonst bleibt sie leer und wird ausgeblendet. */
+function setzeHint(text){
+  const h = document.getElementById('hint');
+  h.textContent = text || '';
+  h.style.display = text ? '' : 'none';
+  h.classList.toggle('armed', !!text);
+}
+
+/* Fadenkreuz, solange ein Ort gesetzt oder verschoben wird — sonst Zeigehand. */
+function cursorStil(){
+  const setzen = armed || !!editId;
+  const wrap = document.getElementById('mapwrap');
+  if (wrap) wrap.classList.toggle('setzen', setzen);
+  if (map) map.getContainer().style.cursor = setzen ? 'crosshair' : '';
+}
 
 function drawPlaces(){
   if (!layer) return;
   layer.clearLayers();
-  S.places.forEach(p => {
+  /* Ist ein Filter aktiv, stehen nur noch die passenden Orte in der Karte. */
+  sichtbareOrte().forEach(p => {
     /* Der Ort, der gerade bearbeitet wird, steht unten als gestrichelter Punkt. */
     if (editId === p.id && pending) return;
-    L.circleMarker([p.lat,p.lng],
-      {radius:7, color:COLOR[p.type], weight:2.5, fillColor:'#fff', fillOpacity:1})
-      /* Zeigen auf den Punkt blendet die Infozeile ein. Ein Klick darauf tut nichts —
-         bearbeitet wird über den Stift in der Liste, damit nichts aus Versehen aufgeht. */
+    const punkt = L.circleMarker([p.lat,p.lng],
+      {radius:7, color:farbeVon(p), weight:2.5,
+       /* Ohne Eintrag im Flugbuch gestrichelt — der Unterschied hängt so nicht
+          allein an der Farbe, die sich von Rot nur wenig abhebt. */
+       dashArray: fluegeAn(p.id) ? null : '4 3',
+       fillColor: infoId === p.id ? farbeVon(p) : '#fff',
+       fillOpacity: infoId === p.id ? .35 : 1})
+      /* Zeigen auf den Punkt blendet die kurze Infozeile ein,
+         ein Klick öffnet das Infofeld mit allem, was zum Ort gespeichert ist. */
       .bindTooltip(p.name+' · '+TYPEN[p.type]
         + (hoeheTxtOrt(p) ? ' · '+hoeheTxtOrt(p) : '')
-        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : ''), {direction:'top'})
-      .addTo(layer);
+        + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
+        + (fluegeAn(p.id) ? '' : ' · noch kein Flug'), {direction:'top'});
+    punkt.on('click', ev => {
+      /* Beim Anlegen und Verschieben gilt der Klick der Karte, nicht dem Punkt —
+         so lässt sich ein Ort auch genau auf einen anderen schieben. */
+      if (armed || editId) return;
+      L.DomEvent.stopPropagation(ev);
+      openPlaceInfo(p.id);
+    });
+    punkt.addTo(layer);
   });
   if (pending){
     const typ = document.getElementById('p-type').value;
     const nm  = document.getElementById('p-name').value.trim();
-    L.circleMarker([pending.lat,pending.lng],
-      {radius:9, color: editId ? (COLOR[typ]||'#15202B') : '#15202B', weight:2.5,
-       dashArray:'3 3', fillColor: editId ? (COLOR[typ]||'#15202B') : '#15202B', fillOpacity:.2})
-      .bindTooltip((nm || 'Neuer Ort') + ' · wird gerade bearbeitet', {direction:'top'})
+    const farbe = editId ? (COLOR[typ] || '#15202B') : '#15202B';
+    /* Zum Verschieben lässt sich dieser Punkt mit der Maus (oder dem Finger)
+       anfassen und ziehen; ein Klick in die Karte setzt ihn weiterhin auch um. */
+    L.marker([pending.lat, pending.lng], {
+        draggable: true, autoPan: true, keyboard: false,
+        icon: L.divIcon({className:'', iconSize:[21,21], iconAnchor:[10.5,10.5],
+          html:`<span class="pinmark" style="color:${farbe}"></span>`})
+      })
+      .bindTooltip((nm || 'Neuer Ort') + ' · zum Verschieben ziehen', {direction:'top', offset:[0,-8]})
+      .on('dragend', ev => {
+        const ll = ev.target.getLatLng();
+        setzePending(ll.lat, ll.lng);
+      })
       .addTo(layer);
   }
 }
 
 /* Einen vorhandenen Ort bearbeiten: Name, Art und Stelle auf der Karte. */
 window.editPlace = id => {
+  if (editId === id) return;                       /* schon offen */
+  mitRueckfrage(() => oeffneOrt(id));
+};
+
+function oeffneOrt(id){
   const p = S.places.find(x=>x.id===id); if (!p) return;
-  if (armed) toggleArm();                 /* „Ort hinzufügen“ zuerst beenden */
+  if (armed){ armed = false; document.getElementById('armbtn').textContent = 'Ort hinzufügen'; }
+  if (imVollbild()) verlasseVollbild();   /* das Formular steht neben der Karte */
+  closePlaceInfo();
   editId  = id;
   pending = {lat:p.lat, lng:p.lng};
   document.getElementById('p-name').value  = p.name;
   document.getElementById('p-type').value  = p.type;
+  document.getElementById('p-info').value  = p.info || '';
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
   zeigeHoehe(p.lat, p.lng, p.elev);
   pendingDirs = dirsIn(p.dirs);
   document.getElementById('placeform').style.display = 'block';
   placeFormLabels();
-  syncRose();
+  syncForm();
+  cursorStil();
   if (map){
-    map.getContainer().style.cursor = 'crosshair';
     map.setView([p.lat, p.lng], Math.max(map.getZoom(), 12));
   }
   drawPlaces();
   show('orte');
-  document.getElementById('p-name').focus();
-};
+  formMerken();
+  nameFokus();
+}
+
+/* ---------- Nicht gespeicherte Änderungen ----------
+   Beim Öffnen des Formulars wird sein Inhalt gemerkt. Wer dann weiterklickt,
+   ohne zu speichern, wird gefragt — wie in der Flugtabelle auch. */
+let formStand = null;
+
+const formWerte = () => JSON.stringify({
+  name: document.getElementById('p-name').value.trim(),
+  type: document.getElementById('p-type').value,
+  info: document.getElementById('p-info').value.trim(),
+  dirs: dirSort(pendingDirs).join(','),
+  lat: pending ? +pending.lat.toFixed(6) : null,
+  lng: pending ? +pending.lng.toFixed(6) : null
+});
+
+const formMerken = () => { formStand = formWerte(); };
+const formOffen  = () => document.getElementById('placeform').style.display !== 'none';
+const formGeaendert = () => formOffen() && formStand !== null && formWerte() !== formStand;
+
+/* Führt `weiter` aus — bei offenen Änderungen erst nach einer Rückfrage. */
+function mitRueckfrage(weiter){
+  if (!formGeaendert()) return weiter();
+  const nm = document.getElementById('p-name').value.trim();
+  ask(`<b>${esc(nm || 'Der neue Ort')}</b> ist noch nicht gespeichert.`
+    + '<br><br>Wenn du jetzt weitermachst, gehen die Änderungen verloren.',
+    () => { closeConfirm(); formStand = null; weiter(); },
+    'Änderungen verwerfen?', 'Ja, verwerfen');
+}
 
 /* Beschriftungen des Formulars — je nachdem, ob ein Ort neu ist oder bearbeitet wird. */
 function placeFormLabels(){
@@ -986,22 +1685,21 @@ function placeFormLabels(){
     editId ? 'Ort bearbeiten' : 'Neuer Ort';
   document.getElementById('p-save').textContent =
     editId ? 'Änderungen speichern' : 'Ort speichern';
-  document.getElementById('p-coordhint').textContent =
-    editId ? 'Zum Verschieben einfach an die neue Stelle in der Karte klicken.' : '';
-  const h = document.getElementById('hint');
+  document.getElementById('p-coordhint').textContent = editId
+    ? 'Zum Verschieben den Punkt in der Karte ziehen, die neue Stelle anklicken '
+      + 'oder die Koordinaten hier eintragen.' : '';
   if (editId){
-    h.classList.add('armed');
-    h.textContent = 'Du bearbeitest einen Ort. Ein Klick in die Karte verschiebt ihn.';
+    setzeHint('Du bearbeitest einen Ort. Zieh den Punkt an die neue Stelle — '
+      + 'oder klick sie in der Karte an.');
   } else if (!armed){
-    h.classList.remove('armed');
-    h.textContent = 'Klick auf „Ort hinzufügen“, dann auf die Stelle in der Karte.';
+    setzeHint('');
   }
 }
 
 /* Bearbeiten beenden, ohne etwas zu speichern. */
 function endEditPlace(){
   editId = null;
-  if (map) map.getContainer().style.cursor = armed ? 'crosshair' : '';
+  cursorStil();
   cancelPlace();
 }
 
@@ -1014,6 +1712,9 @@ window.savePlace = async () => {
   /* Bei einem reinen Lande- oder Übungsgelände werden die Richtungen geleert. */
   const extra = HAS.dirs
     ? { dirs: startet(type) ? (dirSort(pendingDirs).join(',') || null) : null } : {};
+
+  /* Freier Text und ein Link (etwa zu einem YouTube-Video) — beides freiwillig. */
+  if (HAS.info) extra.info = document.getElementById('p-info').value.trim() || null;
 
   /* Die Höhe wird aus den Koordinaten geholt und mitgespeichert. Ist sie gerade
      nicht zu holen, bleibt bei einem unverschobenen Ort die bisherige stehen;
@@ -1030,6 +1731,7 @@ window.savePlace = async () => {
       const { error } = await sb.from('places').update({
         name, type, lat: pending.lat, lng: pending.lng, ...extra }).eq('id', editId);
       if (error) return oops(error);
+      formStand = null;
       endEditPlace();
       await loadAll(); toast(name + ' geändert.');
     };
@@ -1055,25 +1757,138 @@ window.savePlace = async () => {
   const { error } = await sb.from('places').insert({
     name, type, lat: pending.lat, lng: pending.lng, ...extra });
   if (error) return oops(error);
-  cancelPlace(); if (armed) toggleArm();
+  formStand = null;
+  cancelPlace(); if (armed) armUm();
   await loadAll(); toast(name + ' gespeichert.');
 };
 
+window.cancelPlaceAsk = () => mitRueckfrage(() => { if (armed) armUm(); else cancelPlace(); });
+
 window.cancelPlace = () => {
+  formStand = null;
   pending = null;
   editId  = null;
   document.getElementById('placeform').style.display = 'none';
   document.getElementById('p-name').value = '';
   document.getElementById('p-type').value = 'start';
+  document.getElementById('p-info').value = '';
   document.getElementById('p-coord').value = '';
   document.getElementById('p-elev').textContent = '';
   hoehenLauf++;                       /* eine noch laufende Abfrage schreibt nichts mehr hin */
   pendingDirs = [];
-  syncRose();
+  syncForm();
   document.getElementById('p-dirfield').style.display = 'none';
   placeFormLabels();
-  if (map && !armed) map.getContainer().style.cursor = '';
+  cursorStil();
   drawPlaces();
+};
+
+/* ══════════ INFOFELD AM ORT ══════════
+   Ein Klick auf einen Punkt in der Karte öffnet dieses Feld. Es liegt in der
+   Karte drin und geht darum auch im Vollbild auf. Ein Klick auf die Karte,
+   auf „Schließen“ oder Escape macht es wieder zu. */
+function placeInfoHTML(p){
+  const n = fluegeAn(p.id);
+  const kopf = [TYPEN[p.type], hoeheTxtOrt(p),
+                n ? (n === 1 ? '1 Flug' : n + ' Flüge') : 'noch kein Flug'].filter(Boolean);
+  const dirs = dirTxt(p.dirs);
+  const koord = p.lat.toFixed(5) + ', ' + p.lng.toFixed(5);
+  return `<h3>${esc(p.name)}</h3>
+    <p class="meta">${esc(kopf.join(' · '))}</p>
+    ${dirs ? `<p class="rosezeile">Start bei ${esc(dirs)}</p>` : ''}
+    ${p.info ? `<p class="infotxt">${textMitLinks(p.info)}</p>` : ''}
+    <div class="koordzeile"><span class="meta">${koord}</span>
+      <button class="kopierbtn" onclick="kopiereKoord('${koord}', this)"
+        title="Koordinaten kopieren" aria-label="Koordinaten kopieren">
+        <svg class="kop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="11.5" height="11.5" rx="2.2"></rect>
+          <path d="M6 15.5H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>
+        <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 12.5l5.5 5.5L20 7"></path></svg>
+      </button></div>`;
+}
+
+/* Die Koordinaten in die Zwischenablage legen — zum Einfügen in Google Maps und
+   Ähnliches. Klappt der moderne Weg nicht (alter Browser, Seite nicht über
+   https), wird der alte über ein unsichtbares Textfeld versucht. */
+window.kopiereKoord = async (text, knopf) => {
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    }
+  } catch(e){ ok = false; }
+  if (!ok) ok = kopiereAltmodisch(text);
+  if (!ok){ toast('Kopieren hat nicht geklappt — bitte von Hand markieren.', true); return; }
+  toast('Koordinaten kopiert: ' + text);
+  if (knopf){
+    knopf.classList.add('fertig');
+    clearTimeout(knopf._zurueck);
+    knopf._zurueck = setTimeout(() => knopf.classList.remove('fertig'), 1600);
+  }
+};
+
+function kopiereAltmodisch(text){
+  try {
+    const feld = document.createElement('textarea');
+    feld.value = text;
+    feld.setAttribute('readonly', '');
+    feld.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+    /* Im Vollbild muss das Hilfsfeld mit in den Vollbild-Bereich. */
+    (fsEl() || document.body).appendChild(feld);
+    feld.select();
+    const geklappt = document.execCommand('copy');
+    feld.remove();
+    return geklappt;
+  } catch(e){ return false; }
+}
+
+window.openPlaceInfo = id => {
+  const p = S.places.find(x=>x.id===id); if (!p) return;
+  infoId = id;
+  document.getElementById('pp-body').innerHTML = placeInfoHTML(p);
+  document.getElementById('pp-edit').onclick = () => editPlace(id);
+  document.getElementById('placepanel').hidden = false;
+  /* Der offene Ort wird in der Karte gefüllt gezeichnet und in der Liste
+     hervorgehoben. Erst im nächsten Moment, damit der gerade angeklickte Punkt
+     nicht mitten im Klick verschwindet. */
+  setTimeout(() => {
+    drawPlaces();
+    renderPlaceList();
+    zeigeZeile();
+  }, 0);
+};
+
+/* Die hervorgehobene Zeile ins Sichtfenster der Liste holen — nur innerhalb der
+   Liste, damit die Seite und mit ihr die Karte stehen bleiben. Scrollt die Liste
+   nicht selbst (schmaler Bildschirm), passiert gar nichts. */
+function zeigeZeile(){
+  const box = document.getElementById('placelist');
+  const zeile = box.querySelector('tr.aktiv');
+  if (!zeile || box.scrollHeight <= box.clientHeight + 2) return;
+  const oben = zeile.offsetTop, hoch = zeile.offsetHeight;
+  if (oben < box.scrollTop || oben + hoch > box.scrollTop + box.clientHeight){
+    box.scrollTop = Math.max(0, oben - (box.clientHeight - hoch) / 2);
+  }
+}
+
+window.closePlaceInfo = () => {
+  if (!infoId) return;
+  infoId = null;
+  document.getElementById('placepanel').hidden = true;
+  drawPlaces();
+  renderPlaceList();
+};
+
+/* Aus der Liste heraus: Karte auf den Ort schieben und sein Infofeld öffnen. */
+window.zeigeOrt = id => {
+  const p = S.places.find(x=>x.id===id); if (!p) return;
+  show('orte');
+  if (map) map.setView([p.lat, p.lng], Math.max(map.getZoom(), 13));
+  openPlaceInfo(id);
 };
 
 window.delPlace = id => {
@@ -1628,23 +2443,61 @@ window.askDelete = id => {
 /* ══════════ RENDERN ══════════ */
 /* Die Liste der Orte. Steht extra, weil sie auch neu gezeichnet wird,
    sobald die Höhen aus dem Netz eingetroffen sind. */
+/* Die Spalte, nach der sortiert wird, merkt sich das Flugbuch in `SORT`. */
+function sortiert(liste){
+  const r = SORT.ab ? 1 : -1;
+  const wert = p =>
+      SORT.key === 'elev'   ? (Number.isFinite(hoeheOrt(p)) ? hoeheOrt(p) : -1)
+    : SORT.key === 'fluege' ? fluegeAn(p.id)
+    : SORT.key === 'type'   ? TYPEN[p.type]
+    : (p.name || '').toLowerCase();
+  return [...liste].sort((a, b) => {
+    const x = wert(a), y = wert(b);
+    if (x < y) return -r;
+    if (x > y) return r;
+    return (a.name || '').localeCompare(b.name || '');   /* gleich? dann nach Namen */
+  });
+}
+
+window.sortBy = k => {
+  if (SORT.key === k) SORT.ab = !SORT.ab; else { SORT.key = k; SORT.ab = true; }
+  renderPlaceList();
+};
+
+const sortKopf = (k, titel, rechts) => {
+  const an = SORT.key === k;
+  return `<th class="sortbar${an ? ' an' : ''}"${rechts ? ' style="text-align:right"' : ''}>
+    <button onclick="sortBy('${k}')" aria-label="Nach ${esc(titel)} sortieren"${
+      an ? ` aria-sort="${SORT.ab ? 'ascending' : 'descending'}"` : ''}>
+    ${esc(titel)}<span class="pfeilchen">${SORT.ab ? '▲' : '▼'}</span></button></th>`;
+};
+
 function renderPlaceList(){
-  document.getElementById('placelist').innerHTML = S.places.length ? `<table>
-    <tr><th>Name</th><th>Art</th><th>Höhe</th><th>Flüge</th><th></th></tr>
-    ${S.places.map(p=>{
-      const n = S.flights.filter(f=>f.start===p.id||f.land===p.id).length;
-      return `<tr>
-        <td>${esc(p.name)}<br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></td>
+  setFilterState();
+  renderOrteZahlen();
+  const liste = sortiert(sichtbareOrte());
+  const leer = !S.places.length
+    ? '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>'
+    : '<div class="empty"><b>Kein Ort passt zum Filter.</b><br>'
+      + 'Stell den Filter anders ein oder setz ihn zurück.</div>';
+  document.getElementById('placelist').innerHTML = liste.length ? `<table>
+    <tr>${sortKopf('name','Name')}${sortKopf('type','Art')}${sortKopf('elev','Höhe')}${sortKopf('fluege','Flüge')}<th></th></tr>
+    ${liste.map(p=>{
+      const n = fluegeAn(p.id);
+      const zusatz = p.info ? 'Infos' : '';
+      return `<tr${infoId === p.id ? ' class="aktiv"' : ''} data-id="${p.id}">
+        <td class="click" onclick="zeigeOrt('${p.id}')" title="Auf der Karte zeigen">
+          <span class="dot${n ? '' : ' offen'}" style="color:${farbeVon(p)}"></span> <span class="placename">${esc(p.name)}</span>
+          <br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}${zusatz ? ' · '+zusatz : ''}</span></td>
         <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span>
           ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
         <td class="num">${hoeheTxtOrt(p)}</td>
-        <td class="num">${n}</td>
+        <td class="num">${n || '—'}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
             onclick="editPlace('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
           <button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
-      </tr>`;}).join('')}</table>`
-    : '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>';
+      </tr>`;}).join('')}</table>` : leer;
 }
 
 function renderAll(){
@@ -1827,7 +2680,9 @@ async function doRestore(d){
     }
     /* Felder, die es in dieser Datenbank noch nicht gibt, werden beim Einlesen
        weggelassen — sonst würde die ganze Wiederherstellung daran scheitern. */
-    const weg = [ HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
+    const weg = [ 'link',                 /* alte Spalte, wird nicht mehr benutzt */
+                  HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
+                  HAS.info ? '' : 'info',
                   HAS.dist ? '' : 'dist_km', HAS.asc ? '' : 'ascent',
                   HAS.gclass ? '' : 'gclass' ].filter(Boolean);
     const clean = rows => (rows||[]).map(({user_id, ...rest}) => {
@@ -1873,6 +2728,9 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('confirm').classList.contains('on')) closeConfirm();
   else if (document.getElementById('textbox').classList.contains('on')) closeText();
   else if (document.getElementById('detail').classList.contains('on')) closeDetail();
+  else if (infoId) closePlaceInfo();
+  /* Das echte Vollbild beendet der Browser selbst; das Ersatz-Vollbild nicht. */
+  else if (document.getElementById('mapwrap').classList.contains('fsfake')) verlasseVollbild();
 });
 
 boot().catch(e => {
