@@ -168,11 +168,24 @@ Solange dieser Reiter offen ist, zeigt die **Kennzahlenleiste oben** die Zahlen 
 statt zu den Flügen: wie viele Orte es gibt, an wie vielen schon geflogen wurde, wie viele
 noch offen sind und wie hoch der höchste Startplatz liegt.
 
-Die Karte ist eine **Topo-Karte** mit Höhenlinien und Geländeschattierung. Oben rechts in
-der Karte lässt sich auf **Strasse** umschalten, die gewohnte OpenStreetMap-Ansicht. Gezoomt
-wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den Knöpfen + und −.
-Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte; wer ganz nah heran
-will, schaltet dafür kurz um.
+Oben rechts in der Karte stehen **drei Ansichten** zur Wahl:
+
+- **Topo** — die Standardansicht mit Höhenlinien und Geländeschattierung.
+- **Topo grau** — dieselbe Karte ohne Farben. Höhenlinien, Schummerung, Wege und
+  Beschriftung bleiben vollständig erhalten; nur die bunten Wald-, Fels- und Wasserflächen
+  treten zurück, wodurch die Ortspunkte deutlich herausstechen.
+- **Strasse** — die gewohnte OpenStreetMap-Ansicht.
+
+Die zuletzt gewählte Ansicht merkt sich der Browser und stellt sie beim nächsten Öffnen
+wieder ein (nur auf diesem Gerät).
+
+Gezoomt wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den
+Knöpfen + und −. Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte;
+wer ganz nah heran will, schaltet dafür kurz um.
+
+Technisch ist „Topo grau“ **keine zweite Karte**: Es werden dieselben Kacheln geladen wie
+bei „Topo“, die Farbe wird erst im Browser herausgerechnet. Das kostet keine zusätzlichen
+Abrufe beim Kartendienst, und die Ortspunkte darüber behalten ihre Farbe.
 
 **Der Ausschnitt richtet sich nach der Liste.** Beim ersten Öffnen zoomt die Karte so, dass
 *alle* Orte hineinpassen; wird gefiltert oder gesucht, zieht sie auf die übrig gebliebenen

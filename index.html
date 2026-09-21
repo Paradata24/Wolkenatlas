@@ -66,6 +66,9 @@
   .card .body{padding:15px}
 
   #mapwrap{position:relative}
+  /* „Topo grau“: dieselben Kacheln, im Browser entfärbt. Der Filter liegt nur
+     auf den Kartenbildern — die Ortspunkte darüber behalten ihre Farbe. */
+  .kartegrau{filter:grayscale(1) contrast(1.05)}
   #map{height:520px;width:100%;background:#E4EAF0}
   @media(max-width:820px){#map{height:340px}}
   .maphint{font-size:13px;color:var(--muted);padding:10px 15px;border-top:1px solid var(--line)}
@@ -1049,18 +1052,34 @@ async function zeigeHoehe(lat, lng, gespeichert){
 }
 
 /* ══════════ KARTE UND ORTE ══════════ */
+const KARTE_SPEICHER = 'flugbuch-kartenansicht';
 function initMap(){
   /* Startansicht: Bozen in der Mitte, zwei Zoomstufen näher als früher.
      Zoomen mit dem Scrollrad, sobald die Maus über der Karte ist. */
   map = L.map('map', {scrollWheelZoom:true}).setView([46.4983, 11.3548], 10);
 
-  /* Standard ist die Topo-Karte mit Höhenlinien; Strassenkarte bleibt umschaltbar. */
-  const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    {maxZoom:17, attribution:'© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)'});
-  const strasse = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {maxZoom:18, attribution:'© OpenStreetMap'});
-  topo.addTo(map);
-  L.control.layers({'Topo':topo, 'Strasse':strasse}, null, {position:'topright'}).addTo(map);
+  /* Drei Ansichten, umschaltbar oben rechts. „Topo grau“ sind dieselben Kacheln
+     wie „Topo“ — nur wird die Farbe im Browser herausgerechnet. Höhenlinien,
+     Schummerung und Beschriftung bleiben also vollständig erhalten, die bunten
+     Wald-, Fels- und Wasserflächen treten zurück und die Ortspunkte stechen
+     heraus. Es ist reine Anzeige: geladen wird dieselbe Kachel wie in Farbe. */
+  const topoURL = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+  const topoDank = '© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)';
+  const BASIS = {
+    'Topo':      L.tileLayer(topoURL, {maxZoom:17, attribution:topoDank}),
+    'Topo grau': L.tileLayer(topoURL, {maxZoom:17, attribution:topoDank, className:'kartegrau'}),
+    'Strasse':   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                   {maxZoom:18, attribution:'© OpenStreetMap'})
+  };
+
+  /* Die zuletzt gewählte Ansicht merkt sich der Browser. */
+  let start = 'Topo';
+  try { const g = localStorage.getItem(KARTE_SPEICHER); if (g && BASIS[g]) start = g; } catch(e){}
+  BASIS[start].addTo(map);
+  L.control.layers(BASIS, null, {position:'topright'}).addTo(map);
+  map.on('baselayerchange', e => {
+    try { localStorage.setItem(KARTE_SPEICHER, e.name); } catch(err){}
+  });
   layer = L.layerGroup().addTo(map);
   addVollbildKnopf();
   addAlleZeigenKnopf();
