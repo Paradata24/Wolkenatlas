@@ -185,10 +185,17 @@ Knöpfen + und −. Kacheln gibt es bis Zoomstufe 17; eine Stufe näher geht tro
 wird die letzte Kachel vergrössert. Das ist etwas unschärfer, hilft aber beim genauen
 Setzen eines Punktes.
 
-**Der Ausschnitt richtet sich nach der Liste.** Beim ersten Öffnen zoomt die Karte so, dass
-*alle* Orte hineinpassen; wird gefiltert oder gesucht, zieht sie auf die übrig gebliebenen
-nach. Der Knopf mit dem Kartennadel-Symbol (links unter Zoom und Vollbild) holt jederzeit
-alle gerade sichtbaren Orte zurück ins Bild.
+**Der Ausschnitt bleibt, wo du ihn hingeschoben hast.** Beim ersten Öffnen zoomt die Karte
+einmal so, dass *alle* Orte hineinpassen — danach ändert ihn nur noch, wer es selbst
+verlangt:
+
+- ein **Klick auf einen Ort in der Liste** schiebt die Karte auf diesen Ort,
+- der **Knopf mit der Kartennadel** (links unter Zoom und Vollbild) holt alle gerade
+  sichtbaren Orte ins Bild.
+
+**Filtern und Suchen verändern den Ausschnitt nicht.** Es verschwinden nur die Punkte, die
+nicht mehr passen; Zoom und Mitte bleiben stehen. Liegen die Treffer außerhalb des Bildes,
+holt sie der Knopf mit der Kartennadel mit einem Klick herbei.
 
 ### Die Farbe der Punkte
 

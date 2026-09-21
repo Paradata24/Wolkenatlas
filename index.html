@@ -715,9 +715,10 @@ let editId = null;
 /* Der Ort, dessen Infofeld gerade in der Karte offen ist. */
 let infoId = null;
 /* Der Kartenausschnitt wird einmal auf alle Orte gestellt, sobald die Karte
-   das erste Mal wirklich zu sehen ist — vorher kennt sie ihre Größe nicht. */
+   das erste Mal wirklich zu sehen ist — vorher kennt sie ihre Größe nicht.
+   Danach ändert ihn nur noch, wer es selbst verlangt: durch einen Klick auf
+   einen Ort in der Liste oder auf den Knopf „Alle Orte ins Bild holen“. */
 let kartePasst = false;
-let passeAnLauf = 0;
 /* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
    Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
 const F = { text:'', typen:[], min:'', max:'', log:'alle', dirs:[] };
@@ -1155,6 +1156,8 @@ function leseKoord(){
 /* ---------- Kartenausschnitt ----------
    Die Karte soll zeigen, was die Liste zeigt: beim ersten Laden alle Orte,
    und sobald gefiltert wird, genau die übrig gebliebenen. */
+/* Alle gerade sichtbaren Orte ins Bild holen. Wird beim ersten Öffnen einmal
+   von selbst aufgerufen, danach nur noch auf Knopfdruck. */
 function passeKarteAn(){
   if (!map || map.getSize().x < 60) return;      /* Karte gerade nicht sichtbar */
   const liste = sichtbareOrte();
@@ -1431,10 +1434,9 @@ window.applyFilter = () => {
   if (infoId && !S.places.some(p => p.id === infoId && passtFilter(p))) closePlaceInfo();
   renderPlaceList();
   drawPlaces();
-  /* Die Karte zieht nach: sie zeigt genau die Orte, die übrig geblieben sind.
-     Mit kurzer Verzögerung, damit sie beim Tippen im Suchfeld nicht zappelt. */
-  clearTimeout(passeAnLauf);
-  passeAnLauf = setTimeout(() => passeKarteAn(), 450);
+  /* Der Kartenausschnitt bleibt beim Filtern, wie er ist — sonst springt der
+     Zoom bei jeder Änderung. Wer die Treffer ins Bild holen will, nimmt den
+     Knopf mit der Kartennadel links in der Karte. */
 };
 
 window.resetFilter = () => {
