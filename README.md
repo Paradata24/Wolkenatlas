@@ -147,13 +147,18 @@ Die **Schirmklasse** wird nicht pro Flug eingetragen, sondern einmal beim Schirm
 Reiter „Ausrüstung“. In der Flugtabelle steht sie als kleines Kürzel hinter dem
 Schirmnamen und lässt sich dort nicht ändern.
 
-Oben rechts an der Tabelle sitzen zwei Knöpfe:
+Oben rechts an der Tabelle sitzt das **Plus**: Es legt oben eine leere Zeile an, in die du
+einen neuen Flug einträgst. Ein eigenes Eingabeformular gibt es nicht mehr, die Tabelle
+*ist* das Formular.
 
-- **Stift** — alle Zellen werden zu Eingabefeldern. Ändern, was du willst, dann *Speichern*.
-  *Abbrechen* verwirft alles Ungespeicherte (mit Rückfrage). Im Bearbeiten-Zustand
-  steht am Zeilenende auch das × zum Löschen des Flugs.
-- **Plus** — legt oben eine leere Zeile an, in die du einen neuen Flug einträgst.
-  Ein eigenes Eingabeformular gibt es nicht mehr, die Tabelle *ist* das Formular.
+**Einen bestehenden Flug änderst du über die Zeile selbst:** ein Klick darauf öffnet das
+Fenster mit allen Angaben, dort führt *Bearbeiten* zurück in die Tabelle und springt zu
+genau dieser Zeile. Einen eigenen Stift-Knopf über der Tabelle gibt es dafür nicht mehr.
+
+Sobald bearbeitet wird — durch das Plus oder über eine Zeile — werden alle Zellen zu
+Eingabefeldern, und oben rechts stehen *Speichern* und *Abbrechen*. *Abbrechen* verwirft
+alles Ungespeicherte (mit Rückfrage). In diesem Zustand steht am Zeilenende auch das
+× zum Löschen des Flugs.
 
 In der Spalte **Notiz** ganz rechts stehen zwei runde Knöpfe übereinander: oben der
 **Kommentar** (in der Datenbank die Spalte `note`), darunter der **rote** für den Reminder.
