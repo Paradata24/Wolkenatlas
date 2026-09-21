@@ -293,6 +293,15 @@
   /* Lange Adressen brechen erst um, wenn sie sonst nicht passen. */
   .placepanel .lnk{color:var(--chart);overflow-wrap:anywhere}
   .placepanel .ppact{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .koordzeile{display:flex;align-items:center;gap:7px;margin-top:11px}
+  .kopierbtn{background:none;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;
+    color:var(--muted);padding:3px 5px;line-height:0;display:inline-flex;align-items:center;flex:none}
+  .kopierbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .kopierbtn svg{width:14px;height:14px;display:block}
+  .kopierbtn .ok{display:none}
+  .kopierbtn.fertig{color:var(--ground);border-color:var(--ground);background:#EFF6F2}
+  .kopierbtn.fertig .kop{display:none}
+  .kopierbtn.fertig .ok{display:block}
   .placepanel .rosezeile{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
     text-transform:uppercase;color:var(--start);margin:7px 0 0}
   /* Auf dem Handy sitzt das Infofeld unten und lässt die obere Kartenhälfte frei —
@@ -1783,11 +1792,58 @@ function placeInfoHTML(p){
   const kopf = [TYPEN[p.type], hoeheTxtOrt(p),
                 n ? (n === 1 ? '1 Flug' : n + ' Flüge') : 'noch kein Flug'].filter(Boolean);
   const dirs = dirTxt(p.dirs);
+  const koord = p.lat.toFixed(5) + ', ' + p.lng.toFixed(5);
   return `<h3>${esc(p.name)}</h3>
     <p class="meta">${esc(kopf.join(' · '))}</p>
     ${dirs ? `<p class="rosezeile">Start bei ${esc(dirs)}</p>` : ''}
     ${p.info ? `<p class="infotxt">${textMitLinks(p.info)}</p>` : ''}
-    <p class="meta" style="margin-top:11px">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</p>`;
+    <div class="koordzeile"><span class="meta">${koord}</span>
+      <button class="kopierbtn" onclick="kopiereKoord('${koord}', this)"
+        title="Koordinaten kopieren" aria-label="Koordinaten kopieren">
+        <svg class="kop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="11.5" height="11.5" rx="2.2"></rect>
+          <path d="M6 15.5H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path></svg>
+        <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 12.5l5.5 5.5L20 7"></path></svg>
+      </button></div>`;
+}
+
+/* Die Koordinaten in die Zwischenablage legen — zum Einfügen in Google Maps und
+   Ähnliches. Klappt der moderne Weg nicht (alter Browser, Seite nicht über
+   https), wird der alte über ein unsichtbares Textfeld versucht. */
+window.kopiereKoord = async (text, knopf) => {
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    }
+  } catch(e){ ok = false; }
+  if (!ok) ok = kopiereAltmodisch(text);
+  if (!ok){ toast('Kopieren hat nicht geklappt — bitte von Hand markieren.', true); return; }
+  toast('Koordinaten kopiert: ' + text);
+  if (knopf){
+    knopf.classList.add('fertig');
+    clearTimeout(knopf._zurueck);
+    knopf._zurueck = setTimeout(() => knopf.classList.remove('fertig'), 1600);
+  }
+};
+
+function kopiereAltmodisch(text){
+  try {
+    const feld = document.createElement('textarea');
+    feld.value = text;
+    feld.setAttribute('readonly', '');
+    feld.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+    /* Im Vollbild muss das Hilfsfeld mit in den Vollbild-Bereich. */
+    (fsEl() || document.body).appendChild(feld);
+    feld.select();
+    const geklappt = document.execCommand('copy');
+    feld.remove();
+    return geklappt;
+  } catch(e){ return false; }
 }
 
 window.openPlaceInfo = id => {

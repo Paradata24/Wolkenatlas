@@ -229,6 +229,11 @@ anklickbaren Links. Jeder Link öffnet sich in einem neuen Fenster. Darin sitzen
   ihn** an eine neue Stelle.
 - **Schließen** — das Feld geht zu. Das tut auch ein Klick irgendwo in die Karte oder Escape.
 
+Unten im Infofeld stehen die **Koordinaten** mit einem kleinen **Kopier-Knopf** daneben. Ein
+Klick legt sie als `46.43454, 11.85043` in die Zwischenablage — in dieser Form versteht sie
+Google Maps, Komoot und fast jede Karten-App direkt. Der Knopf zeigt kurz ein grünes Häkchen,
+und eine Meldung bestätigt, was kopiert wurde. Im Vollbild funktioniert er genauso.
+
 Ein Klick auf den **Namen in der Liste** schiebt die Karte auf den Ort und öffnet dasselbe
 Infofeld. Umgekehrt wird die Zeile in der Liste hervorgehoben (heller Streifen am linken
 Rand), solange das Infofeld eines Orts offen ist — Karte und Liste zeigen immer auf dasselbe.
