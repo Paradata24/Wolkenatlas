@@ -27,10 +27,12 @@ sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
 `id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
-`type`: `start` | `land` | `both` | `ground` (Übungsgelände)
+`type`: `start` | `exp` (experimenteller Startplatz) | `land` | `ground` (Übungsgelände)
+Eine frühere Version kannte zusätzlich `both` („Start und Landung“). Die Art gibt es nicht
+mehr — siehe „Von ‚Start und Landung‘ zu zwei Punkten“.
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
-Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es nur
-bei Orten mit Start (`start` und `both`); bei `land` und `ground` wird das Feld geleert.
+Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es bei
+`start` und `exp`; bei `land` und `ground` wird das Feld geleert.
 `elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
 aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
 `info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten und so viele Links, wie du
@@ -225,6 +227,50 @@ verlangt:
 nicht mehr passen; Zoom und Mitte bleiben stehen. Liegen die Treffer außerhalb des Bildes,
 holt sie der Knopf mit der Kartennadel mit einem Klick herbei.
 
+### Die Art des Orts
+
+Ein Ort ist **Startplatz**, **Startplatz (experimentell)**, **Landeplatz** oder
+**Übungsgelände** (fürs Groundhandling). Mehr Arten gibt es nicht.
+
+**Experimentell** ist für Plätze gedacht, an denen du **noch nicht geflogen bist**, von denen
+du aber denkst, dass es gehen könnte. Sie verhalten sich wie ein Startplatz: Die Windrose
+steht im Formular, die möglichen Richtungen erscheinen im Kartensymbol, und beim Eintragen
+eines Flugs stehen sie in der Auswahl der Startplätze — sonst ließe sich der erste Flug von
+dort gar nicht festhalten. Unterschiedlich sind nur **Farbe und Filter**: Sie sind
+**neongrün** statt rot und lassen sich in der Legende einzeln ein- und ausblenden.
+
+Hat es dann geklappt, stellst du den Ort über *Bearbeiten* einfach auf **Startplatz** um —
+Name, Stelle, Höhe, Richtungen und Infos bleiben dabei stehen, und die schon eingetragenen
+Flüge auch.
+
+Wer an einem Platz startet *und* landet, legt dafür **zwei Punkte** an — einen Startplatz
+oben und einen Landeplatz unten. Das ist genauer als ein gemeinsamer Punkt: In der Karte
+steht jeder Punkt da, wo er wirklich ist, und in den Auswahllisten beim Flug erscheint
+jeweils nur, was dort auch passt.
+
+#### Von „Start und Landung“ zu zwei Punkten
+
+Früher gab es zusätzlich die Art **„Start und Landung“** (`both` in der Datenbank). Sie ist
+weggefallen. Stehen noch Orte dieser Art in der Datenbank, stellt das Flugbuch sie **beim
+Laden von selbst um** — einmalig, ohne Nachfrage:
+
+- Der Ort ist im Flugbuch **nur als Landung** eingetragen → er wird **Landeplatz**
+  (Startrichtungen werden dabei geleert, ein Landeplatz hat keine).
+- **Sonst** → er wird **Startplatz**. Das gilt auch für Orte, an denen noch kein Flug steht.
+- Der Ort ist bei Flügen **als Start und als Landung** eingetragen → er bleibt als
+  **Startplatz** stehen, und rund **60 Meter südöstlich** entsteht ein neuer **Landeplatz**
+  mit dem Namen „*Name* Landeplatz“. Alle Landungen zeigen danach auf diesen neuen Punkt,
+  die Starts bleiben beim alten. Der Infotext wird auf den neuen Punkt mitkopiert, die Höhe
+  holt er sich selbst.
+
+Danach steht kurz eine Meldung wie „3 Orte von ‚Start und Landung‘ umgestellt · 1 neuer
+Landeplatz.“ Den neuen Landeplatz danach bitte einmal ansehen: Name und Stelle lassen sich
+wie bei jedem anderen Ort über *Bearbeiten* richtigstellen.
+
+Ist nichts umzustellen, passiert nichts. Die Umstellung läuft bei jedem Laden mit und greift
+darum auch dann noch, wenn später einmal eine **alte Sicherung** wiederhergestellt wird, in
+der die alte Art noch vorkommt.
+
 ### Die Farbe der Punkte
 
 Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
@@ -233,8 +279,8 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | --- | --- |
 | **Orange, gestrichelt** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
 | **Rot** | Startplatz, an dem schon geflogen wurde |
+| **Neongrün** | experimenteller Startplatz — immer neongrün, ob geflogen oder nicht |
 | **Blau** | Landeplatz mit Eintrag |
-| **Gold** | Start und Landung mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau, gold, grün), sobald der
@@ -245,6 +291,26 @@ Farben stehen als kleiner Punkt vor dem Namen in der Liste.
 Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
 hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
 nicht jedes Auge trennt sie zuverlässig.
+
+### Das Symbol der Startplätze
+
+Ein **Startplatz zeigt seine möglichen Startrichtungen gleich auf der Karte** — man sieht
+also schon beim Hinschauen, ob ein Platz zum heutigen Wind passt, ohne ihn erst anzuklicken.
+
+Rund um den Punkt steht dafür je ein **Tortenstück** für jede Richtung, bei der sich hier
+starten lässt. Gezeichnet wird wie die Windrose im Formular: **Norden oben, Osten rechts.**
+Nebeneinanderliegende Richtungen ergeben zusammen einen Fächer — aus *N, NO, O* wird also
+ein Viertelkranz von oben nach rechts. Richtungen, bei denen nicht gestartet werden kann,
+werden gar nicht gezeichnet.
+
+Für **experimentelle** Startplätze gilt dasselbe, nur in Neongrün und mit einem dünnen
+dunkelgrünen Rand, damit das helle Neon auf der Karte nicht untergeht. Auch ohne
+eingetragene Richtung sind sie an diesem Rand zu erkennen.
+
+**Unverändert bleiben:** Landeplätze, Übungsgelände und Startplätze, bei denen noch keine
+Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Auch Farbe und Strichart
+bleiben, wie sie waren: Die Farbe sagt die Art des Orts, gestrichelt heißt „noch kein Flug“
+(siehe „Die Farbe der Punkte“) — das gilt für das Symbol genauso wie für den Punkt.
 
 ### Auf einen Ort klicken
 
@@ -337,12 +403,22 @@ werden kann nach:
   der Karte**: Ein Klick auf *Startplatz* lässt nur noch Startplätze stehen, ein Klick auf
   *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
   hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
-  *Startplatz* und *Start + Landung* zusammen zeigen alles, wo gestartet werden kann.
-  „Start + Landung“ ist dabei eine **eigene Art** — ein solcher Ort erscheint also nicht
-  schon beim Klick auf *Startplatz*.
+  *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die vier Arten stehen links,
+  hinter dem Trennstrich folgt der Knopf *noch kein Flug*.
+
+  **Experimentelle ausblenden:** Ein Klick auf *experimentell* zeigt nur sie. Umgekehrt —
+  alles außer ihnen — bekommst du, indem du die anderen drei Arten anklickst; was übrig
+  bleibt, steht in den Kärtchen unter dem Filterkopf.
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
-  nur Orte, an denen ich noch nicht war. Der letzte Legendeneintrag,
-  *noch kein Flug eingetragen*, schaltet genau diesen Filter mit einem Klick.
+  nur Orte, an denen ich noch nicht war. Alle drei stehen als **Auswahlliste im
+  aufgeklappten Filter**. Der häufigste Fall — *noch kein Flug* — hat zusätzlich einen
+  eigenen Knopf **rechts in der Legende**, hinter dem Trennstrich: ein Klick schaltet ihn
+  an, ein zweiter wieder aus. Liste und Knopf zeigen immer denselben Stand.
+
+  Der Knopf **wirkt mit der Art des Orts zusammen** („und“): *Startplatz* + *noch kein Flug*
+  zeigt also genau die Startplätze, an denen du noch nicht warst. Für die Gegenrichtung —
+  nur die Startplätze, an denen schon ein Flug steht — wählst du *Startplatz* in der Legende
+  und in der Liste *nur Orte, an denen ich schon geflogen bin*.
 - **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
   an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
   **„oder“**: Es bleibt jeder Ort stehen, an dem *mindestens eine* der angetippten
@@ -382,7 +458,7 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 ### Startrichtungen — die Windrose
 
-Sobald die Art **Startplatz** oder **Start und Landung** gewählt ist, erscheint im Formular
+Sobald die Art **Startplatz** oder **Startplatz (experimentell)** gewählt ist, erscheint im Formular
 eine **Windrose mit acht Feldern** (N, NO, O, SO, S, SW, W, NW, im Uhrzeigersinn ab Norden
 oben). Jedes angetippte Feld heißt: bei diesem Wind lässt sich hier starten. Nochmal
 antippen nimmt die Richtung wieder weg, mehrere gleichzeitig sind der Normalfall. Unter der
@@ -458,6 +534,43 @@ nur umbenannten Ort bleibt die alte Höhe erhalten. Solange die Spalte `elev` in
 fehlt, zeigt das Flugbuch die Höhe trotzdem an, merkt sie sich aber nur im Browser, statt
 sie zu speichern.
 
+## Der Reiter „Statistik“
+
+Links das **Säulenbild** mit den zwölf Monaten, rechts die **Auswertung**: Art des Flugs,
+Startplätze, Schirme und Gurtzeuge, jeweils mit Anzahl und Summe. Geordnet ist jede Liste
+**nach der Anzahl der Flüge — das meiste ganz oben**; bei gleicher Anzahl steht die längere
+Zeit weiter oben.
+
+### Was die Säulen zeigen
+
+Über dem Bild steht ein **Umschalter mit zwei Feldern**:
+
+| Feld | Säulen zeigen |
+| --- | --- |
+| **Flüge** (Vorgabe) | wie viele Flüge in diesem Monat stehen |
+| **Flugzeit** | wie viel Zeit in diesem Monat in der Luft war |
+
+**Über jeder Säule steht ihr Wert** — die Anzahl als Zahl, die Flugzeit als `h:mm`. Monate
+ohne Flug bleiben leer und zeigen nur einen dünnen Strich, damit das Bild ruhig bleibt. Die
+höchste Säule füllt das Bild aus, alle anderen stehen im Verhältnis dazu; zum Vergleichen
+zwischen zwei Jahren also immer auf die Zahlen schauen, nicht auf die Höhe. Zeigt man auf
+eine Säule, nennt die Infozeile beides zusammen — zum Beispiel „Juli: 3 Flüge, 5:20 h“.
+
+Die Wahl bleibt beim Jahreswechsel stehen und gilt, bis sie umgestellt wird oder die Seite
+neu geladen wird; gemerkt wird sie nicht.
+
+Oben rechts im Säulenbild steht die **Jahresauswahl**. Sie kennt jedes Jahr, aus dem ein
+Flug im Flugbuch steht, und dazu — sobald es mehr als eines ist — **„alle Jahre“**.
+Vorgewählt ist das neueste Jahr.
+
+**Die Auswahl gilt für den ganzen Reiter**: Säulenbild, der Satz darunter und die
+Auswertung rechts zeigen immer denselben Zeitraum. Welcher das gerade ist, steht klein
+in der Überschrift der Auswertung. Die Kennzahlenleiste ganz oben bleibt davon unberührt —
+sie zeigt weiter das laufende Jahr und die Gesamtsumme.
+
+Groundhandling zählt wie überall nicht als Flugzeit: Es steht nicht im Säulenbild und nicht
+im Satz darunter, in der Auswertung erscheint es aber als eigene Art des Flugs.
+
 ## Festgelegte Regeln
 
 Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
@@ -470,8 +583,10 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
   bei dem werden beide Felder ausgeblendet und beim Speichern geleert.
 - **Jede Angabe darf leer bleiben, auch Datum, Orte und Dauer.** Ein Flug wird immer
   gespeichert und kann später ergänzt werden. Leere Werte lassen die Zelle in der
-  Flugtabelle einfach leer, Flüge ohne Datum stehen ganz oben und tauchen in der
-  Jahresstatistik nicht auf, weil sie keinem Jahr zugeordnet werden können.
+  Flugtabelle einfach leer, und Flüge ohne Datum stehen ganz oben. In der Statistik
+  fallen sie heraus, sobald ein bestimmtes Jahr gewählt ist — sie gehören ja zu keinem.
+  Bei „alle Jahre“ zählen sie mit; im Säulenbild können sie trotzdem nirgends stehen,
+  was der Satz darunter dann dazusagt.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
 - Kommentare und Reminder sind tagebuchlang. In der Flugtabelle steht dafür nur ein
