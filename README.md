@@ -203,7 +203,8 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | **Grün** | Übungsgelände mit Eintrag |
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau, gold, grün), sobald der
-erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu. Dieselben
+erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
+zugleich ein Filter, siehe „Suchen, filtern, sortieren“. Dieselben
 Farben stehen als kleiner Punkt vor dem Namen in der Liste.
 
 Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
@@ -292,8 +293,16 @@ werden kann nach:
 
 - **Höhenlage** — „Höhe ab“ und „Höhe bis“ in Metern. Eines von beiden genügt.
   Orte, deren Höhe noch nicht bekannt ist, fallen dabei heraus.
+- **Art des Orts** — nicht im aufgeklappten Filter, sondern direkt in der **Legende unter
+  der Karte**: Ein Klick auf *Startplatz* lässt nur noch Startplätze stehen, ein Klick auf
+  *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
+  hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
+  *Startplatz* und *Start + Landung* zusammen zeigen alles, wo gestartet werden kann.
+  „Start + Landung“ ist dabei eine **eigene Art** — ein solcher Ort erscheint also nicht
+  schon beim Klick auf *Startplatz*.
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
-  nur Orte, an denen ich noch nicht war.
+  nur Orte, an denen ich noch nicht war. Der letzte Legendeneintrag,
+  *noch kein Flug eingetragen*, schaltet genau diesen Filter mit einem Klick.
 - **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
   an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
   **„oder“**: Es bleibt jeder Ort stehen, an dem *mindestens eine* der angetippten

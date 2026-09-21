@@ -301,9 +301,16 @@
     .placepanel{left:8px;right:8px;bottom:22px;width:auto;max-height:52%}
   }
 
-  .legend{display:flex;gap:6px 15px;flex-wrap:wrap;align-items:center;font-size:12.5px;
-    color:var(--muted);padding:9px 15px;border-top:1px solid var(--line)}
-  .legend span{display:inline-flex;align-items:center;gap:6px}
+  /* Die Legende ist zugleich der Filter nach Art des Orts: jeder Eintrag
+     lässt sich anklicken, angeklickt bleibt nur noch diese Art übrig. */
+  .legend{display:flex;gap:4px 6px;flex-wrap:wrap;align-items:center;
+    padding:7px 11px;border-top:1px solid var(--line)}
+  .legitem{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;
+    color:var(--muted);background:none;border:1px solid transparent;border-radius:99px;
+    padding:3px 10px 3px 8px;cursor:pointer;white-space:nowrap}
+  .legitem:hover{background:#EAEFF4;color:var(--ink)}
+  .legitem[aria-pressed="true"]{background:#FCEEF3;border-color:#F2C9D9;
+    color:var(--ink);font-weight:550}
   .dot{display:inline-block;width:11px;height:11px;border-radius:50%;
     border:2.5px solid currentColor;background:#fff;flex:none}
   /* Noch kein Flug: gestrichelt statt durchgezogen — damit nicht allein die
@@ -469,12 +476,17 @@
             </div>
           </div>
         </div>
-        <div class="legend">
-          <span><i class="dot" style="color:var(--start)"></i> Startplatz</span>
-          <span><i class="dot" style="color:var(--chart)"></i> Landeplatz</span>
-          <span><i class="dot" style="color:var(--contour)"></i> Start + Landung</span>
-          <span><i class="dot" style="color:var(--ground)"></i> Übungsgelände</span>
-          <span><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug eingetragen</span>
+        <div class="legend" id="legend">
+          <button type="button" class="legitem" data-typ="start" aria-pressed="false"
+            title="Nur Startplätze zeigen"><i class="dot" style="color:var(--start)"></i> Startplatz</button>
+          <button type="button" class="legitem" data-typ="land" aria-pressed="false"
+            title="Nur Landeplätze zeigen"><i class="dot" style="color:var(--chart)"></i> Landeplatz</button>
+          <button type="button" class="legitem" data-typ="both" aria-pressed="false"
+            title="Nur Orte mit Start und Landung zeigen"><i class="dot" style="color:var(--contour)"></i> Start + Landung</button>
+          <button type="button" class="legitem" data-typ="ground" aria-pressed="false"
+            title="Nur Übungsgelände zeigen"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</button>
+          <button type="button" class="legitem" data-offen="1" aria-pressed="false"
+            title="Nur Orte ohne Eintrag im Flugbuch zeigen"><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug eingetragen</button>
         </div>
         <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
         <div class="maphint" id="hint" style="display:none"></div>
@@ -708,7 +720,7 @@ let kartePasst = false;
 let passeAnLauf = 0;
 /* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
    Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
-const F = { text:'', min:'', max:'', log:'alle', dirs:[] };
+const F = { text:'', typen:[], min:'', max:'', log:'alle', dirs:[] };
 /* Wonach die Ortsliste sortiert ist. `ab` heißt aufsteigend. */
 let SORT = { key:'name', ab:true };
 
@@ -729,6 +741,8 @@ const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildu
                siv:'SIV', comp:'Wettkampf', gh:'Groundhandling'};
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
 const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
+/* Wie die Arten in der Legende unter der Karte heißen. */
+const ARTLBL = {start:'Startplatz', land:'Landeplatz', both:'Start + Landung', ground:'Übungsgelände'};
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
@@ -1335,11 +1349,14 @@ function syncExtraFelder(){
 function syncForm(){ syncRose(); syncExtraFelder(); }
 
 /* ---------- Filter über den Orten ---------- */
-const filterAn = () => F.text !== '' || F.min !== '' || F.max !== ''
+const filterAn = () => F.text !== '' || F.typen.length > 0 || F.min !== '' || F.max !== ''
                     || F.log !== 'alle' || F.dirs.length > 0;
 
 function passtFilter(p){
   const n = fluegeAn(p.id);
+  /* Art des Orts — angeklickt wird sie in der Legende unter der Karte.
+     Mehrere Arten gleichzeitig heißen „oder“. */
+  if (F.typen.length && !F.typen.includes(p.type)) return false;
   /* Die Suche schaut in den Namen und in den Infotext. */
   if (F.text){
     const wo = ((p.name || '') + ' ' + (p.info || '')).toLowerCase();
@@ -1367,6 +1384,19 @@ function passtFilter(p){
 const sichtbareOrte = () => S.places.filter(passtFilter);
 
 function initFilter(){
+  /* Die Legende unter der Karte ist zugleich der Filter nach Art des Orts. */
+  document.getElementById('legend').addEventListener('click', e => {
+    const b = e.target.closest('.legitem'); if (!b) return;
+    if (b.dataset.offen){
+      /* „noch kein Flug“ schaltet denselben Filter wie die Auswahlliste. */
+      const an = F.log !== 'ohne';
+      document.getElementById('f-log').value = an ? 'ohne' : 'alle';
+    } else {
+      const t = b.dataset.typ;
+      F.typen = F.typen.includes(t) ? F.typen.filter(x => x !== t) : [...F.typen, t];
+    }
+    applyFilter();
+  });
   ['f-min','f-max','f-text'].forEach(id =>
     document.getElementById(id).addEventListener('input', applyFilter));
   document.getElementById('f-log').addEventListener('change', applyFilter);
@@ -1408,6 +1438,7 @@ window.applyFilter = () => {
 };
 
 window.resetFilter = () => {
+  F.typen = [];
   document.getElementById('f-text').value = '';
   document.getElementById('f-min').value = '';
   document.getElementById('f-max').value = '';
@@ -1421,6 +1452,8 @@ window.resetFilter = () => {
 function renderChips(){
   const c = [];
   if (F.text) c.push(['text', '„' + F.text + '“']);
+  ['start','land','both','ground'].filter(t => F.typen.includes(t))
+    .forEach(t => c.push(['typ:' + t, ARTLBL[t]]));
   if (F.min !== '') c.push(['min', 'ab ' + F.min + ' m']);
   if (F.max !== '') c.push(['max', 'bis ' + F.max + ' m']);
   if (F.log !== 'alle') c.push(['log', F.log === 'mit' ? 'schon geflogen' : 'noch nicht geflogen']);
@@ -1431,6 +1464,7 @@ function renderChips(){
 }
 
 window.chipWeg = was => {
+  if (was.startsWith('typ:')) F.typen = F.typen.filter(t => t !== was.slice(4));
   if (was === 'text') document.getElementById('f-text').value = '';
   if (was === 'min')  document.getElementById('f-min').value = '';
   if (was === 'max')  document.getElementById('f-max').value = '';
@@ -1453,6 +1487,10 @@ function setFilterState(){
   document.getElementById('f-state').textContent =
     an ? sicht + ' von ' + alle + ' Orten' : (alle === 1 ? '1 Ort' : 'alle ' + alle + ' Orte');
   document.getElementById('f-head').classList.toggle('an', an);
+  document.querySelectorAll('#legend .legitem').forEach(b => {
+    const gedrueckt = b.dataset.offen ? F.log === 'ohne' : F.typen.includes(b.dataset.typ);
+    b.setAttribute('aria-pressed', gedrueckt ? 'true' : 'false');
+  });
   document.getElementById('f-dirfield').style.display = HAS.dirs ? '' : 'none';
   renderChips();
   /* Wer nach Höhe filtert, verliert Orte, deren Höhe noch nicht bekannt ist —
