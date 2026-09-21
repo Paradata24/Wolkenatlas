@@ -1328,11 +1328,13 @@ function passtFilter(p){
     if (F.min !== '' && m < +F.min) return false;
     if (F.max !== '' && m > +F.max) return false;
   }
-  /* Startrichtung: der Ort zählt, wenn mindestens eine der gewählten geht.
-     Orte ohne Startrichtung (Landeplatz, Übungsgelände) fallen dabei heraus. */
+  /* Startrichtung: der Ort zählt nur, wenn dort *alle* gewählten Richtungen
+     gehen. Wer N, NW und W antippt, bekommt keinen Platz mehr, der zwar N und
+     NW kann, aber kein W. Orte ohne Startrichtung (Landeplatz, Übungsgelände)
+     fallen dabei heraus. */
   if (F.dirs.length){
     const d = dirsIn(p.dirs);
-    if (!F.dirs.some(x => d.includes(x))) return false;
+    if (!F.dirs.every(x => d.includes(x))) return false;
   }
   return true;
 }
@@ -1350,12 +1352,19 @@ function initFilter(){
   paintFilterRose();
 }
 
+/* „N“, „N und W“, „N, W und NW“ — Aufzählung wie in normalem Deutsch. */
+const undListe = l => l.length < 2 ? (l[0] || '')
+  : l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1];
+
 function paintFilterRose(){
   paintRose('f-rose', F.dirs);
   const gewaehlt = dirSort(F.dirs);
   const t = document.getElementById('f-dirtext');
-  t.textContent = gewaehlt.length ? 'Nur Orte mit Start bei ' + gewaehlt.join(' oder ')
-                                  : 'Egal — tipp an, welche Richtung gehen soll.';
+  t.textContent = gewaehlt.length
+    ? (gewaehlt.length === 1
+        ? 'Nur Orte mit Start bei ' + gewaehlt[0]
+        : 'Nur Orte, an denen alles davon geht: ' + undListe(gewaehlt))
+    : 'Egal — tipp an, welche Richtungen gehen sollen.';
   t.classList.toggle('hat', gewaehlt.length > 0);
 }
 
@@ -1392,7 +1401,7 @@ function renderChips(){
   if (F.min !== '') c.push(['min', 'ab ' + F.min + ' m']);
   if (F.max !== '') c.push(['max', 'bis ' + F.max + ' m']);
   if (F.log !== 'alle') c.push(['log', F.log === 'mit' ? 'schon geflogen' : 'noch nicht geflogen']);
-  if (F.dirs.length) c.push(['dirs', 'Start bei ' + dirSort(F.dirs).join(' / ')]);
+  if (F.dirs.length) c.push(['dirs', 'Start bei ' + dirSort(F.dirs).join(' + ')]);
   document.getElementById('f-chips').innerHTML = c.map(([k, t]) =>
     `<span class="chip">${esc(t)}<button onclick="chipWeg('${k}')" title="Diesen Filter entfernen"
       aria-label="Filter ${esc(t)} entfernen">×</button></span>`).join('');

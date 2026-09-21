@@ -272,9 +272,17 @@ werden kann nach:
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
   nur Orte, an denen ich noch nicht war.
 - **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
-  an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
-  „oder“. Weil nur Start- und Start-und-Landeplätze Startrichtungen haben, fallen
-  reine Landeplätze und Übungsgelände heraus, sobald hier etwas angetippt ist.
+  an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig werden
+  **zusammengezählt, nicht zur Auswahl gestellt**: Es bleiben nur Orte übrig, an denen
+  *alle* angetippten Richtungen gehen.
+
+  Beispiel: Du tippst **N** an und bekommst jeden Platz, der unter anderem bei Nord startbar
+  ist. Tippst du zusätzlich **NW** und **W** an, fällt ein Platz mit N und NW wieder heraus,
+  weil ihm W fehlt — übrig bleiben die Plätze, die alle drei Richtungen können. Je mehr du
+  antippst, desto weniger Orte bleiben also stehen.
+
+  Weil nur Start- und Start-und-Landeplätze Startrichtungen haben, fallen reine Landeplätze
+  und Übungsgelände heraus, sobald hier etwas angetippt ist.
 
 Ein aktiver Filter färbt die Kopfzeile rosa, und unter ihr stehen **kleine Kärtchen** mit
 dem, was gerade eingestellt ist — „ab 1500 m“, „noch nicht geflogen“, „Start bei S / SW“.
