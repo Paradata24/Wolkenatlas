@@ -262,12 +262,16 @@ es dafür nicht; die frühere Spalte `link` wird nirgends mehr verwendet.
 
 ### Suchen, filtern, sortieren
 
-Über der Liste steht ein **Suchfeld**. Was du hineintippst, wird sofort auf Karte und Liste
-angewendet und sucht im **Namen und im Infotext** — „seilbahn“ findet also auch den Ort, bei
+**Suche und Filter sitzen unter der Karte**, gleich hinter der Legende — dort, wo sie beides
+im Blick haben: die Karte darüber und die Liste daneben.
+
+Im **Suchfeld** wird alles sofort angewendet, was du hineintippst, und zwar auf Karte *und*
+Liste. Gesucht wird im **Namen und im Infotext** — „seilbahn“ findet also auch den Ort, bei
 dem das nur in den Infos steht.
 
 Darunter der Knopf **Filter**; rechts daneben steht immer, wie viele Orte gerade
-zu sehen sind („alle 23 Orte“ oder „7 von 23 Orten“). Ein Klick klappt ihn auf. Gefiltert
+zu sehen sind („alle 23 Orte“ oder „7 von 23 Orten“). Ein Klick klappt ihn auf. Auf breiten
+Bildschirmen steht die Windrose dabei neben den übrigen Einstellungen. Gefiltert
 werden kann nach:
 
 - **Höhenlage** — „Höhe ab“ und „Höhe bis“ in Metern. Eines von beiden genügt.

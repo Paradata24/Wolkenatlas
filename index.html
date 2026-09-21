@@ -310,7 +310,8 @@
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .searchrow{padding:11px 15px 0}
   .searchrow input{font-size:14px;padding:7px 10px}
-  .filterbar{border-bottom:1px solid var(--line)}
+  /* Sitzt jetzt unter der Karte, direkt hinter der Legende. */
+  .filterbar{border-top:1px solid var(--line)}
   .filterhead .chev{flex:none;color:var(--muted);line-height:0;transition:transform .18s ease}
   .filterhead .chev svg{width:13px;height:13px;display:block}
   .filterhead[aria-expanded="true"] .chev{transform:rotate(90deg)}
@@ -330,6 +331,13 @@
   .filterhead.an{background:#FCEEF3}
   .filterhead.an .st{color:var(--start)}
   .filterbody{padding:13px 15px 15px;border-top:1px solid var(--line);background:#FBFCFD}
+  /* Unter der Karte ist Platz: auf breiten Schirmen steht die Windrose neben
+     den übrigen Einstellungen, damit der Filter nicht so tief wird. */
+  @media(min-width:821px){
+    .filterbody{display:grid;grid-template-columns:1fr 210px;gap:0 22px;align-items:start}
+    .filterbody > *{grid-column:1}
+    .filterbody > #f-dirfield{grid-column:2;grid-row:1/span 9;margin-bottom:0}
+  }
   .rose.mini{max-width:172px}
   .rose.mini .seg text{font-size:15px}
   td.click{cursor:pointer}
@@ -459,6 +467,38 @@
         </div>
         <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
         <div class="maphint" id="hint" style="display:none"></div>
+        <div class="filterbar">
+          <div class="searchrow">
+            <label class="sr-only" for="f-text">Ort suchen</label>
+            <input type="search" id="f-text" placeholder="Ort suchen — Name oder Infotext …" autocomplete="off">
+          </div>
+          <button class="filterhead" id="f-head" onclick="toggleFilter()" aria-expanded="false" aria-controls="f-body">
+            <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></span>
+            <span>Filter</span><span class="st" id="f-state">alle Orte</span></button>
+          <div class="chips" id="f-chips"></div>
+          <div class="filterbody" id="f-body" style="display:none">
+            <div class="pair">
+              <div class="field"><label for="f-min">Höhe ab (m)</label>
+                <input type="number" id="f-min" placeholder="z. B. 1000" step="50"></div>
+              <div class="field"><label for="f-max">Höhe bis (m)</label>
+                <input type="number" id="f-max" placeholder="z. B. 2200" step="50"></div>
+            </div>
+            <div class="field"><label for="f-log">Eintrag im Flugbuch</label>
+              <select id="f-log">
+                <option value="alle">egal</option>
+                <option value="mit">nur Orte, an denen ich schon geflogen bin</option>
+                <option value="ohne">nur Orte, an denen ich noch nicht war</option>
+              </select></div>
+            <div class="field" id="f-dirfield"><label>Startrichtung</label>
+              <svg class="rose mini" id="f-rose" viewBox="0 0 200 200" role="group"
+                   aria-label="Filter: mögliche Startrichtung"></svg>
+              <p class="dirsum" id="f-dirtext"></p></div>
+            <p class="note" id="f-ohnehoehe" style="display:none;margin:0 0 10px"></p>
+            <div class="rowend" style="margin-top:4px">
+              <button class="btn small ghost" onclick="resetFilter()">Filter zurücksetzen</button></div>
+          </div>
+        </div>
       </div>
       <div class="card">
         <h2>Orte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
@@ -495,38 +535,6 @@
           <div class="rowend" style="margin-top:0">
             <button class="btn" id="p-save" onclick="savePlace()">Ort speichern</button>
             <button class="btn ghost" onclick="cancelPlaceAsk()">Abbrechen</button>
-          </div>
-        </div>
-        <div class="filterbar">
-          <div class="searchrow">
-            <label class="sr-only" for="f-text">Ort suchen</label>
-            <input type="search" id="f-text" placeholder="Ort suchen — Name oder Infotext …" autocomplete="off">
-          </div>
-          <button class="filterhead" id="f-head" onclick="toggleFilter()" aria-expanded="false" aria-controls="f-body">
-            <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></span>
-            <span>Filter</span><span class="st" id="f-state">alle Orte</span></button>
-          <div class="chips" id="f-chips"></div>
-          <div class="filterbody" id="f-body" style="display:none">
-            <div class="pair">
-              <div class="field"><label for="f-min">Höhe ab (m)</label>
-                <input type="number" id="f-min" placeholder="z. B. 1000" step="50"></div>
-              <div class="field"><label for="f-max">Höhe bis (m)</label>
-                <input type="number" id="f-max" placeholder="z. B. 2200" step="50"></div>
-            </div>
-            <div class="field"><label for="f-log">Eintrag im Flugbuch</label>
-              <select id="f-log">
-                <option value="alle">egal</option>
-                <option value="mit">nur Orte, an denen ich schon geflogen bin</option>
-                <option value="ohne">nur Orte, an denen ich noch nicht war</option>
-              </select></div>
-            <div class="field" id="f-dirfield"><label>Startrichtung</label>
-              <svg class="rose mini" id="f-rose" viewBox="0 0 200 200" role="group"
-                   aria-label="Filter: mögliche Startrichtung"></svg>
-              <p class="dirsum" id="f-dirtext"></p></div>
-            <p class="note" id="f-ohnehoehe" style="display:none;margin:0 0 10px"></p>
-            <div class="rowend" style="margin-top:4px">
-              <button class="btn small ghost" onclick="resetFilter()">Filter zurücksetzen</button></div>
           </div>
         </div>
         <div id="placelist"></div>
