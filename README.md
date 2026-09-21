@@ -521,9 +521,26 @@ sie zu speichern.
 
 ## Der Reiter „Statistik“
 
-Links das **Säulenbild „Flugzeit pro Monat“** mit den zwölf Monaten, rechts die
-**Auswertung**: Art des Flugs, Startplätze, Schirme und Gurtzeuge, jeweils mit Anzahl und
-Summe, die längste Zeit zuerst.
+Links das **Säulenbild** mit den zwölf Monaten, rechts die **Auswertung**: Art des Flugs,
+Startplätze, Schirme und Gurtzeuge, jeweils mit Anzahl und Summe, die längste Zeit zuerst.
+
+### Was die Säulen zeigen
+
+Über dem Bild steht ein **Umschalter mit zwei Feldern**:
+
+| Feld | Säulen zeigen |
+| --- | --- |
+| **Flüge** (Vorgabe) | wie viele Flüge in diesem Monat stehen |
+| **Flugzeit** | wie viel Zeit in diesem Monat in der Luft war |
+
+**Über jeder Säule steht ihr Wert** — die Anzahl als Zahl, die Flugzeit als `h:mm`. Monate
+ohne Flug bleiben leer und zeigen nur einen dünnen Strich, damit das Bild ruhig bleibt. Die
+höchste Säule füllt das Bild aus, alle anderen stehen im Verhältnis dazu; zum Vergleichen
+zwischen zwei Jahren also immer auf die Zahlen schauen, nicht auf die Höhe. Zeigt man auf
+eine Säule, nennt die Infozeile beides zusammen — zum Beispiel „Juli: 3 Flüge, 5:20 h“.
+
+Die Wahl bleibt beim Jahreswechsel stehen und gilt, bis sie umgestellt wird oder die Seite
+neu geladen wird; gemerkt wird sie nicht.
 
 Oben rechts im Säulenbild steht die **Jahresauswahl**. Sie kennt jedes Jahr, aus dem ein
 Flug im Flugbuch steht, und dazu — sobald es mehr als eines ist — **„alle Jahre“**.

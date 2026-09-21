@@ -141,10 +141,22 @@
     color:var(--muted);margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .rem .txt{font-size:15px;line-height:1.55;white-space:pre-wrap}
 
-  .profile{display:flex;align-items:flex-end;gap:5px;height:120px;margin:6px 0 8px}
+  .profile{display:flex;align-items:flex-end;gap:5px;height:132px;margin:6px 0 8px}
   .profile .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
   .profile .bar{background:var(--chart);border-radius:1px 1px 0 0;min-height:1px;transition:height .35s ease}
   .profile .bar.zero{background:var(--line)}
+  /* Die Zahl über der Säule: wie viele Flüge beziehungsweise wie viel Zeit.
+     In leeren Monaten steht nichts, damit das Bild ruhig bleibt. */
+  .profile .zahl{flex:none;height:14px;line-height:14px;text-align:center;white-space:nowrap;
+    font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+  /* Der Umschalter in der Überschrift: Säulen zeigen Flüge oder Flugzeit. */
+  .segs{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:99px;
+    overflow:hidden;flex:none}
+  .seg{font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);background:var(--panel);border:0;padding:4px 11px;cursor:pointer}
+  .seg + .seg{border-left:1px solid var(--line)}
+  .seg:hover{background:#EAEFF4;color:var(--ink)}
+  .seg[aria-pressed="true"]{background:#FCEEF3;color:var(--ink);font-weight:600}
   .months{display:flex;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center}
   .months span{flex:1}
 
@@ -325,6 +337,7 @@
   /* Auf dem Handy sitzt das Infofeld unten und lässt die obere Kartenhälfte frei —
      dort schließt ein Klick in die Karte es wieder. */
   @media(max-width:560px){
+    .profile .zahl{font-size:8.5px;letter-spacing:-.03em}
     .placepanel{left:8px;right:8px;bottom:22px;width:auto;max-height:52%}
   }
 
@@ -618,7 +631,14 @@
   <section class="view" id="v-stat">
     <div class="cols">
       <div class="card">
-        <h2>Flugzeit pro Monat <select id="yearpick" style="width:auto;margin-left:auto;font-size:13px;padding:3px 7px"></select></h2>
+        <h2 style="flex-wrap:wrap;gap:8px 10px"><span id="chart-titel">Flüge pro Monat</span>
+          <span class="segs" id="chartwahl" role="group" aria-label="Was die Säulen zeigen">
+            <button type="button" class="seg" data-was="anzahl" aria-pressed="true"
+              title="Säulen zeigen die Anzahl der Flüge">Flüge</button>
+            <button type="button" class="seg" data-was="zeit" aria-pressed="false"
+              title="Säulen zeigen die Zeit in der Luft">Flugzeit</button>
+          </span>
+          <select id="yearpick" style="width:auto;font-size:13px;padding:3px 7px"></select></h2>
         <div class="body">
           <div class="profile" id="profile"></div>
           <div class="months"><span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
@@ -2772,10 +2792,21 @@ function renderDiary(){
       + 'Beides erscheint dann hier.</div>';
 }
 
+/* Was die Säulen zeigen: 'anzahl' sind die Flüge pro Monat, 'zeit' die Zeit in
+   der Luft. Umgeschaltet wird über der Säulengrafik. */
+let CHART = 'anzahl';
+const MONATE = ['Januar','Februar','März','April','Mai','Juni',
+                'Juli','August','September','Oktober','November','Dezember'];
+
 /* Ohne diesen Zuhörer täte die Jahresauswahl nichts: die Statistik wurde bisher
    nur beim Öffnen des Reiters und nach dem Laden neu gezeichnet. */
 function initStats(){
   document.getElementById('yearpick').addEventListener('change', renderStats);
+  document.getElementById('chartwahl').addEventListener('click', e => {
+    const b = e.target.closest('.seg'); if (!b || b.dataset.was === CHART) return;
+    CHART = b.dataset.was;
+    renderStats();
+  });
 }
 
 function renderStats(){
@@ -2794,12 +2825,30 @@ function renderStats(){
   const dazu = f => y ? (f.date || '').startsWith(y) : true;
   document.getElementById('bd-jahr').textContent = y || 'alle Jahre';
 
-  const perMonth = Array(12).fill(0);
-  S.flights.filter(f => f.date && !isGH(f) && dazu(f))
-           .forEach(f=> perMonth[+f.date.slice(5,7)-1] += (f.mins||0));
-  const peak = Math.max(...perMonth, 60);
-  document.getElementById('profile').innerHTML = perMonth.map(m=>
-    `<div class="col" title="${fmt(m)} h"><div class="bar ${m?'':'zero'}" style="height:${m?Math.max(3,m/peak*100):2}%"></div></div>`).join('');
+  /* Für jeden Monat zwei Zahlen: wie viele Flüge und wie viele Minuten.
+     Groundhandling ist kein Flug und zählt hier wie überall nicht mit. */
+  const perMonth = Array(12).fill(0), cntMonth = Array(12).fill(0);
+  S.flights.filter(f => f.date && !isGH(f) && dazu(f)).forEach(f => {
+    const i = +f.date.slice(5,7) - 1;
+    perMonth[i] += (f.mins||0);
+    cntMonth[i]++;
+  });
+
+  /* Die Säulen zeigen wahlweise die Anzahl oder die Zeit; die höchste Säule füllt
+     das Bild aus. Über jeder Säule steht ihr Wert, leere Monate bleiben stumm.
+     Die 86 % lassen oben Platz für diese Zahl. */
+  const zeit   = CHART === 'zeit';
+  const werte  = zeit ? perMonth : cntMonth;
+  const peak   = Math.max(...werte, zeit ? 60 : 1);
+  document.getElementById('chart-titel').textContent = zeit ? 'Flugzeit pro Monat' : 'Flüge pro Monat';
+  document.querySelectorAll('#chartwahl .seg').forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.was === CHART ? 'true' : 'false'));
+  document.getElementById('profile').innerHTML = werte.map((v,i) => {
+    const n = cntMonth[i];
+    const hinweis = `${MONATE[i]}: ${n ? n + (n===1?' Flug':' Flüge') + ', ' + fmt(perMonth[i]) + ' h' : 'kein Flug'}`;
+    return `<div class="col" title="${hinweis}"><span class="zahl">${v ? (zeit ? fmt(v) : v) : ''}</span>`
+      + `<div class="bar ${v?'':'zero'}" style="height:${v?Math.max(3, v/peak*86):2}%"></div></div>`;
+  }).join('');
 
   const yf = S.flights.filter(f => !isGH(f) && dazu(f));
   const total = yf.reduce((t,f)=>t+(f.mins||0), 0);
