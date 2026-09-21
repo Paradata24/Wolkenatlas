@@ -356,7 +356,6 @@
   /* Noch kein Flug: gestrichelt statt durchgezogen — damit nicht allein die
      Farbe den Unterschied macht (Rot und Orange liegen nah beieinander). */
   .dot.offen{border-style:dashed}
-  .dot.voll{background:currentColor}
   /* Trennt in der Legende die Art des Orts von den beiden Flugbuch-Knöpfen. */
   .legsep{width:1px;height:17px;background:var(--line);margin:0 3px;flex:none}
 
@@ -525,8 +524,6 @@
           <button type="button" class="legitem" data-typ="ground" aria-pressed="false"
             title="Nur Übungsgelände zeigen"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</button>
           <span class="legsep" aria-hidden="true"></span>
-          <button type="button" class="legitem" data-log="mit" aria-pressed="false"
-            title="Nur Orte zeigen, an denen schon ein Flug im Flugbuch steht"><i class="dot voll" style="color:var(--ink)"></i> schon geflogen</button>
           <button type="button" class="legitem" data-log="ohne" aria-pressed="false"
             title="Nur Orte zeigen, an denen noch kein Flug im Flugbuch steht"><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug</button>
         </div>
@@ -1527,10 +1524,10 @@ function initFilter(){
   document.getElementById('legend').addEventListener('click', e => {
     const b = e.target.closest('.legitem'); if (!b) return;
     if (b.dataset.log){
-      /* „schon geflogen“ und „noch kein Flug“ schalten denselben Filter wie die
-         Auswahlliste im aufgeklappten Filter — nochmal klicken hebt ihn wieder auf.
-         Zusammen mit der Art des Orts ergibt das zum Beispiel „nur Startplätze,
-         an denen ich schon war“. */
+      /* „noch kein Flug“ schaltet denselben Filter wie die Auswahlliste im
+         aufgeklappten Filter — nochmal klicken hebt ihn wieder auf. Zusammen mit der
+         Art des Orts ergibt das zum Beispiel „nur Startplätze, an denen ich noch nicht
+         war“. Die Gegenrichtung („schon geflogen“) steht in der Auswahlliste. */
       const schon = F.log === b.dataset.log;
       document.getElementById('f-log').value = schon ? 'alle' : b.dataset.log;
     } else {

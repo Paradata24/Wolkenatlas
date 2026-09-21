@@ -388,22 +388,17 @@ werden kann nach:
   *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
   hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
   *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die drei Arten stehen links,
-  hinter dem Trennstrich folgen die beiden Knöpfe zum Eintrag im Flugbuch.
+  hinter dem Trennstrich folgt der Knopf *noch kein Flug*.
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
-  nur Orte, an denen ich noch nicht war. Dafür stehen **rechts in der Legende**, hinter
-  einem Trennstrich, zwei eigene Knöpfe: *schon geflogen* und *noch kein Flug*. Ein Klick
-  schaltet den Filter, ein zweiter Klick auf denselben Knopf hebt ihn wieder auf, und ein
-  Klick auf den anderen wechselt direkt hinüber. Dieselbe Einstellung steht auch als
-  Auswahlliste im aufgeklappten Filter — beide zeigen immer denselben Stand.
+  nur Orte, an denen ich noch nicht war. Alle drei stehen als **Auswahlliste im
+  aufgeklappten Filter**. Der häufigste Fall — *noch kein Flug* — hat zusätzlich einen
+  eigenen Knopf **rechts in der Legende**, hinter dem Trennstrich: ein Klick schaltet ihn
+  an, ein zweiter wieder aus. Liste und Knopf zeigen immer denselben Stand.
 
-  Die beiden **Gruppen in der Legende wirken zusammen** („und“). Genau so kommt man an die
-  Fragen, die man beim Planen hat:
-
-  | Klick | zeigt |
-  | --- | --- |
-  | *Startplatz* + *schon geflogen* | nur die Startplätze, an denen schon ein Flug im Flugbuch steht |
-  | *Startplatz* + *noch kein Flug* | nur die Startplätze, an denen ich noch nicht war |
-  | *Landeplatz* + *noch kein Flug* | dasselbe für Landeplätze — die Knöpfe gelten für jede Art |
+  Der Knopf **wirkt mit der Art des Orts zusammen** („und“): *Startplatz* + *noch kein Flug*
+  zeigt also genau die Startplätze, an denen du noch nicht warst. Für die Gegenrichtung —
+  nur die Startplätze, an denen schon ein Flug steht — wählst du *Startplatz* in der Legende
+  und in der Liste *nur Orte, an denen ich schon geflogen bin*.
 - **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
   an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
   **„oder“**: Es bleibt jeder Ort stehen, an dem *mindestens eine* der angetippten
