@@ -27,12 +27,12 @@ sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
 `id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
-`type`: `start` | `land` | `ground` (Übungsgelände)
+`type`: `start` | `exp` (experimenteller Startplatz) | `land` | `ground` (Übungsgelände)
 Eine frühere Version kannte zusätzlich `both` („Start und Landung“). Die Art gibt es nicht
 mehr — siehe „Von ‚Start und Landung‘ zu zwei Punkten“.
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
-Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es nur
-bei `start`; bei `land` und `ground` wird das Feld geleert.
+Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es bei
+`start` und `exp`; bei `land` und `ground` wird das Feld geleert.
 `elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
 aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
 `info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten und so viele Links, wie du
@@ -229,8 +229,19 @@ holt sie der Knopf mit der Kartennadel mit einem Klick herbei.
 
 ### Die Art des Orts
 
-Ein Ort ist entweder **Startplatz**, **Landeplatz** oder **Übungsgelände** (fürs
-Groundhandling). Mehr Arten gibt es nicht.
+Ein Ort ist **Startplatz**, **Startplatz (experimentell)**, **Landeplatz** oder
+**Übungsgelände** (fürs Groundhandling). Mehr Arten gibt es nicht.
+
+**Experimentell** ist für Plätze gedacht, an denen du **noch nicht geflogen bist**, von denen
+du aber denkst, dass es gehen könnte. Sie verhalten sich wie ein Startplatz: Die Windrose
+steht im Formular, die möglichen Richtungen erscheinen im Kartensymbol, und beim Eintragen
+eines Flugs stehen sie in der Auswahl der Startplätze — sonst ließe sich der erste Flug von
+dort gar nicht festhalten. Unterschiedlich sind nur **Farbe und Filter**: Sie sind
+**neongrün** statt rot und lassen sich in der Legende einzeln ein- und ausblenden.
+
+Hat es dann geklappt, stellst du den Ort über *Bearbeiten* einfach auf **Startplatz** um —
+Name, Stelle, Höhe, Richtungen und Infos bleiben dabei stehen, und die schon eingetragenen
+Flüge auch.
 
 Wer an einem Platz startet *und* landet, legt dafür **zwei Punkte** an — einen Startplatz
 oben und einen Landeplatz unten. Das ist genauer als ein gemeinsamer Punkt: In der Karte
@@ -268,6 +279,7 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | --- | --- |
 | **Orange, gestrichelt** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
 | **Rot** | Startplatz, an dem schon geflogen wurde |
+| **Neongrün** | experimenteller Startplatz — immer neongrün, ob geflogen oder nicht |
 | **Blau** | Landeplatz mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
 
@@ -290,6 +302,10 @@ starten lässt. Gezeichnet wird wie die Windrose im Formular: **Norden oben, Ost
 Nebeneinanderliegende Richtungen ergeben zusammen einen Fächer — aus *N, NO, O* wird also
 ein Viertelkranz von oben nach rechts. Richtungen, bei denen nicht gestartet werden kann,
 werden gar nicht gezeichnet.
+
+Für **experimentelle** Startplätze gilt dasselbe, nur in Neongrün und mit einem dünnen
+dunkelgrünen Rand, damit das helle Neon auf der Karte nicht untergeht. Auch ohne
+eingetragene Richtung sind sie an diesem Rand zu erkennen.
 
 **Unverändert bleiben:** Landeplätze, Übungsgelände und Startplätze, bei denen noch keine
 Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Auch Farbe und Strichart
@@ -387,8 +403,12 @@ werden kann nach:
   der Karte**: Ein Klick auf *Startplatz* lässt nur noch Startplätze stehen, ein Klick auf
   *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
   hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
-  *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die drei Arten stehen links,
+  *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die vier Arten stehen links,
   hinter dem Trennstrich folgt der Knopf *noch kein Flug*.
+
+  **Experimentelle ausblenden:** Ein Klick auf *experimentell* zeigt nur sie. Umgekehrt —
+  alles außer ihnen — bekommst du, indem du die anderen drei Arten anklickst; was übrig
+  bleibt, steht in den Kärtchen unter dem Filterkopf.
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
   nur Orte, an denen ich noch nicht war. Alle drei stehen als **Auswahlliste im
   aufgeklappten Filter**. Der häufigste Fall — *noch kein Flug* — hat zusätzlich einen
@@ -438,7 +458,7 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 ### Startrichtungen — die Windrose
 
-Sobald die Art **Startplatz** gewählt ist, erscheint im Formular
+Sobald die Art **Startplatz** oder **Startplatz (experimentell)** gewählt ist, erscheint im Formular
 eine **Windrose mit acht Feldern** (N, NO, O, SO, S, SW, W, NW, im Uhrzeigersinn ab Norden
 oben). Jedes angetippte Feld heißt: bei diesem Wind lässt sich hier starten. Nochmal
 antippen nimmt die Richtung wieder weg, mehrere gleichzeitig sind der Normalfall. Unter der

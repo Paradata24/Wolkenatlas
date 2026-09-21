@@ -10,6 +10,9 @@
     --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
     --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
     --noflight:#E07A1F; --r:3px;
+    /* Experimentelle Startplätze: Neongrün. Weil es auf der hellen Karte kaum
+       leuchtet, bekommt es überall einen dünnen dunkelgrünen Rand. */
+    --exp:#39FF14; --exprand:#14532D;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -129,6 +132,9 @@
     padding:2px 6px;border-radius:2px;border:1px solid currentColor}
   .tag.s{color:var(--start)} .tag.l{color:var(--chart)}
   .tag.b{color:var(--contour)} .tag.g{color:var(--ground)}
+  /* Neongrün wäre als Schrift nicht zu lesen — im Kästchen steht es darum dunkelgrün
+     auf hellgrünem Grund. */
+  .tag.e{color:var(--exprand);border-color:#9BE88C;background:#EFFFE9}
   .tag.k{color:var(--muted);border-color:var(--line);background:#F2F5F8}
   .del{background:none;border:none;cursor:pointer;color:var(--muted);font-family:var(--mono);
     font-size:15px;line-height:1;padding:2px 5px;border-radius:2px}
@@ -356,6 +362,8 @@
   /* Noch kein Flug: gestrichelt statt durchgezogen — damit nicht allein die
      Farbe den Unterschied macht (Rot und Orange liegen nah beieinander). */
   .dot.offen{border-style:dashed}
+  /* Der Punkt in der Legende bekommt denselben dunklen Rand wie auf der Karte. */
+  .dot.exp{box-shadow:0 0 0 1px var(--exprand)}
   /* Trennt in der Legende die Art des Orts von den beiden Flugbuch-Knöpfen. */
   .legsep{width:1px;height:17px;background:var(--line);margin:0 3px;flex:none}
 
@@ -519,6 +527,8 @@
         <div class="legend" id="legend">
           <button type="button" class="legitem" data-typ="start" aria-pressed="false"
             title="Nur Startplätze zeigen"><i class="dot" style="color:var(--start)"></i> Startplatz</button>
+          <button type="button" class="legitem" data-typ="exp" aria-pressed="false"
+            title="Nur experimentelle Startplätze zeigen — noch nicht geflogen, könnten aber gehen"><i class="dot exp" style="color:var(--exp)"></i> experimentell</button>
           <button type="button" class="legitem" data-typ="land" aria-pressed="false"
             title="Nur Landeplätze zeigen"><i class="dot" style="color:var(--chart)"></i> Landeplatz</button>
           <button type="button" class="legitem" data-typ="ground" aria-pressed="false"
@@ -571,6 +581,7 @@
           <div class="field"><label for="p-type">Art</label>
             <select id="p-type">
               <option value="start">Startplatz</option>
+              <option value="exp">Startplatz (experimentell)</option>
               <option value="land">Landeplatz</option>
               <option value="ground">Übungsgelände</option>
             </select></div>
@@ -746,8 +757,9 @@ const KLASSEN = ['A','B low','B high','C','D','CCC'];
 const RICHTUNGEN = ['N','NO','O','SO','S','SW','W','NW'];
 const RICHTNAME = {N:'Nord', NO:'Nordost', O:'Ost', SO:'Südost',
                    S:'Süd', SW:'Südwest', W:'West', NW:'Nordwest'};
-/* Richtungen gibt es nur da, wo auch gestartet wird. */
-const startet = t => t === 'start';
+/* Richtungen gibt es nur da, wo auch gestartet wird — auch an den experimentellen
+   Plätzen, denn gerade dort ist die mögliche Richtung die halbe Miete. */
+const startet = t => t === 'start' || t === 'exp';
 const dirsIn  = v => String(v ?? '').split(',').map(x=>x.trim()).filter(x=>RICHTUNGEN.includes(x));
 /* Immer in der Reihenfolge der Windrose anzeigen, egal wie angeklickt wurde. */
 const dirSort = list => RICHTUNGEN.filter(d => list.includes(d));
@@ -791,15 +803,25 @@ const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildu
    Datenbank stehen, werden beim Laden umgestellt — siehe „Umstellung“ weiter unten.
    Farbe und Name dafür bleiben nur stehen, damit so ein Ort in den Sekunden bis zur
    Umstellung nicht ohne Beschriftung dasteht. Auswählen lässt er sich nicht mehr. */
-const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
-const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
+const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62',
+               exp:'#39FF14'};
+const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung',
+               ground:'Übungsgelände', exp:'Experimentell'};
 /* Wie die Arten in der Legende unter der Karte heißen. */
-const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände'};
+const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände',
+                exp:'experimentell'};
+/* Neongrün allein verschwindet auf der hellen Karte — ein dünner dunkler Rand
+   drumherum macht den Punkt deutlich. */
+const KONTUR = {exp:'#14532D'};
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
 const fluegeAn = id => S.flights.filter(f => f.start === id || f.land === id).length;
-const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
+/* Ein experimenteller Platz ist immer neongrün: „noch kein Flug“ ist bei ihm ja
+   keine Ausnahme, sondern der Sinn der Sache. Gestrichelt bleibt er trotzdem,
+   solange kein Flug dort steht. */
+const farbeVon = p => p.type === 'exp' ? COLOR.exp
+                    : fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
 /* Ein Link darf auch ohne „https://“ eingetippt werden. */
 const linkNorm = v => {
   const t = String(v ?? '').trim();
@@ -1590,7 +1612,7 @@ window.resetFilter = () => {
 function renderChips(){
   const c = [];
   if (F.text) c.push(['text', '„' + F.text + '“']);
-  ['start','land','ground'].filter(t => F.typen.includes(t))
+  ['start','exp','land','ground'].filter(t => F.typen.includes(t))
     .forEach(t => c.push(['typ:' + t, ARTLBL[t]]));
   if (F.min !== '') c.push(['min', 'ab ' + F.min + ' m']);
   if (F.max !== '') c.push(['max', 'bis ' + F.max + ' m']);
@@ -1728,13 +1750,17 @@ function ringStueck(ri, ra, w1, w2){
    (leer heißt: nur der Punkt), `offen` heißt „noch kein Flug eingetragen“,
    `voll` färbt den Punkt, solange sein Infofeld offen ist. */
 function symbolSVG(dirs, farbe, opt = {}){
+  /* `kontur` ist der dünne dunkle Rand, den nur das Neongrün braucht. */
+  const rand = opt.kontur ? ` stroke="${opt.kontur}" stroke-width=".7"` : '';
   const deko = dirSort(dirs).map(d => {
     const w = RICHTUNGEN.indexOf(d) * 45;
-    return `<path d="${ringStueck(10.5, 14.5, w - 19, w + 19)}" fill="${farbe}"/>`;
+    return `<path d="${ringStueck(10.5, 14.5, w - 19, w + 19)}" fill="${farbe}"${rand}/>`;
   }).join('');
   const gr = opt.gross || SYMBOX;
   return `<svg width="${gr}" height="${gr}" viewBox="0 0 ${SYMBOX} ${SYMBOX}" aria-hidden="true">`
     + deko
+    + (opt.kontur ? `<circle cx="${SYMM}" cy="${SYMM}" r="7" fill="none"`
+                    + ` stroke="${opt.kontur}" stroke-width="4"/>` : '')
     + `<circle cx="${SYMM}" cy="${SYMM}" r="7" fill="${opt.voll ? farbe : '#fff'}"`
     + ` fill-opacity="${opt.voll ? '.35' : '1'}" stroke="${farbe}" stroke-width="2.5"`
     + (opt.offen ? ' stroke-dasharray="4 3"' : '') + '/></svg>';
@@ -1742,7 +1768,8 @@ function symbolSVG(dirs, farbe, opt = {}){
 
 /* Das Symbol für einen bestimmten Ort. */
 const ortSVG = p => symbolSVG(startet(p.type) ? dirsIn(p.dirs) : [], farbeVon(p),
-                              {offen: !fluegeAn(p.id), voll: infoId === p.id});
+                              {offen: !fluegeAn(p.id), voll: infoId === p.id,
+                               kontur: KONTUR[p.type]});
 
 function drawPlaces(){
   if (!layer) return;
@@ -1755,7 +1782,9 @@ function drawPlaces(){
        alle anderen Orte den schlichten Punkt. Ohne Eintrag im Flugbuch ist er
        gestrichelt — der Unterschied hängt so nicht allein an der Farbe, die sich
        von Rot nur wenig abhebt. */
-    const mitRichtung = startet(p.type) && dirsIn(p.dirs).length;
+    /* Ein experimenteller Platz bekommt das gezeichnete Symbol auch ohne Richtungen,
+       weil nur dort der dunkle Rand ums Neongrün mitkommt. */
+    const mitRichtung = (startet(p.type) && dirsIn(p.dirs).length) || !!KONTUR[p.type];
     const punkt = mitRichtung
       ? L.marker([p.lat,p.lng], {keyboard:false, icon: L.divIcon({className:'',
           iconSize:[SYMBOX,SYMBOX], iconAnchor:[SYMM,SYMM], html: ortSVG(p)})})
@@ -1919,7 +1948,7 @@ window.savePlace = async () => {
     /* Warnen, wenn die neue Art nicht mehr zu den Flügen passt, die den Ort benutzen. */
     const alsStart = S.flights.filter(f=>f.start===editId && !isGH(f)).length;
     const alsLand  = S.flights.filter(f=>f.land===editId).length;
-    const passt = { start:['start'], land:['land'], ground:[] }[type] || [];
+    const passt = { start:['start'], exp:['start'], land:['land'], ground:[] }[type] || [];
     const flg = n => n === 1 ? '1 Flug' : n + ' Flügen';
     const kaputt = [ (alsStart && !passt.includes('start')) ? 'bei '+flg(alsStart)+' als Startplatz' : '',
                      (alsLand  && !passt.includes('land'))  ? 'bei '+flg(alsLand) +' als Landeplatz'  : '' ]
@@ -2148,7 +2177,10 @@ function kindOpts(cur){
     `<option value="${k}"${k===cur?' selected':''}>${esc(t)}</option>`).join('');
 }
 function placeOpts(which, kind, cur){
-  let list = kind === 'gh' ? S.places : S.places.filter(p => p.type === which);
+  /* Beim Startplatz stehen auch die experimentellen zur Wahl — sonst ließe sich der
+     erste Flug von dort gar nicht eintragen. */
+  let list = kind === 'gh' ? S.places
+    : S.places.filter(p => which === 'start' ? startet(p.type) : p.type === 'land');
   if (cur && !list.some(p=>p.id===cur)){
     const p = S.places.find(x=>x.id===cur); if (p) list = [p, ...list];
   }
@@ -2686,7 +2718,7 @@ function renderPlaceList(){
         <td class="click" onclick="zeigeOrt('${p.id}')" title="Auf der Karte zeigen">
           <span class="dot${n ? '' : ' offen'}" style="color:${farbeVon(p)}"></span> <span class="placename">${esc(p.name)}</span>
           <br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}${zusatz ? ' · '+zusatz : ''}</span></td>
-        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g'}[p.type]}">${TYPEN[p.type]}</span>
+        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g',exp:'e'}[p.type]}">${TYPEN[p.type]}</span>
           ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
         <td class="num">${hoeheTxtOrt(p)}</td>
         <td class="num">${n || '—'}</td>
