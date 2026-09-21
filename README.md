@@ -119,7 +119,24 @@ Ohne diese Meldung ist nichts zu tun.
 
 ## Die Startseite
 
-Oben die Kennzahlen, darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug.
+Oben die **Kennzahlenleiste** mit sechs Feldern, in dieser Reihenfolge:
+
+| Feld | zeigt |
+| --- | --- |
+| Flüge diesen Monat | Anzahl der Flüge im laufenden Monat |
+| Flüge dieses Jahr | Anzahl der Flüge im laufenden Jahr |
+| Flüge insgesamt | Anzahl aller erfassten Flüge |
+| Flugzeit dieses Jahr | Zeit in der Luft im laufenden Jahr |
+| Groundhandling dieses Jahr | Groundhandling-Zeit im laufenden Jahr |
+| Groundhandling insgesamt | Groundhandling-Zeit über alles |
+
+Groundhandling ist nie ein Flug und zählt darum in keinem der drei Flüge-Felder und
+nicht zur Flugzeit — siehe *Festgelegte Regeln*. Flüge **ohne Datum** gehören zu keinem
+Monat und zu keinem Jahr; sie zählen nur bei *Flüge insgesamt* mit. Die Beschriftungen
+sind verschieden lang und brechen in schmalen Fenstern um; die Zahl sitzt darum immer
+unten im Feld, damit alle Zahlen auf einer Linie stehen.
+
+Darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug.
 Damit sie kompakt bleibt, stehen zusammengehörende Angaben **übereinander** in einer Zelle
 (oben die wichtigere, darunter kleiner und grau die zweite):
 
@@ -137,17 +154,28 @@ Sortiert nach Datum und Startzeit, neueste zuerst; Flüge ohne Datum stehen ganz
 Fehlt eine Angabe, bleibt die Zelle leer. Lange Namen bei der Ausrüstung werden
 abgeschnitten — der ganze Name steht im Fenster, das ein Klick auf die Zeile öffnet.
 
+Die **Liste rollt in sich selbst**: Sie bekommt genau die Höhe, die unter den Kennzahlen
+noch auf den Schirm passt. Beim Blättern bleiben darum die Zahlen oben und die
+Spaltenüberschriften stehen, egal wie viele Flüge drinstehen. Auf sehr flachen Fenstern
+und auf dem Handy behält die Liste mindestens 260 Pixel Höhe — dort rollt dann auch die
+Seite selbst noch ein Stück.
+
 Die **Schirmklasse** wird nicht pro Flug eingetragen, sondern einmal beim Schirm im
 Reiter „Ausrüstung“. In der Flugtabelle steht sie als kleines Kürzel hinter dem
 Schirmnamen und lässt sich dort nicht ändern.
 
-Oben rechts an der Tabelle sitzen zwei Knöpfe:
+Oben rechts an der Tabelle sitzt das **Plus**: Es legt oben eine leere Zeile an, in die du
+einen neuen Flug einträgst. Ein eigenes Eingabeformular gibt es nicht mehr, die Tabelle
+*ist* das Formular.
 
-- **Stift** — alle Zellen werden zu Eingabefeldern. Ändern, was du willst, dann *Speichern*.
-  *Abbrechen* verwirft alles Ungespeicherte (mit Rückfrage). Im Bearbeiten-Zustand
-  steht am Zeilenende auch das × zum Löschen des Flugs.
-- **Plus** — legt oben eine leere Zeile an, in die du einen neuen Flug einträgst.
-  Ein eigenes Eingabeformular gibt es nicht mehr, die Tabelle *ist* das Formular.
+**Einen bestehenden Flug änderst du über die Zeile selbst:** ein Klick darauf öffnet das
+Fenster mit allen Angaben, dort führt *Bearbeiten* zurück in die Tabelle und springt zu
+genau dieser Zeile. Einen eigenen Stift-Knopf über der Tabelle gibt es dafür nicht mehr.
+
+Sobald bearbeitet wird — durch das Plus oder über eine Zeile — werden alle Zellen zu
+Eingabefeldern, und oben rechts stehen *Speichern* und *Abbrechen*. *Abbrechen* verwirft
+alles Ungespeicherte (mit Rückfrage). In diesem Zustand steht am Zeilenende auch das
+× zum Löschen des Flugs.
 
 In der Spalte **Notiz** ganz rechts stehen zwei runde Knöpfe übereinander: oben der
 **Kommentar** (in der Datenbank die Spalte `note`), darunter der **rote** für den Reminder.

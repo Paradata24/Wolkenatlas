@@ -47,8 +47,15 @@
     border-bottom:1px solid var(--line);margin-bottom:22px}
   .readout div{padding:14px 16px 13px;border-right:1px solid var(--line)}
   .readout div:last-child{border-right:none}
+  /* `border-right:none`: Der Strich zwischen den Feldern gehört an den Rand des
+     Feldes. Ohne das hier bekommt ihn auch die Beschriftung und es steht ein
+     kurzer Strich mitten im Feld. */
   .readout .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
-    text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+    text-transform:uppercase;color:var(--muted);margin-bottom:3px;border-right:none}
+  /* Die sechs Beschriftungen sind verschieden lang und brechen bei schmalen
+     Fenstern um. Die Zahl sitzt darum immer unten im Feld — so stehen die Zahlen
+     aller Felder auf einer Linie, auch wenn darüber ein- oder zweizeilig steht. */
+  .readout > div{display:flex;flex-direction:column;justify-content:space-between}
   .readout .val{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em}
   .readout .val small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
 
@@ -180,6 +187,17 @@
   .iconbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
   .iconbtn svg{width:15px;height:15px;display:block}
   .tablewrap{overflow-x:auto}
+  /* Die Flugliste rollt in sich selbst. So bleiben die Zahlen oben und die
+     Spaltenüberschriften stehen, auch wenn die Liste sehr lang wird. */
+  #flightlist .tablewrap{overflow:auto;overscroll-behavior:contain;
+    max-height:calc(100vh - 270px)}
+  @supports(max-height:max(320px,50dvh)){
+    #flightlist .tablewrap{max-height:max(320px,calc(100dvh - 270px))}
+  }
+  #flightlist thead th{position:sticky;top:0;z-index:3;background:var(--panel);
+    box-shadow:inset 0 -1px 0 var(--line)}
+  /* Damit eine angesprungene Zeile nicht unter den Spaltenköpfen verschwindet. */
+  #flightlist tbody tr{scroll-margin-top:46px}
   table.flights{min-width:720px}
   table.flights th{padding:11px 7px 7px;white-space:normal;line-height:1.35}
   table.flights td{padding:6px 7px;vertical-align:middle;white-space:nowrap}
@@ -424,12 +442,12 @@
   </header>
 
   <div class="readout" id="readout-flug">
-    <div><div class="lbl">Gesamt</div><div class="val" id="r-total">0:00<small>h</small></div></div>
-    <div><div class="lbl">Dieses Jahr</div><div class="val" id="r-year">0:00<small>h</small></div></div>
-    <div><div class="lbl">Dieser Monat</div><div class="val" id="r-month">0:00<small>h</small></div></div>
-    <div><div class="lbl">Flüge</div><div class="val" id="r-count">0</div></div>
-    <div><div class="lbl">Längster</div><div class="val" id="r-max">0:00<small>h</small></div></div>
-    <div><div class="lbl">Groundhandling</div><div class="val" id="r-gh">0:00<small>h</small></div></div>
+    <div><div class="lbl">Flüge diesen Monat</div><div class="val" id="r-cnt-month">0</div></div>
+    <div><div class="lbl">Flüge dieses Jahr</div><div class="val" id="r-cnt-year">0</div></div>
+    <div><div class="lbl">Flüge insgesamt</div><div class="val" id="r-cnt-total">0</div></div>
+    <div><div class="lbl">Flugzeit dieses Jahr</div><div class="val" id="r-time-year">0:00<small>h</small></div></div>
+    <div><div class="lbl">Groundhandling dieses Jahr</div><div class="val" id="r-gh-year">0:00<small>h</small></div></div>
+    <div><div class="lbl">Groundhandling insgesamt</div><div class="val" id="r-gh-total">0:00<small>h</small></div></div>
   </div>
 
   <!-- Im Reiter „Orte“ stehen hier die Zahlen zu den Orten statt zu den Flügen. -->
@@ -447,8 +465,6 @@
         <span class="tools">
           <button class="btn small" id="tablesave" style="display:none" onclick="saveTable()">Speichern</button>
           <button class="btn small ghost" id="tablecancel" style="display:none" onclick="cancelEdit()">Abbrechen</button>
-          <button class="iconbtn" id="editbtn" onclick="toggleEdit()"
-            title="Flüge bearbeiten" aria-label="Flüge bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
           <button class="iconbtn" id="addbtn" onclick="addRow()"
             title="Neuen Flug eintragen" aria-label="Neuen Flug eintragen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
         </span>
@@ -910,6 +926,7 @@ window.show = v => {
     if (!kartePasst) passeKarteAn();
   }, 60);
   if (v==='stat') renderStats();
+  if (v==='flug') flugHoehe();
 };
 
 /* ══════════ HÖHE ÜBER DEM MEER ══════════
@@ -2156,22 +2173,40 @@ function renderTable(){
   el.innerHTML = `<div class="tablewrap"><table class="flights" id="flighttable">
     <thead><tr>${head}</tr></thead>
     <tbody>${rows.map(f => editMode ? editRow(f) : viewRow(f)).join('')}</tbody></table></div>`;
+  flugHoehe();
 }
 
-/* ---------- Stift, Plus, Speichern ---------- */
+/* Die Flugliste rollt in sich selbst. Sie bekommt genau die Höhe, die unter der
+   Statistik noch auf den Schirm passt — so bleiben die Zahlen oben und die
+   Spaltenüberschriften stehen, egal wie lang die Liste wird. Klappt das Messen
+   nicht (etwa weil der Reiter gerade nicht zu sehen ist), greift der Wert aus
+   dem Stylesheet. */
+function flugHoehe(){
+  const box = document.querySelector('#flightlist .tablewrap');
+  if (!box) return;
+  const r = box.getBoundingClientRect();
+  if (!r.height && !r.top) return;
+  const card  = box.closest('.card');
+  /* Was unterhalb der Liste noch in der Karte steht — Hinweise, Rand. */
+  const unten = card ? card.getBoundingClientRect().bottom - r.bottom : 0;
+  const platz = window.innerHeight - (r.top + window.scrollY) - unten - 18;
+  const hoch = Math.max(260, Math.round(platz));
+  box.style.maxHeight = hoch + 'px';
+  /* Ragt die Seite trotzdem noch über den Schirm hinaus — etwa wegen des
+     Randes ganz unten —, wird die Liste um genau dieses Stück kürzer.
+     Dann rollt nur noch sie, und die Statistik steht wirklich fest. */
+  const ueber = document.documentElement.scrollHeight - window.innerHeight;
+  if (ueber > 0) box.style.maxHeight = Math.max(260, hoch - Math.ceil(ueber)) + 'px';
+}
+window.addEventListener('resize', flugHoehe);
+
+/* ---------- Plus, Speichern ---------- */
 function setTools(){
   document.getElementById('flugtitle').textContent = editMode ? 'Flüge — bearbeiten' : 'Flüge';
-  document.getElementById('editbtn').style.display     = editMode ? 'none' : '';
   document.getElementById('tablesave').style.display   = editMode ? '' : 'none';
   document.getElementById('tablecancel').style.display = editMode ? '' : 'none';
   document.getElementById('edithint').style.display    = editMode ? '' : 'none';
 }
-
-window.toggleEdit = () => {
-  if (editMode) return;
-  if (!S.flights.length){ toast('Es gibt noch keinen Flug zum Bearbeiten. Nimm das Plus.'); return; }
-  editMode = true; setTools(); renderTable();
-};
 
 window.addRow = () => {
   if (!editMode){ editMode = true; setTools(); renderTable(); }
@@ -2506,12 +2541,18 @@ function renderAll(){
   const inTime = (f, p) => f.date && f.date.startsWith(p);
   const air = S.flights.filter(f=>!isGH(f)), gnd = S.flights.filter(isGH);
 
-  document.getElementById('r-total').innerHTML = fmt(sum(air))+'<small>h</small>';
-  document.getElementById('r-year').innerHTML  = fmt(sum(air.filter(f=>inTime(f, ''+yr))))+'<small>h</small>';
-  document.getElementById('r-month').innerHTML = fmt(sum(air.filter(f=>inTime(f, yr+'-'+mo))))+'<small>h</small>';
-  document.getElementById('r-count').textContent = air.length;
-  document.getElementById('r-max').innerHTML = fmt(air.length ? Math.max(...air.map(f=>f.mins||0)) : 0)+'<small>h</small>';
-  document.getElementById('r-gh').innerHTML = fmt(sum(gnd))+'<small>h</small>';
+  /* Flüge ohne Datum gehören zu keinem Monat und zu keinem Jahr — sie zählen
+     darum nur bei „insgesamt“ mit. Groundhandling ist nie ein Flug. */
+  const imJahr  = f => inTime(f, ''+yr);
+  const imMonat = f => inTime(f, yr+'-'+mo);
+  const std = m => fmt(m)+'<small>h</small>';
+
+  document.getElementById('r-cnt-month').textContent = air.filter(imMonat).length;
+  document.getElementById('r-cnt-year').textContent  = air.filter(imJahr).length;
+  document.getElementById('r-cnt-total').textContent = air.length;
+  document.getElementById('r-time-year').innerHTML = std(sum(air.filter(imJahr)));
+  document.getElementById('r-gh-year').innerHTML   = std(sum(gnd.filter(imJahr)));
+  document.getElementById('r-gh-total').innerHTML  = std(sum(gnd));
 
   document.getElementById('noplaces').textContent = S.places.length ? ''
     : 'Start- und Landeplätze legst du unter „Orte“ auf der Karte an.';
