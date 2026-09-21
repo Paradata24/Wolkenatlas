@@ -12,7 +12,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
-- **Karte:** Leaflet mit OpenTopoMap (Standard) und OpenStreetMap, ohne Schlüssel und ohne Konto.
+- **Karte:** Leaflet mit OpenTopoMap, im Browser entfärbt — ohne Schlüssel und ohne Konto.
 - **Höhen der Orte:** Open Topo Data, ebenfalls ohne Schlüssel und ohne Konto.
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
@@ -168,24 +168,22 @@ Solange dieser Reiter offen ist, zeigt die **Kennzahlenleiste oben** die Zahlen 
 statt zu den Flügen: wie viele Orte es gibt, an wie vielen schon geflogen wurde, wie viele
 noch offen sind und wie hoch der höchste Startplatz liegt.
 
-Oben rechts in der Karte stehen **drei Ansichten** zur Wahl:
+Es gibt **genau eine Ansicht**: die Topo-Karte mit Höhenlinien und Geländeschattierung,
+**in Grau**. Einen Umschalter braucht es dafür nicht mehr.
 
-- **Topo** — die Standardansicht mit Höhenlinien und Geländeschattierung.
-- **Topo grau** — dieselbe Karte ohne Farben. Höhenlinien, Schummerung, Wege und
-  Beschriftung bleiben vollständig erhalten; nur die bunten Wald-, Fels- und Wasserflächen
-  treten zurück, wodurch die Ortspunkte deutlich herausstechen.
-- **Strasse** — die gewohnte OpenStreetMap-Ansicht.
+Höhenlinien, Schummerung, Wege, Straßen und alle Beschriftungen bleiben vollständig
+erhalten — nur die bunten Wald-, Fels- und Wasserflächen treten zurück. Dadurch sind die
+Ortspunkte die einzigen Farbflecken auf der Karte und stechen sofort ins Auge.
 
-Die zuletzt gewählte Ansicht merkt sich der Browser und stellt sie beim nächsten Öffnen
-wieder ein (nur auf diesem Gerät).
+Technisch ist das **keine eigene Karte**: Es werden dieselben Kacheln geladen wie in Farbe,
+die Farbe wird erst beim Anzeigen im Browser herausgerechnet. Das kostet keine zusätzlichen
+Abrufe beim Kartendienst, und die Ortspunkte darüber behalten ihre Farbe, weil die
+Entfärbung nur auf den Kartenbildern liegt.
 
 Gezoomt wird mit dem **Scrollrad**, sobald die Maus über der Karte ist — oder mit den
-Knöpfen + und −. Die Topo-Karte reicht eine Zoomstufe weniger weit als die Strassenkarte;
-wer ganz nah heran will, schaltet dafür kurz um.
-
-Technisch ist „Topo grau“ **keine zweite Karte**: Es werden dieselben Kacheln geladen wie
-bei „Topo“, die Farbe wird erst im Browser herausgerechnet. Das kostet keine zusätzlichen
-Abrufe beim Kartendienst, und die Ortspunkte darüber behalten ihre Farbe.
+Knöpfen + und −. Kacheln gibt es bis Zoomstufe 17; eine Stufe näher geht trotzdem, dann
+wird die letzte Kachel vergrössert. Das ist etwas unschärfer, hilft aber beim genauen
+Setzen eines Punktes.
 
 **Der Ausschnitt richtet sich nach der Liste.** Beim ersten Öffnen zoomt die Karte so, dass
 *alle* Orte hineinpassen; wird gefiltert oder gesucht, zieht sie auf die übrig gebliebenen
