@@ -280,6 +280,30 @@ Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchge
 hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
 nicht jedes Auge trennt sie zuverlässig.
 
+### Das Symbol der Startplätze
+
+Ein **Startplatz zeigt seine möglichen Startrichtungen gleich auf der Karte** — man sieht
+also schon beim Hinschauen, ob ein Platz zum heutigen Wind passt, ohne ihn erst anzuklicken.
+Gezeichnet wird immer die Windrose-Ausrichtung von oben: Norden ist oben, Osten rechts.
+
+Dafür stehen **drei Bauarten** zur Wahl. Umgeschaltet wird mit den drei Knöpfen direkt unter
+der Legende („Startrichtungen im Symbol“); jeder Knopf zeigt seine Bauart als kleines Bild.
+
+| Bauart | wie es aussieht |
+| --- | --- |
+| **Windrose** | Rund um den Punkt stehen acht Tortenstücke. Die möglichen Richtungen sind voll ausgefüllt, die übrigen bleiben blass stehen — man sieht also auch, was *nicht* geht. |
+| **Zacken** | Ein Strahl nach außen je möglicher Richtung, wie die Zacken eines Kompasssterns. Das ruhigste Bild, weil nur gezeichnet wird, was geht. |
+| **Bogen** | Ein durchgehender Bogen über alle möglichen Richtungen. Nebeneinanderliegende Richtungen wachsen zu einem Stück zusammen, aus *N, NO, O* wird also ein einziger Bogen — das „Startfenster“ auf einen Blick. |
+
+**Unverändert bleiben:** Landeplätze, Übungsgelände und Startplätze, bei denen noch keine
+Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Auch Farbe und Strichart
+bleiben, wie sie waren: Die Farbe sagt die Art des Orts, gestrichelt heißt „noch kein Flug“
+(siehe „Die Farbe der Punkte“) — das gilt für das Symbol genauso wie für den Punkt.
+
+Die gewählte Bauart **merkt sich der Browser** (nicht die Datenbank). Sie gilt darum pro
+Gerät: Am Handy lässt sich eine andere einstellen als am Rechner, und andere Konten sind
+davon nicht betroffen.
+
 ### Auf einen Ort klicken
 
 Ein **Klick auf einen Punkt** öffnet sein **Infofeld** in der Karte: Name, Art, Höhe, wie

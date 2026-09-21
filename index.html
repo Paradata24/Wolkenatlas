@@ -400,6 +400,12 @@
   th.sortbar .pfeilchen{font-size:9px;opacity:0}
   th.sortbar.an{color:var(--ink)}
   th.sortbar.an .pfeilchen{opacity:1}
+  /* Die Auswahl, wie die Startrichtungen im Kartensymbol gezeichnet werden.
+     Steht als zweite Zeile direkt unter der Legende. */
+  .symbolwahl{display:flex;gap:4px 6px;flex-wrap:wrap;align-items:center;
+    padding:0 11px 8px}
+  .symbolwahl .lbl{font-size:12.5px;color:var(--muted);padding-left:2px}
+  .legitem svg{display:block;flex:none}
   /* Der Punkt, der gerade gesetzt oder verschoben wird — er lässt sich ziehen. */
   .pinmark{display:block;width:21px;height:21px;box-sizing:border-box;border-radius:50%;
     border:2.5px dashed currentColor;background:rgba(255,255,255,.55);cursor:grab}
@@ -510,6 +516,16 @@
             title="Nur Übungsgelände zeigen"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</button>
           <button type="button" class="legitem" data-offen="1" aria-pressed="false"
             title="Nur Orte ohne Eintrag im Flugbuch zeigen"><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug eingetragen</button>
+        </div>
+        <!-- Zum Ausprobieren: drei Bauarten für das Symbol der Startplätze. -->
+        <div class="symbolwahl" id="symbolwahl">
+          <span class="lbl">Startrichtungen im Symbol:</span>
+          <button type="button" class="legitem" data-stil="rose" aria-pressed="false"
+            title="Die möglichen Richtungen als Tortenstücke rund um den Punkt">Windrose</button>
+          <button type="button" class="legitem" data-stil="zacken" aria-pressed="false"
+            title="Ein Strahl nach außen je möglicher Richtung">Zacken</button>
+          <button type="button" class="legitem" data-stil="bogen" aria-pressed="false"
+            title="Ein durchgehender Bogen über alle möglichen Richtungen">Bogen</button>
         </div>
         <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
         <div class="maphint" id="hint" style="display:none"></div>
@@ -1201,6 +1217,7 @@ function initMap(){
   document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncForm(); });
   buildRose('p-rose', toggleDir);
   initFilter();
+  initSymbolwahl();
   map.on('click', e => {
     /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild. */
     if (infoId) closePlaceInfo();
@@ -1668,6 +1685,122 @@ function cursorStil(){
   if (map) map.getContainer().style.cursor = setzen ? 'crosshair' : '';
 }
 
+/* ══════════ SYMBOLE AUF DER KARTE ══════════
+   Ein Startplatz zeigt seine möglichen Startrichtungen gleich im Kartensymbol.
+   Drei Bauarten stehen zur Wahl, umgeschaltet wird mit den Knöpfen unter der Karte:
+
+     rose    Windrose — jede mögliche Richtung ein volles Tortenstück rund um den
+             Punkt; die übrigen bleiben blass stehen, damit man auch sieht,
+             was NICHT geht.
+     zacken  Zacken — ein Strahl nach außen je möglicher Richtung.
+     bogen   Bogen — ein durchgehender Bogen über alle möglichen Richtungen;
+             nebeneinanderliegende wachsen dabei zu einem Stück zusammen.
+
+   Orte ohne Startrichtung — Landeplätze, Übungsgelände und Startplätze, bei denen
+   noch keine Richtung eingetragen ist — bleiben der schlichte Punkt von bisher.
+   Die Wahl merkt sich der Browser; sie steht nicht in der Datenbank und gilt
+   darum nur auf diesem Gerät. */
+const STILE = {rose:'Windrose', zacken:'Zacken', bogen:'Bogen'};
+/* Der Browser darf sich sperren (privates Fenster) — dann gilt eben die Vorgabe. */
+const holStil = () => { try { return localStorage.getItem('wa-symbol'); } catch { return null; } };
+const merkStil = v => { try { localStorage.setItem('wa-symbol', v); } catch {} };
+let SYMBOL = STILE[holStil()] ? holStil() : 'rose';
+
+/* Das Symbol ist 34 × 34 Bildpunkte groß, der Ort selbst sitzt genau in der Mitte. */
+const SYMBOX = 34, SYMM = 17;
+const GRAD = Math.PI / 180;
+const nz = v => Math.round(v * 100) / 100;
+/* Ein Punkt auf dem Kreis. Der Winkel zählt im Uhrzeigersinn ab Norden (oben) —
+   genau wie die Windrose: N = 0°, NO = 45°, O = 90° und so weiter. */
+const pol = (r, w) => [nz(SYMM + r * Math.sin(w * GRAD)), nz(SYMM - r * Math.cos(w * GRAD))];
+/* Ein Stück Kreisring zwischen zwei Winkeln — daraus bestehen die Tortenstücke. */
+function ringStueck(ri, ra, w1, w2){
+  const [x1,y1] = pol(ra,w1), [x2,y2] = pol(ra,w2);
+  const [x3,y3] = pol(ri,w2), [x4,y4] = pol(ri,w1);
+  const gross = (w2 - w1) > 180 ? 1 : 0;
+  return `M${x1} ${y1}A${ra} ${ra} 0 ${gross} 1 ${x2} ${y2}L${x3} ${y3}A${ri} ${ri} 0 ${gross} 0 ${x4} ${y4}Z`;
+}
+/* Ein Bogen auf dem Kreis, ohne Füllung. */
+function bogenPfad(r, w1, w2){
+  const [x1,y1] = pol(r,w1), [x2,y2] = pol(r,w2);
+  return `M${x1} ${y1}A${r} ${r} 0 ${(w2 - w1) > 180 ? 1 : 0} 1 ${x2} ${y2}`;
+}
+/* Nebeneinanderliegende Richtungen zu einem Block zusammenfassen — über Norden
+   hinweg: aus N, NO, O wird ein Bogen, aus N und S bleiben zwei. */
+function bloecke(idx){
+  if (idx.length === 8) return 'rund';
+  const hat = n => idx.includes((n + 8) % 8);
+  const start = idx.find(i => !hat(i - 1));
+  const raus = [];
+  let von = null;
+  for (let k = 0; k < 8; k++){
+    const i = (start + k) % 8;
+    if (hat(i)){ if (von === null) von = i; }
+    else if (von !== null){ raus.push([von, (i - 1 + 8) % 8]); von = null; }
+  }
+  if (von !== null) raus.push([von, (start + 7) % 8]);
+  return raus;
+}
+
+/* Baut das fertige Symbol als SVG. `dirs` sind die möglichen Startrichtungen
+   (leer heißt: nur der Punkt), `offen` heißt „noch kein Flug eingetragen“,
+   `voll` färbt den Punkt, solange sein Infofeld offen ist. */
+function symbolSVG(dirs, farbe, stil, opt = {}){
+  const idx = dirSort(dirs).map(d => RICHTUNGEN.indexOf(d));
+  let deko = '';
+  if (idx.length){
+    if (stil === 'rose'){
+      deko = RICHTUNGEN.map((d, i) =>
+        `<path d="${ringStueck(10.5, 14.5, i*45 - 19, i*45 + 19)}" fill="${farbe}"`
+        + ` opacity="${idx.includes(i) ? '.92' : '.17'}"/>`).join('');
+    } else if (stil === 'zacken'){
+      deko = idx.map(i => {
+        const [ax,ay] = pol(16.5, i*45), [bx,by] = pol(8.8, i*45 - 15), [cx,cy] = pol(8.8, i*45 + 15);
+        return `<path d="M${ax} ${ay}L${bx} ${by}L${cx} ${cy}Z" fill="${farbe}" opacity=".92"/>`;
+      }).join('');
+    } else {
+      const b = bloecke(idx);
+      const strich = ` fill="none" stroke="${farbe}" stroke-width="3.4" stroke-linecap="round" opacity=".92"`;
+      deko = b === 'rund'
+        ? `<circle cx="${SYMM}" cy="${SYMM}" r="12.5"${strich}/>`
+        : b.map(([a,z]) => {
+            const n = ((z - a + 8) % 8) + 1;            /* so viele Richtungen breit */
+            return `<path d="${bogenPfad(12.5, a*45 - 20, a*45 + (n-1)*45 + 20)}"${strich}/>`;
+          }).join('');
+    }
+  }
+  const gr = opt.gross || SYMBOX;
+  return `<svg width="${gr}" height="${gr}" viewBox="0 0 ${SYMBOX} ${SYMBOX}" aria-hidden="true">`
+    + deko
+    + `<circle cx="${SYMM}" cy="${SYMM}" r="7" fill="${opt.voll ? farbe : '#fff'}"`
+    + ` fill-opacity="${opt.voll ? '.35' : '1'}" stroke="${farbe}" stroke-width="2.5"`
+    + (opt.offen ? ' stroke-dasharray="4 3"' : '') + '/></svg>';
+}
+
+/* Das Symbol für einen bestimmten Ort. */
+const ortSVG = p => symbolSVG(startet(p.type) ? dirsIn(p.dirs) : [], farbeVon(p), SYMBOL,
+                              {offen: !fluegeAn(p.id), voll: infoId === p.id});
+
+/* Die drei Knöpfe unter der Karte zeigen ihre Bauart gleich als kleines Bild. */
+function initSymbolwahl(){
+  const box = document.getElementById('symbolwahl');
+  box.querySelectorAll('.legitem').forEach(b =>
+    b.insertAdjacentHTML('afterbegin',
+      symbolSVG(['N','NO','O'], COLOR.start, b.dataset.stil, {gross:24})));
+  box.addEventListener('click', e => {
+    const b = e.target.closest('.legitem'); if (!b) return;
+    SYMBOL = b.dataset.stil;
+    merkStil(SYMBOL);
+    markiereStil();
+    drawPlaces();
+  });
+  markiereStil();
+}
+function markiereStil(){
+  document.querySelectorAll('#symbolwahl .legitem').forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.stil === SYMBOL ? 'true' : 'false'));
+}
+
 function drawPlaces(){
   if (!layer) return;
   layer.clearLayers();
@@ -1675,10 +1808,16 @@ function drawPlaces(){
   sichtbareOrte().forEach(p => {
     /* Der Ort, der gerade bearbeitet wird, steht unten als gestrichelter Punkt. */
     if (editId === p.id && pending) return;
-    const punkt = L.circleMarker([p.lat,p.lng],
+    /* Ein Startplatz mit eingetragenen Richtungen bekommt das gezeichnete Symbol,
+       alle anderen Orte den schlichten Punkt. Ohne Eintrag im Flugbuch ist er
+       gestrichelt — der Unterschied hängt so nicht allein an der Farbe, die sich
+       von Rot nur wenig abhebt. */
+    const mitRichtung = startet(p.type) && dirsIn(p.dirs).length;
+    const punkt = mitRichtung
+      ? L.marker([p.lat,p.lng], {keyboard:false, icon: L.divIcon({className:'',
+          iconSize:[SYMBOX,SYMBOX], iconAnchor:[SYMM,SYMM], html: ortSVG(p)})})
+      : L.circleMarker([p.lat,p.lng],
       {radius:7, color:farbeVon(p), weight:2.5,
-       /* Ohne Eintrag im Flugbuch gestrichelt — der Unterschied hängt so nicht
-          allein an der Farbe, die sich von Rot nur wenig abhebt. */
        dashArray: fluegeAn(p.id) ? null : '4 3',
        fillColor: infoId === p.id ? farbeVon(p) : '#fff',
        fillOpacity: infoId === p.id ? .35 : 1})
@@ -1687,7 +1826,8 @@ function drawPlaces(){
       .bindTooltip(p.name+' · '+TYPEN[p.type]
         + (hoeheTxtOrt(p) ? ' · '+hoeheTxtOrt(p) : '')
         + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
-        + (fluegeAn(p.id) ? '' : ' · noch kein Flug'), {direction:'top'});
+        + (fluegeAn(p.id) ? '' : ' · noch kein Flug'),
+        {direction:'top', offset: mitRichtung ? [0,-9] : [0,0]});
     punkt.on('click', ev => {
       /* Beim Anlegen und Verschieben gilt der Klick der Karte, nicht dem Punkt —
          so lässt sich ein Ort auch genau auf einen anderen schieben. */
