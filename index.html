@@ -457,7 +457,8 @@
           <span><i class="dot" style="color:var(--ground)"></i> Übungsgelände</span>
           <span><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug eingetragen</span>
         </div>
-        <div class="maphint" id="hint">Klick auf einen Punkt zeigt seine Infos. Neuer Ort: „Ort hinzufügen“, dann in die Karte klicken.</div>
+        <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
+        <div class="maphint" id="hint" style="display:none"></div>
       </div>
       <div class="card">
         <h2>Orte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
@@ -1460,9 +1461,8 @@ function armUm(){
   if (editId) endEditPlace();          /* ein offenes Bearbeiten zuerst schließen */
   armed = !armed;
   document.getElementById('armbtn').textContent = armed ? 'Abbrechen' : 'Ort hinzufügen';
-  const h = document.getElementById('hint');
-  h.classList.toggle('armed', armed);
-  h.textContent = armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz — oder trag rechts die Koordinaten ein.' : HINT_NORMAL;
+  setzeHint(armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz — '
+                  + 'oder trag rechts die Koordinaten ein.' : '');
   if (!armed) cancelPlace();
   else {
     /* Gleich das Formular zeigen: so lassen sich Koordinaten auch einfügen,
@@ -1480,9 +1480,14 @@ function armUm(){
 const schmal = () => window.matchMedia('(max-width:820px)').matches;
 const nameFokus = () => { if (!schmal()) document.getElementById('p-name').focus(); };
 
-/* Der Standardhinweis unter der Karte. */
-const HINT_NORMAL = 'Klick auf einen Punkt zeigt seine Infos. Neuer Ort: „Ort hinzufügen“, '
-  + 'dann in die Karte klicken.';
+/* Die Zeile unter der Karte. Sie erscheint nur, solange etwas zu tun ist —
+   beim Anlegen und beim Verschieben. Sonst bleibt sie leer und wird ausgeblendet. */
+function setzeHint(text){
+  const h = document.getElementById('hint');
+  h.textContent = text || '';
+  h.style.display = text ? '' : 'none';
+  h.classList.toggle('armed', !!text);
+}
 
 /* Fadenkreuz, solange ein Ort gesetzt oder verschoben wird — sonst Zeigehand. */
 function cursorStil(){
@@ -1610,14 +1615,11 @@ function placeFormLabels(){
   document.getElementById('p-coordhint').textContent = editId
     ? 'Zum Verschieben den Punkt in der Karte ziehen, die neue Stelle anklicken '
       + 'oder die Koordinaten hier eintragen.' : '';
-  const h = document.getElementById('hint');
   if (editId){
-    h.classList.add('armed');
-    h.textContent = 'Du bearbeitest einen Ort. Zieh den Punkt an die neue Stelle — '
-      + 'oder klick sie in der Karte an.';
+    setzeHint('Du bearbeitest einen Ort. Zieh den Punkt an die neue Stelle — '
+      + 'oder klick sie in der Karte an.');
   } else if (!armed){
-    h.classList.remove('armed');
-    h.textContent = HINT_NORMAL;
+    setzeHint('');
   }
 }
 

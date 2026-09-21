@@ -225,6 +225,9 @@ Rand), solange das Infofeld eines Orts offen ist — Karte und Liste zeigen imme
 
 Drei Wege führen zum selben Ergebnis, während ein Ort angelegt oder bearbeitet wird:
 
+Unter der Karte erscheint dabei eine rosa Zeile, die sagt, was gerade dran ist; wenn nichts
+angelegt oder verschoben wird, steht dort nichts.
+
 - **Ziehen** — den gestrichelten Punkt in der Karte anfassen und an die neue Stelle ziehen.
   Das ist der bequemste Weg für kleine Korrekturen.
 - **Klicken** — irgendwo in die Karte klicken setzt den Punkt dorthin.
