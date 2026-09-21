@@ -342,6 +342,14 @@
   .rose.mini .seg text{font-size:15px}
   td.click{cursor:pointer}
   td.click:hover{background:#F2F5F8}
+  /* Die Ortsliste scrollt in sich selbst, solange sie neben der Karte steht.
+     So bleibt die Karte stehen, wenn ein angeklickter Ort weiter unten liegt. */
+  @media(min-width:821px){
+    #placelist{position:relative;overflow:auto;overscroll-behavior:contain;
+      max-height:calc(100vh - 250px)}
+    #placelist th{position:sticky;top:0;z-index:2;background:var(--panel)}
+    #placelist th.sortbar button{background:var(--panel)}
+  }
   .placename{text-decoration:underline dotted var(--line);text-underline-offset:3px}
   td.click:hover .placename{text-decoration-color:var(--muted)}
   /* Die Zeile zu dem Ort, dessen Infofeld in der Karte gerade offen ist. */
@@ -1744,10 +1752,22 @@ window.openPlaceInfo = id => {
   setTimeout(() => {
     drawPlaces();
     renderPlaceList();
-    const zeile = document.querySelector('#placelist tr.aktiv');
-    if (zeile && !imVollbild()) zeile.scrollIntoView({block:'nearest'});
+    zeigeZeile();
   }, 0);
 };
+
+/* Die hervorgehobene Zeile ins Sichtfenster der Liste holen — nur innerhalb der
+   Liste, damit die Seite und mit ihr die Karte stehen bleiben. Scrollt die Liste
+   nicht selbst (schmaler Bildschirm), passiert gar nichts. */
+function zeigeZeile(){
+  const box = document.getElementById('placelist');
+  const zeile = box.querySelector('tr.aktiv');
+  if (!zeile || box.scrollHeight <= box.clientHeight + 2) return;
+  const oben = zeile.offsetTop, hoch = zeile.offsetHeight;
+  if (oben < box.scrollTop || oben + hoch > box.scrollTop + box.clientHeight){
+    box.scrollTop = Math.max(0, oben - (box.clientHeight - hoch) / 2);
+  }
+}
 
 window.closePlaceInfo = () => {
   if (!infoId) return;

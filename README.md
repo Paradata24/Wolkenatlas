@@ -214,6 +214,11 @@ Ein Klick auf den **Namen in der Liste** schiebt die Karte auf den Ort und öffn
 Infofeld. Umgekehrt wird die Zeile in der Liste hervorgehoben (heller Streifen am linken
 Rand), solange das Infofeld eines Orts offen ist — Karte und Liste zeigen immer auf dasselbe.
 
+Damit dabei die Karte nicht aus dem Bild rutscht, **scrollt die Liste in sich selbst**,
+solange sie neben der Karte steht: Liegt der angeklickte Ort weiter unten, rollt nur die
+Liste dorthin, die Seite bleibt stehen. Die Spaltenüberschriften bleiben beim Scrollen oben
+kleben. Auf dem Handy, wo die Liste unter der Karte steht, scrollt wie gewohnt die Seite.
+
 - **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
   Das Formular geht sofort auf, damit sich die Stelle auch über die Koordinaten eintragen lässt.
 - **Ändern:** der **Stift** in der Liste oder *Bearbeiten* im Infofeld. Solange du bearbeitest,
