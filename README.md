@@ -272,14 +272,13 @@ werden kann nach:
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
   nur Orte, an denen ich noch nicht war.
 - **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
-  an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig werden
-  **zusammengezählt, nicht zur Auswahl gestellt**: Es bleiben nur Orte übrig, an denen
-  *alle* angetippten Richtungen gehen.
+  an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
+  **„oder“**: Es bleibt jeder Ort stehen, an dem *mindestens eine* der angetippten
+  Richtungen geht. Je mehr du antippst, desto mehr Orte kommen also dazu.
 
-  Beispiel: Du tippst **N** an und bekommst jeden Platz, der unter anderem bei Nord startbar
-  ist. Tippst du zusätzlich **NW** und **W** an, fällt ein Platz mit N und NW wieder heraus,
-  weil ihm W fehlt — übrig bleiben die Plätze, die alle drei Richtungen können. Je mehr du
-  antippst, desto weniger Orte bleiben also stehen.
+  Das ist auf die Windvorhersage gemünzt: Steht für morgen **Ostwind** an, tippst du
+  **NO, O und SO** an und siehst jeden Platz, der bei einer dieser Richtungen startbar ist —
+  auch den, der nur SO kann. Plätze, die ausschließlich nach Westen schauen, fallen weg.
 
   Weil nur Start- und Start-und-Landeplätze Startrichtungen haben, fallen reine Landeplätze
   und Übungsgelände heraus, sobald hier etwas angetippt ist.
