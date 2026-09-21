@@ -119,7 +119,24 @@ Ohne diese Meldung ist nichts zu tun.
 
 ## Die Startseite
 
-Oben die Kennzahlen, darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug.
+Oben die **Kennzahlenleiste** mit sechs Feldern, in dieser Reihenfolge:
+
+| Feld | zeigt |
+| --- | --- |
+| Flüge diesen Monat | Anzahl der Flüge im laufenden Monat |
+| Flüge dieses Jahr | Anzahl der Flüge im laufenden Jahr |
+| Flüge insgesamt | Anzahl aller erfassten Flüge |
+| Groundhandling dieses Jahr | Groundhandling-Zeit im laufenden Jahr |
+| Groundhandling insgesamt | Groundhandling-Zeit über alles |
+| Flugzeit dieses Jahr | Zeit in der Luft im laufenden Jahr |
+
+Groundhandling ist nie ein Flug und zählt darum in keinem der drei Flüge-Felder und
+nicht zur Flugzeit — siehe *Festgelegte Regeln*. Flüge **ohne Datum** gehören zu keinem
+Monat und zu keinem Jahr; sie zählen nur bei *Flüge insgesamt* mit. Die Beschriftungen
+sind verschieden lang und brechen in schmalen Fenstern um; die Zahl sitzt darum immer
+unten im Feld, damit alle Zahlen auf einer Linie stehen.
+
+Darunter **eine Tabelle mit allen Flügen** — eine Zeile pro Flug.
 Damit sie kompakt bleibt, stehen zusammengehörende Angaben **übereinander** in einer Zelle
 (oben die wichtigere, darunter kleiner und grau die zweite):
 
