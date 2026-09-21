@@ -626,7 +626,8 @@
           <p class="note" id="yearsum"></p>
         </div>
       </div>
-      <div class="card"><h2>Auswertung</h2><div class="body" id="breakdown"></div></div>
+      <div class="card"><h2>Auswertung <span id="bd-jahr" style="margin-left:auto;font-size:13px;
+        color:var(--muted);font-weight:400"></span></h2><div class="body" id="breakdown"></div></div>
     </div>
   </section>
 
@@ -873,6 +874,7 @@ async function startApp(session){
   document.getElementById('whoami').textContent = session.user.email;
   document.getElementById('app').classList.add('on');
   initMap();
+  initStats();
   await checkCols();
   await loadAll();
 }
@@ -2770,33 +2772,53 @@ function renderDiary(){
       + 'Beides erscheint dann hier.</div>';
 }
 
+/* Ohne diesen Zuhörer täte die Jahresauswahl nichts: die Statistik wurde bisher
+   nur beim Öffnen des Reiters und nach dem Laden neu gezeichnet. */
+function initStats(){
+  document.getElementById('yearpick').addEventListener('change', renderStats);
+}
+
 function renderStats(){
-  /* Flüge ohne Datum lassen sich keinem Jahr zuordnen und bleiben hier außen vor. */
   const years = [...new Set(S.flights.filter(f=>f.date).map(f=>f.date.slice(0,4)))].sort().reverse();
   const yp = document.getElementById('yearpick'), keep = yp.value;
-  yp.innerHTML = years.length ? years.map(y=>`<option>${y}</option>`).join('')
-                              : `<option>${new Date().getFullYear()}</option>`;
-  if (years.includes(keep)) yp.value = keep;
-  const y = yp.value;
+  /* Gibt es mehr als ein Jahr, kommt „alle Jahre“ als letzte Möglichkeit dazu. */
+  yp.innerHTML = (years.length ? years : [''+new Date().getFullYear()])
+                   .map(y=>`<option value="${y}">${y}</option>`).join('')
+               + (years.length > 1 ? '<option value="alle">alle Jahre</option>' : '');
+  /* Die getroffene Wahl übersteht das Neuzeichnen — sonst gilt das neueste Jahr. */
+  if (keep && [...yp.options].some(o => o.value === keep)) yp.value = keep;
+
+  const y = yp.value === 'alle' ? null : yp.value;      /* null heißt: alle Jahre */
+  /* Flüge ohne Datum lassen sich keinem Jahr zuordnen: bei einem bestimmten Jahr
+     bleiben sie außen vor, bei „alle Jahre“ zählen sie mit. */
+  const dazu = f => y ? (f.date || '').startsWith(y) : true;
+  document.getElementById('bd-jahr').textContent = y || 'alle Jahre';
 
   const perMonth = Array(12).fill(0);
-  S.flights.filter(f=>f.date && f.date.startsWith(y) && !isGH(f))
+  S.flights.filter(f => f.date && !isGH(f) && dazu(f))
            .forEach(f=> perMonth[+f.date.slice(5,7)-1] += (f.mins||0));
   const peak = Math.max(...perMonth, 60);
   document.getElementById('profile').innerHTML = perMonth.map(m=>
     `<div class="col" title="${fmt(m)} h"><div class="bar ${m?'':'zero'}" style="height:${m?Math.max(3,m/peak*100):2}%"></div></div>`).join('');
 
-  const yf = S.flights.filter(f=>f.date && f.date.startsWith(y) && !isGH(f));
-  const total = perMonth.reduce((a,b)=>a+b,0);
+  const yf = S.flights.filter(f => !isGH(f) && dazu(f));
+  const total = yf.reduce((t,f)=>t+(f.mins||0), 0);
   const hm = yf.reduce((t,f)=>t+(f.ascM||0),0), asc = yf.reduce((t,f)=>t+(f.ascMin||0),0);
+  /* Flüge ohne Datum zählen bei „alle Jahre“ mit, im Säulenbild können sie aber
+     nirgends stehen — das wird dazugesagt, damit die Zahlen zusammenpassen. */
+  const ohneDatum = y ? 0 : yf.filter(f => !f.date).length;
   document.getElementById('yearsum').textContent = yf.length
-    ? `${y}: ${yf.length} ${yf.length===1?'Flug':'Flüge'}, zusammen ${fmt(total)} Stunden in der Luft.`
+    ? `${y || 'Alle Jahre'}: ${yf.length} ${yf.length===1?'Flug':'Flüge'}, zusammen ${fmt(total)} Stunden in der Luft.`
       + (hm ? ` Dazu ${hm.toLocaleString('de-DE')} Höhenmeter im Aufstieg${asc?` in ${fmt(asc)} Stunden`:''}.` : '')
-    : `Für ${y} sind noch keine Flüge erfasst.`;
+      + (ohneDatum ? ` ${ohneDatum === 1 ? 'Ein Flug' : ohneDatum + ' Flüge'} davon`
+                     + ` ohne Datum — ${ohneDatum === 1 ? 'er steht' : 'sie stehen'} in keinem Monat.` : '')
+    : (y ? `Für ${y} sind noch keine Flüge erfasst.` : 'Noch sind keine Flüge erfasst.');
 
+  /* Die Auswertung rechts zeigt denselben Zeitraum wie das Säulenbild links. */
+  const imZeitraum = S.flights.filter(dazu);
   const tally = (key, list) => {
     const m = {};
-    (list||S.flights).forEach(f=>{ const k = key(f); if(!k) return;
+    (list||imZeitraum).forEach(f=>{ const k = key(f); if(!k) return;
       m[k]=m[k]||{n:0,min:0}; m[k].n++; m[k].min+=(f.mins||0); });
     return Object.entries(m).sort((a,b)=>b[1].min-a[1].min);
   };
@@ -2806,13 +2828,14 @@ function renderStats(){
     <table style="margin-bottom:20px">${rows.map(([k,v])=>`<tr><td>${esc(k)}</td>
       <td class="num" style="text-align:right;color:var(--muted)">${v.n}×</td>
       <td class="num" style="text-align:right"><b>${fmt(v.min)}</b></td></tr>`).join('')}</table>` : '';
-  const airOnly = S.flights.filter(f=>!isGH(f));
+  const airOnly = imZeitraum.filter(f=>!isGH(f));
   document.getElementById('breakdown').innerHTML =
       block('Art des Flugs', tally(f=>KINDS[f.kind]))
     + block('Startplätze', tally(f=>f.start ? pname(f.start) : '', airOnly))
     + block('Schirme', tally(f=>f.glider))
     + block('Gurtzeuge', tally(f=>f.harness))
-    || '<div class="empty">Sobald du Flüge einträgst,<br>erscheint hier die Auswertung.</div>';
+    || (y ? `<div class="empty">Für ${y} ist noch nichts eingetragen.</div>`
+          : '<div class="empty">Sobald du Flüge einträgst,<br>erscheint hier die Auswertung.</div>');
 }
 
 /* ══════════ SICHERUNG ══════════ */

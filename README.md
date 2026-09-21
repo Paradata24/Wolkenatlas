@@ -519,6 +519,24 @@ nur umbenannten Ort bleibt die alte Höhe erhalten. Solange die Spalte `elev` in
 fehlt, zeigt das Flugbuch die Höhe trotzdem an, merkt sie sich aber nur im Browser, statt
 sie zu speichern.
 
+## Der Reiter „Statistik“
+
+Links das **Säulenbild „Flugzeit pro Monat“** mit den zwölf Monaten, rechts die
+**Auswertung**: Art des Flugs, Startplätze, Schirme und Gurtzeuge, jeweils mit Anzahl und
+Summe, die längste Zeit zuerst.
+
+Oben rechts im Säulenbild steht die **Jahresauswahl**. Sie kennt jedes Jahr, aus dem ein
+Flug im Flugbuch steht, und dazu — sobald es mehr als eines ist — **„alle Jahre“**.
+Vorgewählt ist das neueste Jahr.
+
+**Die Auswahl gilt für den ganzen Reiter**: Säulenbild, der Satz darunter und die
+Auswertung rechts zeigen immer denselben Zeitraum. Welcher das gerade ist, steht klein
+in der Überschrift der Auswertung. Die Kennzahlenleiste ganz oben bleibt davon unberührt —
+sie zeigt weiter das laufende Jahr und die Gesamtsumme.
+
+Groundhandling zählt wie überall nicht als Flugzeit: Es steht nicht im Säulenbild und nicht
+im Satz darunter, in der Auswertung erscheint es aber als eigene Art des Flugs.
+
 ## Festgelegte Regeln
 
 Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
@@ -531,8 +549,10 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
   bei dem werden beide Felder ausgeblendet und beim Speichern geleert.
 - **Jede Angabe darf leer bleiben, auch Datum, Orte und Dauer.** Ein Flug wird immer
   gespeichert und kann später ergänzt werden. Leere Werte lassen die Zelle in der
-  Flugtabelle einfach leer, Flüge ohne Datum stehen ganz oben und tauchen in der
-  Jahresstatistik nicht auf, weil sie keinem Jahr zugeordnet werden können.
+  Flugtabelle einfach leer, und Flüge ohne Datum stehen ganz oben. In der Statistik
+  fallen sie heraus, sobald ein bestimmtes Jahr gewählt ist — sie gehören ja zu keinem.
+  Bei „alle Jahre“ zählen sie mit; im Säulenbild können sie trotzdem nirgends stehen,
+  was der Satz darunter dann dazusagt.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
 - Kommentare und Reminder sind tagebuchlang. In der Flugtabelle steht dafür nur ein
