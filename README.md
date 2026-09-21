@@ -27,10 +27,12 @@ sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
 `id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
-`type`: `start` | `land` | `both` | `ground` (Übungsgelände)
+`type`: `start` | `land` | `ground` (Übungsgelände)
+Eine frühere Version kannte zusätzlich `both` („Start und Landung“). Die Art gibt es nicht
+mehr — siehe „Von ‚Start und Landung‘ zu zwei Punkten“.
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
 Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es nur
-bei Orten mit Start (`start` und `both`); bei `land` und `ground` wird das Feld geleert.
+bei `start`; bei `land` und `ground` wird das Feld geleert.
 `elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
 aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
 `info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten und so viele Links, wie du
@@ -225,6 +227,39 @@ verlangt:
 nicht mehr passen; Zoom und Mitte bleiben stehen. Liegen die Treffer außerhalb des Bildes,
 holt sie der Knopf mit der Kartennadel mit einem Klick herbei.
 
+### Die Art des Orts
+
+Ein Ort ist entweder **Startplatz**, **Landeplatz** oder **Übungsgelände** (fürs
+Groundhandling). Mehr Arten gibt es nicht.
+
+Wer an einem Platz startet *und* landet, legt dafür **zwei Punkte** an — einen Startplatz
+oben und einen Landeplatz unten. Das ist genauer als ein gemeinsamer Punkt: In der Karte
+steht jeder Punkt da, wo er wirklich ist, und in den Auswahllisten beim Flug erscheint
+jeweils nur, was dort auch passt.
+
+#### Von „Start und Landung“ zu zwei Punkten
+
+Früher gab es zusätzlich die Art **„Start und Landung“** (`both` in der Datenbank). Sie ist
+weggefallen. Stehen noch Orte dieser Art in der Datenbank, stellt das Flugbuch sie **beim
+Laden von selbst um** — einmalig, ohne Nachfrage:
+
+- Der Ort ist im Flugbuch **nur als Landung** eingetragen → er wird **Landeplatz**
+  (Startrichtungen werden dabei geleert, ein Landeplatz hat keine).
+- **Sonst** → er wird **Startplatz**. Das gilt auch für Orte, an denen noch kein Flug steht.
+- Der Ort ist bei Flügen **als Start und als Landung** eingetragen → er bleibt als
+  **Startplatz** stehen, und rund **60 Meter südöstlich** entsteht ein neuer **Landeplatz**
+  mit dem Namen „*Name* Landeplatz“. Alle Landungen zeigen danach auf diesen neuen Punkt,
+  die Starts bleiben beim alten. Der Infotext wird auf den neuen Punkt mitkopiert, die Höhe
+  holt er sich selbst.
+
+Danach steht kurz eine Meldung wie „3 Orte von ‚Start und Landung‘ umgestellt · 1 neuer
+Landeplatz.“ Den neuen Landeplatz danach bitte einmal ansehen: Name und Stelle lassen sich
+wie bei jedem anderen Ort über *Bearbeiten* richtigstellen.
+
+Ist nichts umzustellen, passiert nichts. Die Umstellung läuft bei jedem Laden mit und greift
+darum auch dann noch, wenn später einmal eine **alte Sicherung** wiederhergestellt wird, in
+der die alte Art noch vorkommt.
+
 ### Die Farbe der Punkte
 
 Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
@@ -234,7 +269,6 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | **Orange, gestrichelt** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
 | **Rot** | Startplatz, an dem schon geflogen wurde |
 | **Blau** | Landeplatz mit Eintrag |
-| **Gold** | Start und Landung mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau, gold, grün), sobald der
@@ -337,9 +371,7 @@ werden kann nach:
   der Karte**: Ein Klick auf *Startplatz* lässt nur noch Startplätze stehen, ein Klick auf
   *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
   hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
-  *Startplatz* und *Start + Landung* zusammen zeigen alles, wo gestartet werden kann.
-  „Start + Landung“ ist dabei eine **eigene Art** — ein solcher Ort erscheint also nicht
-  schon beim Klick auf *Startplatz*.
+  *Startplatz* und *Übungsgelände* zusammen zeigen beides.
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
   nur Orte, an denen ich noch nicht war. Der letzte Legendeneintrag,
   *noch kein Flug eingetragen*, schaltet genau diesen Filter mit einem Klick.
@@ -382,7 +414,7 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 ### Startrichtungen — die Windrose
 
-Sobald die Art **Startplatz** oder **Start und Landung** gewählt ist, erscheint im Formular
+Sobald die Art **Startplatz** gewählt ist, erscheint im Formular
 eine **Windrose mit acht Feldern** (N, NO, O, SO, S, SW, W, NW, im Uhrzeigersinn ab Norden
 oben). Jedes angetippte Feld heißt: bei diesem Wind lässt sich hier starten. Nochmal
 antippen nimmt die Richtung wieder weg, mehrere gleichzeitig sind der Normalfall. Unter der

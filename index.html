@@ -506,8 +506,6 @@
             title="Nur Startplätze zeigen"><i class="dot" style="color:var(--start)"></i> Startplatz</button>
           <button type="button" class="legitem" data-typ="land" aria-pressed="false"
             title="Nur Landeplätze zeigen"><i class="dot" style="color:var(--chart)"></i> Landeplatz</button>
-          <button type="button" class="legitem" data-typ="both" aria-pressed="false"
-            title="Nur Orte mit Start und Landung zeigen"><i class="dot" style="color:var(--contour)"></i> Start + Landung</button>
           <button type="button" class="legitem" data-typ="ground" aria-pressed="false"
             title="Nur Übungsgelände zeigen"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</button>
           <button type="button" class="legitem" data-offen="1" aria-pressed="false"
@@ -557,7 +555,6 @@
             <select id="p-type">
               <option value="start">Startplatz</option>
               <option value="land">Landeplatz</option>
-              <option value="both">Start und Landung</option>
               <option value="ground">Übungsgelände</option>
             </select></div>
           <div class="field" id="p-dirfield" style="display:none">
@@ -725,7 +722,7 @@ const RICHTUNGEN = ['N','NO','O','SO','S','SW','W','NW'];
 const RICHTNAME = {N:'Nord', NO:'Nordost', O:'Ost', SO:'Südost',
                    S:'Süd', SW:'Südwest', W:'West', NW:'Nordwest'};
 /* Richtungen gibt es nur da, wo auch gestartet wird. */
-const startet = t => t === 'start' || t === 'both';
+const startet = t => t === 'start';
 const dirsIn  = v => String(v ?? '').split(',').map(x=>x.trim()).filter(x=>RICHTUNGEN.includes(x));
 /* Immer in der Reihenfolge der Windrose anzeigen, egal wie angeklickt wurde. */
 const dirSort = list => RICHTUNGEN.filter(d => list.includes(d));
@@ -765,10 +762,14 @@ const nk = v => (typeof v === 'number' ? v : parseFloat(v)).toLocaleString('de-D
    Beschriftung von `schule` heisst jetzt Ausbildung. `comp` ist neu dazugekommen. */
 const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildung',
                siv:'SIV', comp:'Wettkampf', gh:'Groundhandling'};
+/* Die Art `both` („Start und Landung“) gibt es nicht mehr. Orte, die noch so in der
+   Datenbank stehen, werden beim Laden umgestellt — siehe „Umstellung“ weiter unten.
+   Farbe und Name dafür bleiben nur stehen, damit so ein Ort in den Sekunden bis zur
+   Umstellung nicht ohne Beschriftung dasteht. Auswählen lässt er sich nicht mehr. */
 const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
 const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
 /* Wie die Arten in der Legende unter der Karte heißen. */
-const ARTLBL = {start:'Startplatz', land:'Landeplatz', both:'Start + Landung', ground:'Übungsgelände'};
+const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände'};
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
@@ -894,6 +895,9 @@ async function loadAll(){
     sb.from('flights').select('*').order('flight_date', {ascending:false})
   ]);
   for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
+  /* Stehen noch Orte der alten Art „Start und Landung“ in der Datenbank, werden sie
+     jetzt umgestellt — danach wird einmal frisch geladen. */
+  if (await migriereBeides(pl.data, fl.data)) return loadAll();
   S.places  = pl.data;
   S.gear    = ge.data;
   S.flights = fl.data.map(f => ({
@@ -909,6 +913,83 @@ async function loadAll(){
   if (!kartePasst) passeKarteAn();
   const ohneHoehe = HAS.elev ? S.places.filter(p => p.elev == null) : S.places;
   ladeHoehen(ohneHoehe, () => { renderPlaceList(); drawPlaces(); }).then(hoehenNachtragen);
+}
+
+
+/* ══════════ UMSTELLUNG: „Start und Landung“ ══════════
+   Diese Art gibt es nicht mehr. Orte, die noch so in der Datenbank stehen, werden
+   beim Laden einmal von selbst umgestellt:
+
+     · nur als Landung eingetragen ......... wird ein Landeplatz
+     · sonst ............................... wird ein Startplatz
+     · bei Flügen als Start UND als Landung  bleibt als Startplatz stehen; dazu
+       entsteht ein eigener Landeplatz ein paar Meter daneben, und alle Landungen
+       zeigen danach auf diesen neuen Punkt.
+
+   Ist nichts mehr umzustellen, passiert hier gar nichts — die Funktion ist also
+   auch nach dem Wiederherstellen einer alten Sicherung gleich wieder zur Stelle. */
+
+/* Rund 60 Meter nach Südosten: nah genug dran, um den Ort wiederzuerkennen,
+   weit genug weg, damit beide Punkte in der Karte einzeln anklickbar sind. */
+const VERSATZ = 0.0006;
+/* Zwei Punkte gelten als „an derselben Stelle“, wenn sie keine 300 Meter trennen.
+   Damit wird ein schon angelegter Landeplatz wiedergefunden, statt ihn doppelt
+   anzulegen — etwa wenn die Umstellung beim letzten Mal mittendrin abgebrochen ist. */
+const nahDabei = (a, b) => Math.abs(a.lat - b.lat) < 0.003 && Math.abs(a.lng - b.lng) < 0.003;
+
+/* Einen Namen finden, den es noch nicht gibt: „X Landeplatz“, sonst „X Landeplatz 2“ … */
+function freierName(basis, namen){
+  let n = basis, i = 2;
+  while (namen.includes(n)) n = basis + ' ' + (i++);
+  namen.push(n);
+  return n;
+}
+
+async function migriereBeides(places, flights){
+  const alte = places.filter(p => p.type === 'both');
+  if (!alte.length) return false;
+  const namen = places.map(p => p.name);
+  let neue = 0;
+  try {
+    for (const p of alte){
+      const alsStart = flights.some(f => f.start_place === p.id);
+      const alsLand  = flights.some(f => f.land_place  === p.id);
+
+      if (alsStart && alsLand){
+        /* Gibt es den Landeplatz von einem früheren Durchlauf schon? Dann den nehmen. */
+        let ziel = places.find(q => q.id !== p.id && q.type === 'land'
+                              && q.name.startsWith(p.name + ' Landeplatz') && nahDabei(q, p));
+        if (!ziel){
+          const kopie = { name: freierName(p.name + ' Landeplatz', namen), type: 'land',
+                          lat: +(p.lat - VERSATZ).toFixed(6), lng: +(p.lng + VERSATZ).toFixed(6) };
+          /* Infos zum Ort (Zufahrt, Gebühren …) gelten meist für beide Punkte. */
+          if (HAS.info) kopie.info = p.info ?? null;
+          if (HAS.dirs) kopie.dirs = null;
+          /* Die Höhe holt sich der neue Punkt beim nächsten Laden selbst. */
+          const { data, error } = await sb.from('places').insert(kopie).select('id').single();
+          if (error) throw error;
+          ziel = data;
+          neue++;
+        }
+        const e1 = (await sb.from('flights').update({ land_place: ziel.id })
+                            .eq('land_place', p.id)).error;
+        if (e1) throw e1;
+      }
+
+      const art  = (alsLand && !alsStart) ? 'land' : 'start';
+      const feld = { type: art };
+      /* Ein Landeplatz hat keine Startrichtungen. */
+      if (HAS.dirs && art === 'land') feld.dirs = null;
+      const { error } = await sb.from('places').update(feld).eq('id', p.id);
+      if (error) throw error;
+    }
+  } catch(e){ oops(e); return false; }
+
+  const z = n => n === 1 ? '1 Ort' : n + ' Orte';
+  toast(z(alte.length) + ' von „Start und Landung“ umgestellt'
+        + (neue ? ' · ' + (neue === 1 ? '1 neuer Landeplatz' : neue + ' neue Landeplätze') : '')
+        + '.');
+  return true;
 }
 
 /* ══════════ ANSICHTEN ══════════ */
@@ -1480,7 +1561,7 @@ window.resetFilter = () => {
 function renderChips(){
   const c = [];
   if (F.text) c.push(['text', '„' + F.text + '“']);
-  ['start','land','both','ground'].filter(t => F.typen.includes(t))
+  ['start','land','ground'].filter(t => F.typen.includes(t))
     .forEach(t => c.push(['typ:' + t, ARTLBL[t]]));
   if (F.min !== '') c.push(['min', 'ab ' + F.min + ' m']);
   if (F.max !== '') c.push(['max', 'bis ' + F.max + ' m']);
@@ -1755,7 +1836,7 @@ window.savePlace = async () => {
     /* Warnen, wenn die neue Art nicht mehr zu den Flügen passt, die den Ort benutzen. */
     const alsStart = S.flights.filter(f=>f.start===editId && !isGH(f)).length;
     const alsLand  = S.flights.filter(f=>f.land===editId).length;
-    const passt = { start:['start'], land:['land'], both:['start','land'], ground:[] }[type] || [];
+    const passt = { start:['start'], land:['land'], ground:[] }[type] || [];
     const flg = n => n === 1 ? '1 Flug' : n + ' Flügen';
     const kaputt = [ (alsStart && !passt.includes('start')) ? 'bei '+flg(alsStart)+' als Startplatz' : '',
                      (alsLand  && !passt.includes('land'))  ? 'bei '+flg(alsLand) +' als Landeplatz'  : '' ]
@@ -1984,9 +2065,7 @@ function kindOpts(cur){
     `<option value="${k}"${k===cur?' selected':''}>${esc(t)}</option>`).join('');
 }
 function placeOpts(which, kind, cur){
-  let list = kind === 'gh' ? S.places
-    : S.places.filter(p => which === 'start' ? (p.type==='start'||p.type==='both')
-                                             : (p.type==='land' ||p.type==='both'));
+  let list = kind === 'gh' ? S.places : S.places.filter(p => p.type === which);
   if (cur && !list.some(p=>p.id===cur)){
     const p = S.places.find(x=>x.id===cur); if (p) list = [p, ...list];
   }
