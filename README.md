@@ -137,6 +137,12 @@ Sortiert nach Datum und Startzeit, neueste zuerst; Flüge ohne Datum stehen ganz
 Fehlt eine Angabe, bleibt die Zelle leer. Lange Namen bei der Ausrüstung werden
 abgeschnitten — der ganze Name steht im Fenster, das ein Klick auf die Zeile öffnet.
 
+Die **Liste rollt in sich selbst**: Sie bekommt genau die Höhe, die unter den Kennzahlen
+noch auf den Schirm passt. Beim Blättern bleiben darum die Zahlen oben und die
+Spaltenüberschriften stehen, egal wie viele Flüge drinstehen. Auf sehr flachen Fenstern
+und auf dem Handy behält die Liste mindestens 260 Pixel Höhe — dort rollt dann auch die
+Seite selbst noch ein Stück.
+
 Die **Schirmklasse** wird nicht pro Flug eingetragen, sondern einmal beim Schirm im
 Reiter „Ausrüstung“. In der Flugtabelle steht sie als kleines Kürzel hinter dem
 Schirmnamen und lässt sich dort nicht ändern.
