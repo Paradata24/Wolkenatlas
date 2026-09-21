@@ -2865,11 +2865,13 @@ function renderStats(){
 
   /* Die Auswertung rechts zeigt denselben Zeitraum wie das Säulenbild links. */
   const imZeitraum = S.flights.filter(dazu);
+  /* Geordnet nach der Anzahl der Flüge, das meiste ganz oben. Sind es gleich viele,
+     entscheidet die längere Zeit. */
   const tally = (key, list) => {
     const m = {};
     (list||imZeitraum).forEach(f=>{ const k = key(f); if(!k) return;
       m[k]=m[k]||{n:0,min:0}; m[k].n++; m[k].min+=(f.mins||0); });
-    return Object.entries(m).sort((a,b)=>b[1].min-a[1].min);
+    return Object.entries(m).sort((a,b) => b[1].n - a[1].n || b[1].min - a[1].min);
   };
   const block = (title, rows) => rows.length ? `
     <h3 style="font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;

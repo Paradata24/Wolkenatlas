@@ -522,7 +522,9 @@ sie zu speichern.
 ## Der Reiter „Statistik“
 
 Links das **Säulenbild** mit den zwölf Monaten, rechts die **Auswertung**: Art des Flugs,
-Startplätze, Schirme und Gurtzeuge, jeweils mit Anzahl und Summe, die längste Zeit zuerst.
+Startplätze, Schirme und Gurtzeuge, jeweils mit Anzahl und Summe. Geordnet ist jede Liste
+**nach der Anzahl der Flüge — das meiste ganz oben**; bei gleicher Anzahl steht die längere
+Zeit weiter oben.
 
 ### Was die Säulen zeigen
 
