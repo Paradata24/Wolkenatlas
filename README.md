@@ -126,9 +126,9 @@ Oben die **Kennzahlenleiste** mit sechs Feldern, in dieser Reihenfolge:
 | Flüge diesen Monat | Anzahl der Flüge im laufenden Monat |
 | Flüge dieses Jahr | Anzahl der Flüge im laufenden Jahr |
 | Flüge insgesamt | Anzahl aller erfassten Flüge |
+| Flugzeit dieses Jahr | Zeit in der Luft im laufenden Jahr |
 | Groundhandling dieses Jahr | Groundhandling-Zeit im laufenden Jahr |
 | Groundhandling insgesamt | Groundhandling-Zeit über alles |
-| Flugzeit dieses Jahr | Zeit in der Luft im laufenden Jahr |
 
 Groundhandling ist nie ein Flug und zählt darum in keinem der drei Flüge-Felder und
 nicht zur Flugzeit — siehe *Festgelegte Regeln*. Flüge **ohne Datum** gehören zu keinem

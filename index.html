@@ -445,9 +445,9 @@
     <div><div class="lbl">Flüge diesen Monat</div><div class="val" id="r-cnt-month">0</div></div>
     <div><div class="lbl">Flüge dieses Jahr</div><div class="val" id="r-cnt-year">0</div></div>
     <div><div class="lbl">Flüge insgesamt</div><div class="val" id="r-cnt-total">0</div></div>
+    <div><div class="lbl">Flugzeit dieses Jahr</div><div class="val" id="r-time-year">0:00<small>h</small></div></div>
     <div><div class="lbl">Groundhandling dieses Jahr</div><div class="val" id="r-gh-year">0:00<small>h</small></div></div>
     <div><div class="lbl">Groundhandling insgesamt</div><div class="val" id="r-gh-total">0:00<small>h</small></div></div>
-    <div><div class="lbl">Flugzeit dieses Jahr</div><div class="val" id="r-time-year">0:00<small>h</small></div></div>
   </div>
 
   <!-- Im Reiter „Orte“ stehen hier die Zahlen zu den Orten statt zu den Flügen. -->
@@ -2550,9 +2550,9 @@ function renderAll(){
   document.getElementById('r-cnt-month').textContent = air.filter(imMonat).length;
   document.getElementById('r-cnt-year').textContent  = air.filter(imJahr).length;
   document.getElementById('r-cnt-total').textContent = air.length;
+  document.getElementById('r-time-year').innerHTML = std(sum(air.filter(imJahr)));
   document.getElementById('r-gh-year').innerHTML   = std(sum(gnd.filter(imJahr)));
   document.getElementById('r-gh-total').innerHTML  = std(sum(gnd));
-  document.getElementById('r-time-year').innerHTML = std(sum(air.filter(imJahr)));
 
   document.getElementById('noplaces').textContent = S.places.length ? ''
     : 'Start- und Landeplätze legst du unter „Orte“ auf der Karte an.';
