@@ -96,17 +96,8 @@
     background:#fff;border:1px solid var(--line);border-radius:var(--r)}
   input[type=number],input[type=date],input[type=time]{font-family:var(--mono)}
   textarea{resize:vertical;min-height:52px}
-  #f-note{min-height:110px}
-  #f-rem{border-left:3px solid var(--start)}
   .field{margin-bottom:12px}
   .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .group{margin-bottom:12px}
-  .group .grouplbl{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;
-    text-transform:uppercase;color:var(--muted);margin:0 0 4px}
-  .group .sub{display:flex;align-items:center;gap:7px;margin-bottom:5px}
-  .group .sub:last-child{margin-bottom:0}
-  .group .sub span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--muted);white-space:nowrap;min-width:34px}
 
   .btn{font:inherit;font-size:14px;font-weight:550;cursor:pointer;padding:9px 16px;
     border-radius:var(--r);border:1px solid var(--ink);background:var(--ink);color:#fff}
@@ -135,17 +126,9 @@
   /* Neongrün wäre als Schrift nicht zu lesen — im Kästchen steht es darum dunkelgrün
      auf hellgrünem Grund. */
   .tag.e{color:var(--exprand);border-color:#9BE88C;background:#EFFFE9}
-  .tag.k{color:var(--muted);border-color:var(--line);background:#F2F5F8}
   .del{background:none;border:none;cursor:pointer;color:var(--muted);font-family:var(--mono);
     font-size:15px;line-height:1;padding:2px 5px;border-radius:2px}
   .del:hover{color:var(--start);background:#FCEEF3}
-
-  .rem{border-left:3px solid var(--start);padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer}
-  .rem:last-child{border-bottom:none}
-  .rem:hover{background:#FCFAFB}
-  .rem .meta{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--muted);margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .rem .txt{font-size:15px;line-height:1.55;white-space:pre-wrap}
 
   .profile{display:flex;align-items:flex-end;gap:5px;height:132px;margin:6px 0 8px}
   .profile .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
@@ -745,9 +728,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------- Zustand ---------- */
 let S = { places: [], gear: [], flights: [] };
-/* Flugstrecke und Aufstiegsart sind später dazugekommen. Fehlen die Spalten in
-   der Datenbank noch, lässt das Flugbuch die beiden Felder einfach weg —
-   siehe README, Abschnitt „Flugstrecke und Aufstiegsart“. */
+/* Diese sechs Spalten sind später dazugekommen. Fehlen die Spalten in
+   der Datenbank noch, lässt das Flugbuch die betroffenen Felder einfach weg —
+   siehe README, Abschnitt „Später dazugekommene Felder“. */
 let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
@@ -793,6 +776,10 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 const deDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); return d+'.'+m+'.'+y; };
 const dateLbl = iso => deDate(iso) || 'ohne Datum';
 /* Kilometer deutsch: 12.4 wird zu 12,4 */
+/* Das heutige Datum als „2026-07-14“ — nach der Uhr hier, nicht nach Weltzeit.
+   Sonst stünde zwischen Mitternacht und 2 Uhr noch der Vortag drin. */
+const heute = () => { const d = new Date();
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
 const nk = v => (typeof v === 'number' ? v : parseFloat(v)).toLocaleString('de-DE');
 
 /* Die Schluessel stehen so in der Datenbank und bleiben, wie sie sind — nur die
@@ -816,7 +803,18 @@ const KONTUR = {exp:'#14532D'};
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
-const fluegeAn = id => S.flights.filter(f => f.start === id || f.land === id).length;
+/* Wie viele Flüge an einem Ort hängen. Gezählt wird einmal für alle Orte und erst
+   wieder, wenn die Flüge neu geladen wurden — die Zahl wird beim Zeichnen von
+   Karte und Liste sehr oft gebraucht. */
+let flugZahl = null, flugZahlVon = null;
+const fluegeAn = id => {
+  if (flugZahlVon !== S.flights){
+    flugZahl = new Map(); flugZahlVon = S.flights;
+    const plus = k => { if (k) flugZahl.set(k, (flugZahl.get(k) || 0) + 1); };
+    S.flights.forEach(f => { plus(f.start); if (f.land !== f.start) plus(f.land); });
+  }
+  return flugZahl.get(id) || 0;
+};
 /* Ein experimenteller Platz ist immer neongrün: „noch kein Flug“ ist bei ihm ja
    keine Ausnahme, sondern der Sinn der Sache. Gestrichelt bleibt er trotzdem,
    solange kein Flug dort steht. */
@@ -902,7 +900,7 @@ async function doLogin(){
     password: document.getElementById('l-pass').value
   });
   btn.disabled = false;
-    if (error){ msg.textContent = 'Anmeldung fehlgeschlagen. Prüf E-Mail und Passwort.'; }
+  if (error){ msg.textContent = 'Anmeldung fehlgeschlagen. Prüf E-Mail und Passwort.'; return; }
   document.getElementById('login').classList.remove('on');
   startApp(data.session);
 }
@@ -952,7 +950,7 @@ async function loadAll(){
     id:f.id, date:f.flight_date || '', time:f.start_time ? f.start_time.slice(0,5) : '',
     kind:f.kind || 'thermik', start:f.start_place || '', land:f.land_place || '', mins:f.mins || 0,
     ascM:f.asc_m||0, ascMin:f.asc_min||0,
-    dist:(f.dist_km ?? '') === null ? '' : (f.dist_km ?? ''), asc:f.ascent||'',
+    dist:f.dist_km ?? '', asc:f.ascent||'',
     glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
   }));
   renderAll(); renderStats();
@@ -1059,11 +1057,12 @@ window.show = v => {
 };
 
 /* ══════════ HÖHE ÜBER DEM MEER ══════════
-   Die Höhe steht nicht in der Datenbank. Sie wird aus den Koordinaten geholt
-   (Open Topo Data, kostenlos, ohne Schlüssel und ohne Konto — wie die Karte)
-   und im Browser gemerkt, damit sie beim nächsten Öffnen sofort da ist. Geht
-   das Holen schief, etwa ohne Netz, bleibt die Höhe einfach leer und alles
-   andere funktioniert unverändert weiter. In Supabase ist nichts einzurichten. */
+   Die Höhe wird aus den Koordinaten geholt (Open Topo Data, kostenlos, ohne
+   Schlüssel und ohne Konto — wie die Karte) und in der Spalte `elev` gespeichert.
+   Zusätzlich merkt sie sich der Browser, damit sie sofort da ist — und damit sie
+   auch dann angezeigt wird, wenn die Spalte in Supabase noch fehlt. Geht das
+   Holen schief, etwa ohne Netz, bleibt die Höhe einfach leer und alles andere
+   funktioniert unverändert weiter. */
 const HOEHEN_SPEICHER = 'flugbuch-hoehen-otd';   /* eigener Name je Höhenmodell */
 const HOEHEN_STAND = 'flugbuch-hoehen-stand';    /* welches Modell die Werte geliefert hat */
 const HOEHEN_MODELLSTAND = 'otd1';
@@ -1308,9 +1307,7 @@ function leseKoord(){
   if (map) map.setView([k.lat, k.lng], Math.max(map.getZoom(), 13));
 }
 
-/* ---------- Kartenausschnitt ----------
-   Die Karte soll zeigen, was die Liste zeigt: beim ersten Laden alle Orte,
-   und sobald gefiltert wird, genau die übrig gebliebenen. */
+/* ---------- Kartenausschnitt ---------- */
 /* Alle gerade sichtbaren Orte ins Bild holen. Wird beim ersten Öffnen einmal
    von selbst aufgerufen, danach nur noch auf Knopfdruck. */
 function passeKarteAn(){
@@ -1477,7 +1474,7 @@ function paintFormRose(){
   t.classList.toggle('hat', gewaehlt.length > 0);
 }
 
-/* Die Windrose gibt es nur bei Start- und bei Start-und-Landeplätzen. Fehlt die
+/* Die Windrose gibt es nur bei Startplätzen, auch den experimentellen. Fehlt die
    Spalte `dirs` in der Datenbank, steht dort stattdessen ein Hinweis. */
 function syncRose(){
   const feld = document.getElementById('p-dirfield');
@@ -1493,7 +1490,7 @@ function syncRose(){
   paintFormRose();
 }
 
-/* Infos und Link gibt es nur, wenn die beiden Spalten in der Datenbank da sind. */
+/* Das Feld „Infos und Links“ gibt es nur, wenn die Spalte `info` in der Datenbank da ist. */
 function syncExtraFelder(){
   document.getElementById('p-infofield').style.display = HAS.info ? '' : 'none';
   const miss = document.getElementById('p-extramiss');
@@ -1756,8 +1753,7 @@ function symbolSVG(dirs, farbe, opt = {}){
     const w = RICHTUNGEN.indexOf(d) * 45;
     return `<path d="${ringStueck(10.5, 14.5, w - 19, w + 19)}" fill="${farbe}"${rand}/>`;
   }).join('');
-  const gr = opt.gross || SYMBOX;
-  return `<svg width="${gr}" height="${gr}" viewBox="0 0 ${SYMBOX} ${SYMBOX}" aria-hidden="true">`
+  return `<svg width="${SYMBOX}" height="${SYMBOX}" viewBox="0 0 ${SYMBOX} ${SYMBOX}" aria-hidden="true">`
     + deko
     + (opt.kontur ? `<circle cx="${SYMM}" cy="${SYMM}" r="7" fill="none"`
                     + ` stroke="${opt.kontur}" stroke-width="4"/>` : '')
@@ -1785,14 +1781,14 @@ function drawPlaces(){
     /* Ein experimenteller Platz bekommt das gezeichnete Symbol auch ohne Richtungen,
        weil nur dort der dunkle Rand ums Neongrün mitkommt. */
     const mitRichtung = (startet(p.type) && dirsIn(p.dirs).length) || !!KONTUR[p.type];
-    const punkt = mitRichtung
+    const punkt = (mitRichtung
       ? L.marker([p.lat,p.lng], {keyboard:false, icon: L.divIcon({className:'',
           iconSize:[SYMBOX,SYMBOX], iconAnchor:[SYMM,SYMM], html: ortSVG(p)})})
       : L.circleMarker([p.lat,p.lng],
       {radius:7, color:farbeVon(p), weight:2.5,
        dashArray: fluegeAn(p.id) ? null : '4 3',
        fillColor: infoId === p.id ? farbeVon(p) : '#fff',
-       fillOpacity: infoId === p.id ? .35 : 1})
+       fillOpacity: infoId === p.id ? .35 : 1}))
       /* Zeigen auf den Punkt blendet die kurze Infozeile ein,
          ein Klick öffnet das Infofeld mit allem, was zum Ort gespeichert ist. */
       .bindTooltip(p.name+' · '+TYPEN[p.type]
@@ -1923,7 +1919,7 @@ window.savePlace = async () => {
   const extra = HAS.dirs
     ? { dirs: startet(type) ? (dirSort(pendingDirs).join(',') || null) : null } : {};
 
-  /* Freier Text und ein Link (etwa zu einem YouTube-Video) — beides freiwillig. */
+  /* Freier Text mit beliebig vielen Links darin — freiwillig. */
   if (HAS.info) extra.info = document.getElementById('p-info').value.trim() || null;
 
   /* Die Höhe wird aus den Koordinaten geholt und mitgespeichert. Ist sie gerade
@@ -2157,14 +2153,13 @@ window.delGear = (id) => {
 };
 
 /* ══════════ FLÜGE — DIE TABELLE IST DAS FORMULAR ══════════
-   Stift oben rechts: alle Zellen werden zu Eingabefeldern.
    Plus oben rechts: eine leere Zeile oben in der Tabelle für einen neuen Flug.
+   Klick auf eine Zeile, dann „Bearbeiten“: alle Zellen werden zu Eingabefeldern.
    Die beiden runden Knöpfe ganz rechts öffnen Reminder und Kommentar.
    Nichts ist Pflicht — was leer bleibt, bleibt leer.                       */
 
 let editMode = false, draftSeq = 0;
 const KINDDEF = 'thermik';
-const placeName = id => (S.places.find(p=>p.id===id)||{}).name || '';
 
 /* Sortiert nach Datum, bei gleichem Datum nach Startzeit — neueste zuerst.
    Flüge ohne Datum stehen ganz oben, damit sie nicht vergessen gehen. */
@@ -2238,8 +2233,8 @@ const stack = (oben, unten, cls) =>
     : '';
 
 function routeCell(f){
-  const st = f.start ? esc(placeName(f.start)) : '';
-  const la = (!isGH(f) && f.land) ? esc(placeName(f.land)) : '';
+  const st = f.start ? esc(pname(f.start)) : '';
+  const la = (!isGH(f) && f.land) ? esc(pname(f.land)) : '';
   if (!st && !la) return '<td></td>';
   return `<td class="lang">${stack(st, la ? '<span class="pfeil">↳</span> ' + la : '')}</td>`;
 }
@@ -2406,7 +2401,7 @@ window.addRow = () => {
   if (!editMode){ editMode = true; setTools(); renderTable(); }
   const tb = document.querySelector('#flighttable tbody');
   if (!tb) return;
-  const neu = { key:'neu:'+(++draftSeq), date:new Date().toISOString().slice(0,10), time:'',
+  const neu = { key:'neu:'+(++draftSeq), date:heute(), time:'',
                 kind:KINDDEF, start:'', land:'', mins:0, dist:'', asc:'', ascM:0, ascMin:0,
                 glider:'', harness:'', note:'', reminder:'' };
   tb.insertAdjacentHTML('afterbegin', editRow(neu, true));
@@ -2475,12 +2470,12 @@ function pendingChanges(){
   });
 }
 
-/* 23502 = die Datenbank verlangt für diese Spalte noch einen Wert. */
 function dbErr(e){
   /* 23514 = die Datenbank erlaubt für `kind` diesen Wert noch nicht (z. B. Wettkampf). */
   if (e && (e.code === '23514' || e.code === '22P02')) return toast(
     'Die Datenbank kennt die Art „Wettkampf“ noch nicht. Wie du sie freischaltest, '
     + 'steht in der README unter „Später dazugekommene Felder“.', true);
+  /* 23502 = die Datenbank verlangt für diese Spalte noch einen Wert. */
   if (e && e.code === '23502') return toast(
     'Die Datenbank lässt dieses Feld noch nicht leer. In Supabase einmalig freigeben '
     + '(siehe README, Abschnitt „Leere Felder“).', true);
@@ -2670,8 +2665,6 @@ window.askDelete = id => {
 };
 
 /* ══════════ RENDERN ══════════ */
-/* Die Liste der Orte. Steht extra, weil sie auch neu gezeichnet wird,
-   sobald die Höhen aus dem Netz eingetroffen sind. */
 /* Die Spalte, nach der sortiert wird, merkt sich das Flugbuch in `SORT`. */
 function sortiert(liste){
   const r = SORT.ab ? 1 : -1;
@@ -2701,6 +2694,8 @@ const sortKopf = (k, titel, rechts) => {
     ${esc(titel)}<span class="pfeilchen">${SORT.ab ? '▲' : '▼'}</span></button></th>`;
 };
 
+/* Die Liste der Orte. Steht extra, weil sie auch neu gezeichnet wird,
+   sobald die Höhen aus dem Netz eingetroffen sind. */
 function renderPlaceList(){
   setFilterState();
   renderOrteZahlen();
@@ -2758,7 +2753,8 @@ function renderAll(){
                  HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)',
                  HAS.gclass ? '' : 'Schirmklasse',
                  HAS.dirs ? '' : 'Startrichtungen an den Orten',
-                 HAS.elev ? '' : 'Höhe der Orte'].filter(Boolean);
+                 HAS.elev ? '' : 'Höhe der Orte',
+                 HAS.info ? '' : 'Infos an den Orten'].filter(Boolean);
   document.getElementById('needcols').textContent = fehlt.length
     ? 'Noch nicht freigeschaltet: ' + fehlt.join(', ')
       + '. Wie du das in Supabase einmalig einschaltest, steht in der README '
@@ -2933,7 +2929,7 @@ window.backupJSON = async () => {
   const strip = rows => rows.map(({user_id, ...rest}) => rest);
   const data = { format:'flugbuch', version:1, exported_at:new Date().toISOString(),
                  places:strip(pl.data), gear:strip(ge.data), flights:strip(fl.data) };
-  download('flugbuch-sicherung-'+new Date().toISOString().slice(0,10)+'.json',
+  download('flugbuch-sicherung-'+heute()+'.json',
            JSON.stringify(data, null, 2), 'application/json');
   toast(`Sicherung mit ${fl.data.length} Flügen heruntergeladen.`);
 };
@@ -3004,7 +3000,7 @@ window.exportCSV = () => {
             f.mins||'', f.mins?fmt(f.mins):'', f.dist||'', am?ASCLBL[am]:'', f.ascM||'', f.ascMin||'',
             f.glider, klasseOf(f.glider), f.harness, f.note, f.reminder].map(q).join(';');
   });
-  download('flugbuch-'+new Date().toISOString().slice(0,10)+'.csv',
+  download('flugbuch-'+heute()+'.csv',
            '\uFEFF' + [head.map(q).join(';'), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
   toast('CSV heruntergeladen.');
 };

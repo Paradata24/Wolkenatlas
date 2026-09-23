@@ -17,7 +17,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
 Ganz oben im `<script type="module">`-Block stehen `SUPABASE_URL` und `SUPABASE_KEY`.
-Der Schlüssel ist der öffentliche „anon key" und gehört dort hin — das ist so vorgesehen.
+Der Schlüssel ist der öffentliche „anon key“ und gehört dort hin — das ist so vorgesehen.
 Der `service_role`-Schlüssel darf **niemals** in diese Datei.
 
 ## Datenbank
@@ -66,7 +66,7 @@ dist_km, ascent, asc_m, asc_min, glider, harness, note, reminder, created_at`
 `ascent`: `foot` (zu Fuß) | `car` (Auto) | `lift` (Bahn) — leer heißt: nicht erfasst
 
 `dist_km` und `ascent` sind später dazugekommen. Fehlen sie in der Datenbank, lässt das
-Flugbuch die beiden Felder von selbst weg (siehe „Flugstrecke und Aufstiegsart“).
+Flugbuch die beiden Felder von selbst weg (siehe „Später dazugekommene Felder“).
 
 `start_place` und `land_place` verweisen auf `places` mit `on delete restrict`:
 Ein Ort, an dem noch Flüge hängen, lässt sich nicht löschen.
@@ -93,6 +93,7 @@ Sechs Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, 
 die **Höhe** und die **Infos** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
 der Flugtabelle einen Hinweis und lässt die betroffenen Felder einfach weg — alles andere
 funktioniert normal weiter.
+Welche Spalten gerade fehlen, zählt dieser Hinweis einzeln auf.
 Zum Freischalten in Supabase unter **SQL Editor** einmalig ausführen:
 
 ```sql
@@ -283,8 +284,8 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | **Blau** | Landeplatz mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
 
-Ein orangener Punkt wird also von selbst rot (beziehungsweise blau, gold, grün), sobald der
-erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
+Ein orangener Punkt wird also von selbst rot (beziehungsweise blau oder grün), sobald der
+erste Flug an diesem Ort eingetragen ist. Experimentelle Startplätze bleiben neongrün. Unter der Karte steht die Legende dazu — sie ist
 zugleich ein Filter, siehe „Suchen, filtern, sortieren“. Dieselben
 Farben stehen als kleiner Punkt vor dem Namen in der Liste.
 
@@ -428,7 +429,7 @@ werden kann nach:
   **NO, O und SO** an und siehst jeden Platz, der bei einer dieser Richtungen startbar ist —
   auch den, der nur SO kann. Plätze, die ausschließlich nach Westen schauen, fallen weg.
 
-  Weil nur Start- und Start-und-Landeplätze Startrichtungen haben, fallen reine Landeplätze
+  Weil nur Startplätze (auch die experimentellen) Startrichtungen haben, fallen Landeplätze
   und Übungsgelände heraus, sobald hier etwas angetippt ist.
 
 Ein aktiver Filter färbt die Kopfzeile rosa, und unter ihr stehen **kleine Kärtchen** mit
@@ -534,6 +535,20 @@ nur umbenannten Ort bleibt die alte Höhe erhalten. Solange die Spalte `elev` in
 fehlt, zeigt das Flugbuch die Höhe trotzdem an, merkt sie sich aber nur im Browser, statt
 sie zu speichern.
 
+## Der Reiter „Ausrüstung“
+
+Zwei Listen nebeneinander: **Schirme** und **Gurtzeuge**. Oben in jeder Liste ein Feld für
+den Namen und ein Knopf zum Hinzufügen; bei Schirmen lässt sich gleich die **Schirmklasse**
+mit auswählen. Derselbe Name darf in einer Liste nur einmal vorkommen.
+
+Zu jedem Teil steht daneben, bei wie vielen Flügen es dabei war und wie viel Flugzeit
+zusammenkommt. Die Klasse eines Schirms lässt sich in der Liste jederzeit umstellen und
+wird sofort gespeichert.
+
+Löschen geht mit dem × — nur, wenn kein Flug mehr dieses Teil verwendet, und immer mit
+Rückfrage. Weil Flüge den **Namen** speichern (siehe „Datenbank“), gibt es kein Umbenennen:
+ein umbenanntes Teil wäre für die alten Flüge ein anderes.
+
 ## Der Reiter „Statistik“
 
 Links das **Säulenbild** mit den zwölf Monaten, rechts die **Auswertung**: Art des Flugs,
@@ -604,10 +619,8 @@ Der CSV-Export ist zum Auswerten in Excel gedacht, **nicht** zum Wiederherstelle
 ## Offene Ideen
 
 - Orte nach Gebiet oder Region gruppieren
-- Filter auch für die Art des Orts (nur Startplätze, nur Landeplätze)
 - Vom Infofeld direkt zu den Flügen an diesem Ort springen
 - Bei sehr vielen Orten dicht beieinander: Punkte zusammenfassen
-
 - IGC-Dateien importieren (Vario/XCTrack), damit Flugzeit und Koordinaten automatisch entstehen
 - Reminder abhaken können
 - Höhenmeter-Feld nur bei Hike & Fly einblenden
