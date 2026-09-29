@@ -196,7 +196,7 @@ Der Ortsteil ist die **Sammlung aller Plätze** — die geflogenen und die, die 
 Liste stehen. Er steht darum gleich hinter „Flüge“.
 
 Beim Öffnen ist **nur die Karte** zu sehen, über die ganze Breite — ohne Kennzahlenleiste
-oben und ohne Liste daneben. Unter der Karte stehen Legende, Suche und Filter. Was zu einem
+oben und ohne Liste daneben. Unter der Karte steht die Legende, oben rechts in der Karte der Filter. Was zu einem
 Ort gespeichert ist, zeigt ein **Klick auf den Punkt** (siehe „Auf einen Ort klicken“).
 Nur solange ein Ort angelegt oder bearbeitet wird, rückt **rechts das Formular** neben die
 Karte; danach ist die Karte wieder allein.
@@ -227,7 +227,7 @@ verlangt:
 
 **Filtern und Suchen verändern den Ausschnitt nicht.** Es verschwinden nur die Punkte, die
 nicht mehr passen; Zoom und Mitte bleiben stehen. Liegen die Treffer außerhalb des Bildes,
-holt sie der Knopf mit der Kartennadel mit einem Klick herbei.
+holt sie *Treffer ins Bild* im Filter oder der Knopf mit der Kartennadel herbei.
 
 ### Die Art des Orts
 
@@ -284,7 +284,7 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau oder grün), sobald der
 erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
-zugleich ein Filter, siehe „Suchen und filtern“.
+der Schlüssel für die Farben; gefiltert wird im Filter oben rechts in der Karte.
 
 Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
 hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
@@ -370,68 +370,58 @@ Fehlt die Spalte `info` in der Datenbank noch, steht das Feld gar nicht da und a
 Stelle ein Hinweis — alles andere funktioniert unverändert weiter. Eine zweite Spalte braucht
 es dafür nicht; die frühere Spalte `link` wird nirgends mehr verwendet.
 
-### Suchen und filtern
+### Filter: Welcher Startplatz geht morgen?
 
-**Suche und Filter sitzen unter der Karte**, gleich hinter der Legende.
+Der Filter ist für eine Frage gemacht: **Morgen kommt der Wind aus West — wo kann ich
+starten?**
 
-Im **Suchfeld** wird alles sofort angewendet, was du hineintippst: auf der Karte bleiben nur
-die passenden Punkte stehen. Gesucht wird im **Namen und im Infotext** — „seilbahn“ findet also auch den Ort, bei
-dem das nur in den Infos steht.
+Er sitzt **oben rechts in der Karte** als Knopf *Filter*. Weil er in der Karte liegt, ist er
+**auch im Vollbild** da und lässt sich dort genauso bedienen. Ein Klick klappt ihn auf, das ×
+oder Escape klappt ihn wieder zu. Ist etwas eingestellt, wird der Knopf rosa und zeigt kurz,
+was gilt — etwa „W · neu“.
 
-Darunter der Knopf **Filter**; rechts daneben steht immer, wie viele Orte gerade
-zu sehen sind („alle 23 Orte“ oder „7 von 23 Orten“). Ein Klick klappt ihn auf. Auf breiten
-Bildschirmen steht die Windrose dabei neben den übrigen Einstellungen. Gefiltert
-werden kann nach:
+Von oben nach unten:
 
-- **Höhenlage** — „Höhe ab“ und „Höhe bis“ in Metern. Eines von beiden genügt.
-  Orte, deren Höhe noch nicht bekannt ist, fallen dabei heraus.
-- **Art des Orts** — nicht im aufgeklappten Filter, sondern direkt in der **Legende unter
-  der Karte**: Ein Klick auf *Startplatz* lässt nur noch Startplätze stehen, ein Klick auf
-  *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
-  hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
-  *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die drei Arten stehen links,
-  hinter dem Trennstrich folgt der Knopf *noch kein Flug*.
+- **Wind kommt aus** — eine Windrose mit acht Feldern. Tipp an, woher der Wind kommt, zum
+  Beispiel **W**. Dann bleiben nur die **Startplätze** stehen, an denen bei West gestartet
+  werden kann. Mehrere Felder heißen „oder“: **SW und W** zeigt jeden Platz, der bei
+  mindestens einer der beiden Richtungen geht. Nochmal antippen nimmt eine Richtung wieder
+  weg. Landeplätze und Übungsgelände haben keine Startrichtung und fallen heraus, sobald hier
+  etwas angetippt ist.
+- **Neu oder schon geflogen** — drei Knöpfe:
+  *Alle* · *Neue* (noch kein Flug im Flugbuch) · *Geflogen* (schon mindestens ein Flug dort).
+  Zusammen mit dem Wind heißt das zum Beispiel: *W* + *Neue* = „neue Startplätze, die bei
+  Westwind gehen“.
+- **Zeigen** — *Start*, *Landung*, *Übung*: welche Arten von Orten überhaupt zu sehen sind.
+  Anfangs sind alle drei an; ein Klick blendet eine Art aus, ein zweiter wieder ein.
+- **Suche und Höhe** (zum Aufklappen) — Suche im **Namen und Infotext** („seilbahn“ findet
+  auch den Ort, bei dem das nur in den Infos steht) und **Höhe ab / bis** in Metern. Orte,
+  deren Höhe noch nicht bekannt ist, fallen bei der Höhe heraus; ein kurzer Satz sagt, wie
+  viele das sind.
 
-- **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
-  nur Orte, an denen ich noch nicht war. Alle drei stehen als **Auswahlliste im
-  aufgeklappten Filter**. Der häufigste Fall — *noch kein Flug* — hat zusätzlich einen
-  eigenen Knopf **rechts in der Legende**, hinter dem Trennstrich: ein Klick schaltet ihn
-  an, ein zweiter wieder aus. Liste und Knopf zeigen immer denselben Stand.
+Oben im Filter steht immer, wie viele Orte gerade zu sehen sind („2 von 23 Orten“). Unten
+zwei Knöpfe, die auch beim Rollen stehen bleiben:
 
-  Der Knopf **wirkt mit der Art des Orts zusammen** („und“): *Startplatz* + *noch kein Flug*
-  zeigt also genau die Startplätze, an denen du noch nicht warst. Für die Gegenrichtung —
-  nur die Startplätze, an denen schon ein Flug steht — wählst du *Startplatz* in der Legende
-  und im aufgeklappten Filter *nur Orte, an denen ich schon geflogen bin*.
-- **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
-  an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
-  **„oder“**: Es bleibt jeder Ort stehen, an dem *mindestens eine* der angetippten
-  Richtungen geht. Je mehr du antippst, desto mehr Orte kommen also dazu.
+- **Treffer ins Bild** — holt alle passenden Orte in den Kartenausschnitt.
+- **Zurücksetzen** — alles wieder auf Anfang, alle Orte sind zu sehen.
 
-  Das ist auf die Windvorhersage gemünzt: Steht für morgen **Ostwind** an, tippst du
-  **NO, O und SO** an und siehst jeden Platz, der bei einer dieser Richtungen startbar ist —
-  auch den, der nur SO kann. Plätze, die ausschließlich nach Westen schauen, fallen weg.
+**Filtern verändert den Kartenausschnitt nicht** — es verschwinden nur die Punkte, die nicht
+passen. Wer die Treffer sehen will, nimmt *Treffer ins Bild*. Gespeichert wird der Filter
+nicht; beim nächsten Laden der Seite sind wieder alle Orte da.
 
-  Weil nur Startplätze Startrichtungen haben, fallen Landeplätze
-  und Übungsgelände heraus, sobald hier etwas angetippt ist.
+Auf dem **Handy** nimmt der aufgeklappte Filter die ganze Breite der Karte ein. Ein Klick in
+die Karte, auf einen Ort oder auf *Treffer ins Bild* macht ihn zu, damit die Karte wieder frei
+ist. Infofeld und Filter sind dort nie gleichzeitig offen. Auf großen Bildschirmen geht das:
+der Filter rechts oben, das Infofeld links unten.
 
-Ein aktiver Filter färbt die Kopfzeile rosa, und unter ihr stehen **kleine Kärtchen** mit
-dem, was gerade eingestellt ist — „ab 1500 m“, „noch nicht geflogen“, „Start bei S / SW“.
-Jedes lässt sich mit dem × einzeln wegnehmen, ohne den Filter aufklappen zu müssen.
-
-**Auf der Karte bleiben nur die gefilterten Orte übrig**,
-alle anderen verschwinden, bis *Filter zurücksetzen* gedrückt wird. Gespeichert wird der
-Filter nicht — beim nächsten Laden der Seite sind wieder alle Orte da.
-
-Filterst du nach Höhe und es gibt Orte, deren Höhe noch nicht bekannt ist, sagt ein kurzer
-Satz, wie viele dabei ausgeblendet sind — sonst würden sie unbemerkt fehlen. Passt gar kein
-Ort zum Filter, steht das ebenfalls unter der Karte.
+Die **Legende unter der Karte** erklärt nur noch die Farben; gefiltert wird im Filter.
 
 ### Vollbild
 
 Links unter den Zoomknöpfen sitzt der **Vollbildknopf**. Er legt die Karte über den ganzen
 Bildschirm; derselbe Knopf bringt sie wieder zurück, ebenso Escape. Auch im Vollbild öffnet
 ein Klick auf einen Ort sein Infofeld, und ein Klick irgendwo in die Karte schließt es
-wieder. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Karte steht.
+wieder. Der **Filter** oben rechts funktioniert im Vollbild genauso. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Karte steht.
 
 Kann ein Browser kein Vollbild für einen einzelnen Ausschnitt (ältere iPhones), wird die
 Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann dasselbe.
