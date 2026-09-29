@@ -27,12 +27,13 @@ sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
 `id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
-`type`: `start` | `exp` (experimenteller Startplatz) | `land` | `ground` (Übungsgelände)
-Eine frühere Version kannte zusätzlich `both` („Start und Landung“). Die Art gibt es nicht
-mehr — siehe „Von ‚Start und Landung‘ zu zwei Punkten“.
+`type`: `start` | `land` | `ground` (Übungsgelände)
+Frühere Versionen kannten zusätzlich `both` („Start und Landung“) und `exp` („Startplatz
+(experimentell)“). Beide Arten gibt es nicht mehr — siehe „Von ‚Start und Landung‘ zu zwei
+Punkten“ und „Experimentelle Startplätze“.
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
 Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es bei
-`start` und `exp`; bei `land` und `ground` wird das Feld geleert.
+`start`; bei `land` und `ground` wird das Feld geleert.
 `elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
 aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
 `info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten und so viele Links, wie du
@@ -192,12 +193,13 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 ## Der Reiter „Orte“
 
 Der Ortsteil ist die **Sammlung aller Plätze** — die geflogenen und die, die noch auf der
-Liste stehen. Er steht darum gleich hinter „Flüge“. Links die Karte, rechts Formular,
-Suche, Filter und die Liste aller Orte.
+Liste stehen. Er steht darum gleich hinter „Flüge“.
 
-Solange dieser Reiter offen ist, zeigt die **Kennzahlenleiste oben** die Zahlen zu den Orten
-statt zu den Flügen: wie viele Orte es gibt, an wie vielen schon geflogen wurde, wie viele
-noch offen sind und wie hoch der höchste Startplatz liegt.
+Beim Öffnen ist **nur die Karte** zu sehen, über die ganze Breite — ohne Kennzahlenleiste
+oben und ohne Liste daneben. Unter der Karte stehen Legende, Suche und Filter. Was zu einem
+Ort gespeichert ist, zeigt ein **Klick auf den Punkt** (siehe „Auf einen Ort klicken“).
+Nur solange ein Ort angelegt oder bearbeitet wird, rückt **rechts das Formular** neben die
+Karte; danach ist die Karte wieder allein.
 
 Es gibt **genau eine Ansicht**: die Topo-Karte mit Höhenlinien und Geländeschattierung,
 **in Grau**. Einen Umschalter braucht es dafür nicht mehr.
@@ -220,7 +222,6 @@ Setzen eines Punktes.
 einmal so, dass *alle* Orte hineinpassen — danach ändert ihn nur noch, wer es selbst
 verlangt:
 
-- ein **Klick auf einen Ort in der Liste** schiebt die Karte auf diesen Ort,
 - der **Knopf mit der Kartennadel** (links unter Zoom und Vollbild) holt alle gerade
   sichtbaren Orte ins Bild.
 
@@ -230,19 +231,8 @@ holt sie der Knopf mit der Kartennadel mit einem Klick herbei.
 
 ### Die Art des Orts
 
-Ein Ort ist **Startplatz**, **Startplatz (experimentell)**, **Landeplatz** oder
-**Übungsgelände** (fürs Groundhandling). Mehr Arten gibt es nicht.
-
-**Experimentell** ist für Plätze gedacht, an denen du **noch nicht geflogen bist**, von denen
-du aber denkst, dass es gehen könnte. Sie verhalten sich wie ein Startplatz: Die Windrose
-steht im Formular, die möglichen Richtungen erscheinen im Kartensymbol, und beim Eintragen
-eines Flugs stehen sie in der Auswahl der Startplätze — sonst ließe sich der erste Flug von
-dort gar nicht festhalten. Unterschiedlich sind nur **Farbe und Filter**: Sie sind
-**neongrün** statt rot und lassen sich in der Legende einzeln ein- und ausblenden.
-
-Hat es dann geklappt, stellst du den Ort über *Bearbeiten* einfach auf **Startplatz** um —
-Name, Stelle, Höhe, Richtungen und Infos bleiben dabei stehen, und die schon eingetragenen
-Flüge auch.
+Ein Ort ist **Startplatz**, **Landeplatz** oder **Übungsgelände** (fürs Groundhandling).
+Mehr Arten gibt es nicht.
 
 Wer an einem Platz startet *und* landet, legt dafür **zwei Punkte** an — einen Startplatz
 oben und einen Landeplatz unten. Das ist genauer als ein gemeinsamer Punkt: In der Karte
@@ -272,6 +262,15 @@ Ist nichts umzustellen, passiert nichts. Die Umstellung läuft bei jedem Laden m
 darum auch dann noch, wenn später einmal eine **alte Sicherung** wiederhergestellt wird, in
 der die alte Art noch vorkommt.
 
+#### Experimentelle Startplätze
+
+Eine Zeit lang gab es die Art **„Startplatz (experimentell)“** (`exp` in der Datenbank), in
+Neongrün. Sie ist wieder weggefallen. Stehen noch Orte dieser Art in der Datenbank, werden
+sie **beim Laden von selbst zu normalen Startplätzen** — Name, Stelle, Höhe, Richtungen,
+Infos und Flüge bleiben dabei, wie sie sind. Kurz steht eine Meldung wie „2 experimentelle
+Orte zu Startplatz umgestellt.“ Wie oben greift das auch nach dem Wiederherstellen einer
+alten Sicherung.
+
 ### Die Farbe der Punkte
 
 Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
@@ -280,14 +279,12 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | --- | --- |
 | **Orange, gestrichelt** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
 | **Rot** | Startplatz, an dem schon geflogen wurde |
-| **Neongrün** | experimenteller Startplatz — immer neongrün, ob geflogen oder nicht |
 | **Blau** | Landeplatz mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau oder grün), sobald der
-erste Flug an diesem Ort eingetragen ist. Experimentelle Startplätze bleiben neongrün. Unter der Karte steht die Legende dazu — sie ist
-zugleich ein Filter, siehe „Suchen, filtern, sortieren“. Dieselben
-Farben stehen als kleiner Punkt vor dem Namen in der Liste.
+erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
+zugleich ein Filter, siehe „Suchen und filtern“.
 
 Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
 hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
@@ -304,10 +301,6 @@ Nebeneinanderliegende Richtungen ergeben zusammen einen Fächer — aus *N, NO, 
 ein Viertelkranz von oben nach rechts. Richtungen, bei denen nicht gestartet werden kann,
 werden gar nicht gezeichnet.
 
-Für **experimentelle** Startplätze gilt dasselbe, nur in Neongrün und mit einem dünnen
-dunkelgrünen Rand, damit das helle Neon auf der Karte nicht untergeht. Auch ohne
-eingetragene Richtung sind sie an diesem Rand zu erkennen.
-
 **Unverändert bleiben:** Landeplätze, Übungsgelände und Startplätze, bei denen noch keine
 Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Auch Farbe und Strichart
 bleiben, wie sie waren: Die Farbe sagt die Art des Orts, gestrichelt heißt „noch kein Flug“
@@ -317,33 +310,27 @@ bleiben, wie sie waren: Die Farbe sagt die Art des Orts, gestrichelt heißt „n
 
 Ein **Klick auf einen Punkt** öffnet sein **Infofeld** in der Karte: Name, Art, Höhe, wie
 viele Flüge daran hängen, die Startrichtungen und der gespeicherte Text mit seinen
-anklickbaren Links. Jeder Link öffnet sich in einem neuen Fenster. Darin sitzen zwei Knöpfe:
+anklickbaren Links. Jeder Link öffnet sich in einem neuen Fenster. Darin sitzen drei Knöpfe:
 
 - **Bearbeiten** — öffnet rechts das Formular mit allen Angaben. Von dort aus lässt sich der
   Ort umbenennen, seine Art und den Text ändern, und ein **Klick in die Karte verschiebt
   ihn** an eine neue Stelle.
 - **Schließen** — das Feld geht zu. Das tut auch ein Klick irgendwo in die Karte oder Escape.
+- **Löschen** — rechts im Feld. Nur, wenn keine Flüge mehr an dem Ort hängen, und immer
+  mit Rückfrage.
 
 Unten im Infofeld stehen die **Koordinaten** mit einem kleinen **Kopier-Knopf** daneben. Ein
 Klick legt sie als `46.43454, 11.85043` in die Zwischenablage — in dieser Form versteht sie
 Google Maps, Komoot und fast jede Karten-App direkt. Der Knopf zeigt kurz ein grünes Häkchen,
 und eine Meldung bestätigt, was kopiert wurde. Im Vollbild funktioniert er genauso.
 
-Ein Klick auf den **Namen in der Liste** schiebt die Karte auf den Ort und öffnet dasselbe
-Infofeld. Umgekehrt wird die Zeile in der Liste hervorgehoben (heller Streifen am linken
-Rand), solange das Infofeld eines Orts offen ist — Karte und Liste zeigen immer auf dasselbe.
-
-Damit dabei die Karte nicht aus dem Bild rutscht, **scrollt die Liste in sich selbst**,
-solange sie neben der Karte steht: Liegt der angeklickte Ort weiter unten, rollt nur die
-Liste dorthin, die Seite bleibt stehen. Die Spaltenüberschriften bleiben beim Scrollen oben
-kleben. Auf dem Handy, wo die Liste unter der Karte steht, scrollt wie gewohnt die Seite.
-
-- **Neu anlegen:** „Ort hinzufügen“, dann in die Karte klicken, Name und Art eintragen, speichern.
+- **Neu anlegen:** „Ort hinzufügen“ (oben rechts über der Karte), dann in die Karte klicken, Name und Art eintragen, speichern.
   Das Formular geht sofort auf, damit sich die Stelle auch über die Koordinaten eintragen lässt.
-- **Ändern:** der **Stift** in der Liste oder *Bearbeiten* im Infofeld. Solange du bearbeitest,
+- **Ändern:** *Bearbeiten* im Infofeld. Solange du bearbeitest,
   ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
   *Abbrechen* verwirft es.
-- **Löschen:** das × — nur, wenn keine Flüge mehr an dem Ort hängen, und immer mit Rückfrage.
+- **Löschen:** *Löschen* im Infofeld — nur, wenn keine Flüge mehr an dem Ort hängen, und
+  immer mit Rückfrage.
 
 ### Die Stelle setzen: ziehen, klicken oder eintippen
 
@@ -362,7 +349,7 @@ angelegt oder verschoben wird, steht dort nichts.
 
 ### Nicht gespeicherte Änderungen
 
-Wer am Formular etwas ändert und dann woanders hinklickt — auf den Stift eines anderen Orts,
+Wer am Formular etwas ändert und dann woanders hinklickt — auf *Bearbeiten* bei einem anderen Ort,
 auf „Ort hinzufügen“ oder auf *Abbrechen* —, bekommt eine **Rückfrage**, bevor die Eingaben
 verloren gehen. Erst *Ja, verwerfen* wirft sie weg.
 
@@ -377,20 +364,18 @@ dazu `youtube.com/…` und `youtu.be/…` auch ohne Vorsatz. Ein Punkt oder Komm
 der Adresse gehört zum Satz und nicht mehr zum Link. Angeklickt öffnet sich der Link in einem
 neuen Fenster; angezeigt wird er gekürzt (ohne `https://`) mit einem kleinen ↗ dahinter.
 
-Der Text steht im Infofeld am Kartenpunkt; in der Liste steht unter dem Namen nur der kurze
-Hinweis „Infos“, damit die Tabelle schmal bleibt.
+Der Text steht im Infofeld am Kartenpunkt.
 
 Fehlt die Spalte `info` in der Datenbank noch, steht das Feld gar nicht da und an seiner
 Stelle ein Hinweis — alles andere funktioniert unverändert weiter. Eine zweite Spalte braucht
 es dafür nicht; die frühere Spalte `link` wird nirgends mehr verwendet.
 
-### Suchen, filtern, sortieren
+### Suchen und filtern
 
-**Suche und Filter sitzen unter der Karte**, gleich hinter der Legende — dort, wo sie beides
-im Blick haben: die Karte darüber und die Liste daneben.
+**Suche und Filter sitzen unter der Karte**, gleich hinter der Legende.
 
-Im **Suchfeld** wird alles sofort angewendet, was du hineintippst, und zwar auf Karte *und*
-Liste. Gesucht wird im **Namen und im Infotext** — „seilbahn“ findet also auch den Ort, bei
+Im **Suchfeld** wird alles sofort angewendet, was du hineintippst: auf der Karte bleiben nur
+die passenden Punkte stehen. Gesucht wird im **Namen und im Infotext** — „seilbahn“ findet also auch den Ort, bei
 dem das nur in den Infos steht.
 
 Darunter der Knopf **Filter**; rechts daneben steht immer, wie viele Orte gerade
@@ -404,12 +389,9 @@ werden kann nach:
   der Karte**: Ein Klick auf *Startplatz* lässt nur noch Startplätze stehen, ein Klick auf
   *Landeplatz* nur noch Landeplätze, und so weiter. Der angeklickte Eintrag wird rosa
   hinterlegt; nochmal klicken nimmt ihn wieder weg. Mehrere gleichzeitig heißen „oder“:
-  *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die vier Arten stehen links,
+  *Startplatz* und *Übungsgelände* zusammen zeigen beides. Die drei Arten stehen links,
   hinter dem Trennstrich folgt der Knopf *noch kein Flug*.
 
-  **Experimentelle ausblenden:** Ein Klick auf *experimentell* zeigt nur sie. Umgekehrt —
-  alles außer ihnen — bekommst du, indem du die anderen drei Arten anklickst; was übrig
-  bleibt, steht in den Kärtchen unter dem Filterkopf.
 - **Eintrag im Flugbuch** — egal / nur Orte, an denen ich schon geflogen bin /
   nur Orte, an denen ich noch nicht war. Alle drei stehen als **Auswahlliste im
   aufgeklappten Filter**. Der häufigste Fall — *noch kein Flug* — hat zusätzlich einen
@@ -419,7 +401,7 @@ werden kann nach:
   Der Knopf **wirkt mit der Art des Orts zusammen** („und“): *Startplatz* + *noch kein Flug*
   zeigt also genau die Startplätze, an denen du noch nicht warst. Für die Gegenrichtung —
   nur die Startplätze, an denen schon ein Flug steht — wählst du *Startplatz* in der Legende
-  und in der Liste *nur Orte, an denen ich schon geflogen bin*.
+  und im aufgeklappten Filter *nur Orte, an denen ich schon geflogen bin*.
 - **Startrichtung** — dieselbe Windrose wie im Formular. Angetippt heißt: zeig mir Orte,
   an denen bei dieser Richtung gestartet werden kann. Mehrere gleichzeitig heißen
   **„oder“**: Es bleibt jeder Ort stehen, an dem *mindestens eine* der angetippten
@@ -429,23 +411,20 @@ werden kann nach:
   **NO, O und SO** an und siehst jeden Platz, der bei einer dieser Richtungen startbar ist —
   auch den, der nur SO kann. Plätze, die ausschließlich nach Westen schauen, fallen weg.
 
-  Weil nur Startplätze (auch die experimentellen) Startrichtungen haben, fallen Landeplätze
+  Weil nur Startplätze Startrichtungen haben, fallen Landeplätze
   und Übungsgelände heraus, sobald hier etwas angetippt ist.
 
 Ein aktiver Filter färbt die Kopfzeile rosa, und unter ihr stehen **kleine Kärtchen** mit
 dem, was gerade eingestellt ist — „ab 1500 m“, „noch nicht geflogen“, „Start bei S / SW“.
 Jedes lässt sich mit dem × einzeln wegnehmen, ohne den Filter aufklappen zu müssen.
 
-Er gilt für Karte **und** Liste: **auf der Karte bleiben nur die gefilterten Orte übrig**,
+**Auf der Karte bleiben nur die gefilterten Orte übrig**,
 alle anderen verschwinden, bis *Filter zurücksetzen* gedrückt wird. Gespeichert wird der
 Filter nicht — beim nächsten Laden der Seite sind wieder alle Orte da.
 
 Filterst du nach Höhe und es gibt Orte, deren Höhe noch nicht bekannt ist, sagt ein kurzer
-Satz, wie viele dabei ausgeblendet sind — sonst würden sie unbemerkt fehlen.
-
-**Sortiert** wird die Liste per Klick auf eine Spaltenüberschrift: *Name*, *Art*, *Höhe* oder
-*Flüge*. Nochmal klicken dreht die Reihenfolge um; ein kleines Dreieck zeigt, wonach gerade
-sortiert ist.
+Satz, wie viele dabei ausgeblendet sind — sonst würden sie unbemerkt fehlen. Passt gar kein
+Ort zum Filter, steht das ebenfalls unter der Karte.
 
 ### Vollbild
 
@@ -459,14 +438,14 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 ### Startrichtungen — die Windrose
 
-Sobald die Art **Startplatz** oder **Startplatz (experimentell)** gewählt ist, erscheint im Formular
+Sobald die Art **Startplatz** gewählt ist, erscheint im Formular
 eine **Windrose mit acht Feldern** (N, NO, O, SO, S, SW, W, NW, im Uhrzeigersinn ab Norden
 oben). Jedes angetippte Feld heißt: bei diesem Wind lässt sich hier starten. Nochmal
 antippen nimmt die Richtung wieder weg, mehrere gleichzeitig sind der Normalfall. Unter der
 Windrose steht die aktuelle Auswahl noch einmal als Text. Gespeichert wird sie zusammen mit
 dem Ort über *Ort speichern* beziehungsweise *Änderungen speichern*.
 
-Die gewählten Richtungen stehen danach in der Ortsliste unter der Art, im Kästchen, das
+Die gewählten Richtungen stehen danach im Kartensymbol, im Kästchen, das
 beim Zeigen auf den Punkt in der Karte aufgeht, und im Infofeld des Orts. Über dieselbe
 Windrose lässt sich im Filter suchen, wo bei einer bestimmten Richtung gestartet werden kann. Wird ein Ort auf **Landeplatz** oder
 **Übungsgelände** umgestellt, verschwindet die Windrose und die Richtungen werden beim
@@ -490,7 +469,6 @@ Jeder Ort hat eine **Höhe über dem Meer**. Sie wird nicht eingetippt, sondern 
 Koordinaten berechnet und in der Spalte `elev` der Tabelle `places` gespeichert — zusammen
 mit Name, Art und Koordinaten. Sie steht damit auch in der Sicherung und im JSON-Export.
 
-- In der **Ortsliste** steht sie in einer eigenen Spalte „Höhe“.
 - Im **Kästchen am Kartenpunkt** steht sie hinter der Art des Orts.
 - Beim **Anlegen und Bearbeiten** steht unter den Koordinaten „Höhe: etwa 1.412 m über dem
   Meer.“ — sie ändert sich sofort mit, wenn der Ort in der Karte verschoben wird.

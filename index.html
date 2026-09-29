@@ -10,9 +10,6 @@
     --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
     --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
     --noflight:#E07A1F; --r:3px;
-    /* Experimentelle Startplätze: Neongrün. Weil es auf der hellen Karte kaum
-       leuchtet, bekommt es überall einen dünnen dunkelgrünen Rand. */
-    --exp:#39FF14; --exprand:#14532D;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -123,9 +120,6 @@
     padding:2px 6px;border-radius:2px;border:1px solid currentColor}
   .tag.s{color:var(--start)} .tag.l{color:var(--chart)}
   .tag.b{color:var(--contour)} .tag.g{color:var(--ground)}
-  /* Neongrün wäre als Schrift nicht zu lesen — im Kästchen steht es darum dunkelgrün
-     auf hellgrünem Grund. */
-  .tag.e{color:var(--exprand);border-color:#9BE88C;background:#EFFFE9}
   .del{background:none;border:none;cursor:pointer;color:var(--muted);font-family:var(--mono);
     font-size:15px;line-height:1;padding:2px 5px;border-radius:2px}
   .del:hover{color:var(--start);background:#FCEEF3}
@@ -345,8 +339,6 @@
   /* Noch kein Flug: gestrichelt statt durchgezogen — damit nicht allein die
      Farbe den Unterschied macht (Rot und Orange liegen nah beieinander). */
   .dot.offen{border-style:dashed}
-  /* Der Punkt in der Legende bekommt denselben dunklen Rand wie auf der Karte. */
-  .dot.exp{box-shadow:0 0 0 1px var(--exprand)}
   /* Trennt in der Legende die Art des Orts von den beiden Flugbuch-Knöpfen. */
   .legsep{width:1px;height:17px;background:var(--line);margin:0 3px;flex:none}
 
@@ -383,29 +375,13 @@
   }
   .rose.mini{max-width:172px}
   .rose.mini .seg text{font-size:15px}
-  td.click{cursor:pointer}
-  td.click:hover{background:#F2F5F8}
-  /* Die Ortsliste scrollt in sich selbst, solange sie neben der Karte steht.
-     So bleibt die Karte stehen, wenn ein angeklickter Ort weiter unten liegt. */
-  @media(min-width:821px){
-    #placelist{position:relative;overflow:auto;overscroll-behavior:contain;
-      max-height:calc(100vh - 250px)}
-    #placelist th{position:sticky;top:0;z-index:2;background:var(--panel)}
-    #placelist th.sortbar button{background:var(--panel)}
-  }
-  .placename{text-decoration:underline dotted var(--line);text-underline-offset:3px}
-  td.click:hover .placename{text-decoration-color:var(--muted)}
-  /* Die Zeile zu dem Ort, dessen Infofeld in der Karte gerade offen ist. */
-  tr.aktiv td{background:#FFFBF2}
-  tr.aktiv td:first-child{box-shadow:inset 3px 0 0 var(--start)}
-  th.sortbar{padding:0}
-  th.sortbar button{width:100%;background:none;border:none;cursor:pointer;color:inherit;
-    font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
-    text-align:left;padding:0 10px 7px;display:flex;align-items:baseline;gap:4px}
-  th.sortbar button:hover{color:var(--ink)}
-  th.sortbar .pfeilchen{font-size:9px;opacity:0}
-  th.sortbar.an{color:var(--ink)}
-  th.sortbar.an .pfeilchen{opacity:1}
+  /* Im Reiter „Orte“ steht die Karte allein über die ganze Breite. Nur solange ein
+     Ort angelegt oder bearbeitet wird, rückt das Formular rechts daneben. */
+  #v-orte .cols{grid-template-columns:1fr}
+  #v-orte .cols.mitform{grid-template-columns:1.6fr 1fr}
+  #v-orte .cols:not(.mitform) #placecard{display:none}
+  @media(max-width:820px){#v-orte .cols.mitform{grid-template-columns:1fr}}
+  @media(min-width:821px){#v-orte #map{height:max(520px, calc(100vh - 290px))}}
   /* Der Punkt, der gerade gesetzt oder verschoben wird — er lässt sich ziehen. */
   .pinmark{display:block;width:21px;height:21px;box-sizing:border-box;border-radius:50%;
     border:2.5px dashed currentColor;background:rgba(255,255,255,.55);cursor:grab}
@@ -456,13 +432,6 @@
     <div><div class="lbl">Groundhandling insgesamt</div><div class="val" id="r-gh-total">0:00<small>h</small></div></div>
   </div>
 
-  <!-- Im Reiter „Orte“ stehen hier die Zahlen zu den Orten statt zu den Flügen. -->
-  <div class="readout" id="readout-orte" style="display:none">
-    <div><div class="lbl">Orte</div><div class="val" id="o-total">0</div></div>
-    <div><div class="lbl">Schon geflogen</div><div class="val" id="o-flown">0</div></div>
-    <div><div class="lbl">Noch offen</div><div class="val" id="o-open">0</div></div>
-    <div><div class="lbl">Höchster Start</div><div class="val" id="o-high">—</div></div>
-  </div>
 
   <!-- ---------- FLÜGE ---------- -->
   <section class="view on" id="v-flug">
@@ -494,7 +463,7 @@
   <section class="view" id="v-orte">
     <div class="cols">
       <div class="card">
-        <h2>Karte</h2>
+        <h2>Karte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
         <div id="mapwrap">
           <div id="map"></div>
           <!-- Das Infofeld liegt in der Karte drin, damit es auch im Vollbild aufgeht. -->
@@ -504,14 +473,13 @@
             <div class="ppact">
               <button class="btn small" id="pp-edit">Bearbeiten</button>
               <button class="btn small ghost" onclick="closePlaceInfo()">Schließen</button>
+              <button class="btn small ghost" id="pp-del" style="margin-left:auto">Löschen</button>
             </div>
           </div>
         </div>
         <div class="legend" id="legend">
           <button type="button" class="legitem" data-typ="start" aria-pressed="false"
             title="Nur Startplätze zeigen"><i class="dot" style="color:var(--start)"></i> Startplatz</button>
-          <button type="button" class="legitem" data-typ="exp" aria-pressed="false"
-            title="Nur experimentelle Startplätze zeigen — noch nicht geflogen, könnten aber gehen"><i class="dot exp" style="color:var(--exp)"></i> experimentell</button>
           <button type="button" class="legitem" data-typ="land" aria-pressed="false"
             title="Nur Landeplätze zeigen"><i class="dot" style="color:var(--chart)"></i> Landeplatz</button>
           <button type="button" class="legitem" data-typ="ground" aria-pressed="false"
@@ -523,6 +491,8 @@
 
         <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
         <div class="maphint" id="hint" style="display:none"></div>
+        <!-- Nur zu sehen, wenn es noch keine Orte gibt oder keiner zum Filter passt. -->
+        <p class="note" id="o-leer" style="display:none;margin:0;padding:10px 15px"></p>
         <div class="filterbar">
           <div class="searchrow">
             <label class="sr-only" for="f-text">Ort suchen</label>
@@ -556,15 +526,14 @@
           </div>
         </div>
       </div>
-      <div class="card">
-        <h2>Orte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
+      <div class="card" id="placecard">
+        <h2>Ort</h2>
         <div class="body" id="placeform" style="display:none">
           <p class="note" id="p-title" style="margin:0 0 12px;font-weight:550;color:var(--ink)">Neuer Ort</p>
           <div class="field"><label for="p-name">Name</label><input type="text" id="p-name" placeholder="z. B. Monte Baldo Nord"></div>
           <div class="field"><label for="p-type">Art</label>
             <select id="p-type">
               <option value="start">Startplatz</option>
-              <option value="exp">Startplatz (experimentell)</option>
               <option value="land">Landeplatz</option>
               <option value="ground">Übungsgelände</option>
             </select></div>
@@ -591,7 +560,6 @@
             <button class="btn ghost" onclick="cancelPlaceAsk()">Abbrechen</button>
           </div>
         </div>
-        <div id="placelist"></div>
       </div>
     </div>
   </section>
@@ -740,9 +708,8 @@ const KLASSEN = ['A','B low','B high','C','D','CCC'];
 const RICHTUNGEN = ['N','NO','O','SO','S','SW','W','NW'];
 const RICHTNAME = {N:'Nord', NO:'Nordost', O:'Ost', SO:'Südost',
                    S:'Süd', SW:'Südwest', W:'West', NW:'Nordwest'};
-/* Richtungen gibt es nur da, wo auch gestartet wird — auch an den experimentellen
-   Plätzen, denn gerade dort ist die mögliche Richtung die halbe Miete. */
-const startet = t => t === 'start' || t === 'exp';
+/* Richtungen gibt es nur da, wo auch gestartet wird. */
+const startet = t => t === 'start';
 const dirsIn  = v => String(v ?? '').split(',').map(x=>x.trim()).filter(x=>RICHTUNGEN.includes(x));
 /* Immer in der Reihenfolge der Windrose anzeigen, egal wie angeklickt wurde. */
 const dirSort = list => RICHTUNGEN.filter(d => list.includes(d));
@@ -758,14 +725,12 @@ let editId = null;
 let infoId = null;
 /* Der Kartenausschnitt wird einmal auf alle Orte gestellt, sobald die Karte
    das erste Mal wirklich zu sehen ist — vorher kennt sie ihre Größe nicht.
-   Danach ändert ihn nur noch, wer es selbst verlangt: durch einen Klick auf
-   einen Ort in der Liste oder auf den Knopf „Alle Orte ins Bild holen“. */
+   Danach ändert ihn nur noch, wer es selbst verlangt: mit dem Knopf
+   „Alle Orte ins Bild holen“. */
 let kartePasst = false;
 /* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
    Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
 const F = { text:'', typen:[], min:'', max:'', log:'alle', dirs:[] };
-/* Wonach die Ortsliste sortiert ist. `ab` heißt aufsteigend. */
-let SORT = { key:'name', ab:true };
 
 const pad = n => String(n).padStart(2,'0');
 const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
@@ -790,16 +755,10 @@ const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildu
    Datenbank stehen, werden beim Laden umgestellt — siehe „Umstellung“ weiter unten.
    Farbe und Name dafür bleiben nur stehen, damit so ein Ort in den Sekunden bis zur
    Umstellung nicht ohne Beschriftung dasteht. Auswählen lässt er sich nicht mehr. */
-const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62',
-               exp:'#39FF14'};
-const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung',
-               ground:'Übungsgelände', exp:'Experimentell'};
+const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
+const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
 /* Wie die Arten in der Legende unter der Karte heißen. */
-const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände',
-                exp:'experimentell'};
-/* Neongrün allein verschwindet auf der hellen Karte — ein dünner dunkler Rand
-   drumherum macht den Punkt deutlich. */
-const KONTUR = {exp:'#14532D'};
+const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände'};
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
@@ -815,11 +774,7 @@ const fluegeAn = id => {
   }
   return flugZahl.get(id) || 0;
 };
-/* Ein experimenteller Platz ist immer neongrün: „noch kein Flug“ ist bei ihm ja
-   keine Ausnahme, sondern der Sinn der Sache. Gestrichelt bleibt er trotzdem,
-   solange kein Flug dort steht. */
-const farbeVon = p => p.type === 'exp' ? COLOR.exp
-                    : fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
+const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
 /* Ein Link darf auch ohne „https://“ eingetippt werden. */
 const linkNorm = v => {
   const t = String(v ?? '').trim();
@@ -944,6 +899,7 @@ async function loadAll(){
   /* Stehen noch Orte der alten Art „Start und Landung“ in der Datenbank, werden sie
      jetzt umgestellt — danach wird einmal frisch geladen. */
   if (await migriereBeides(pl.data, fl.data)) return loadAll();
+  if (await migriereExp(pl.data)) return loadAll();
   S.places  = pl.data;
   S.gear    = ge.data;
   S.flights = fl.data.map(f => ({
@@ -989,6 +945,19 @@ function freierName(basis, namen){
   while (namen.includes(n)) n = basis + ' ' + (i++);
   namen.push(n);
   return n;
+}
+
+/* Die Art `exp` („Startplatz (experimentell)“) gibt es auch nicht mehr. Solche Orte
+   werden beim Laden einfach zu normalen Startplätzen — Richtungen und Infos bleiben. */
+async function migriereExp(places){
+  const alte = places.filter(p => p.type === 'exp');
+  if (!alte.length) return false;
+  const { error } = await sb.from('places').update({ type: 'start' })
+                            .in('id', alte.map(p => p.id));
+  if (error){ oops(error); return false; }
+  toast((alte.length === 1 ? '1 experimenteller Ort' : alte.length + ' experimentelle Orte')
+        + ' zu Startplatz umgestellt.');
+  return true;
 }
 
 async function migriereBeides(places, flights){
@@ -1044,9 +1013,8 @@ window.show = v => {
     document.getElementById('v-'+k).classList.toggle('on', k===v);
     document.getElementById('t-'+k).setAttribute('aria-selected', k===v);
   });
-  /* Im Reiter „Orte“ zählen die Orte, überall sonst die Flugstunden. */
+  /* Im Reiter „Orte“ steht nur die Karte — die Zahlen zu den Flügen bleiben weg. */
   document.getElementById('readout-flug').style.display = v==='orte' ? 'none' : '';
-  document.getElementById('readout-orte').style.display = v==='orte' ? '' : 'none';
   if (v==='orte' && map) setTimeout(() => {
     map.invalidateSize();
     /* Beim ersten Öffnen alle Orte ins Bild holen — jetzt kennt die Karte ihre Größe. */
@@ -1269,7 +1237,7 @@ function setzePending(lat, lng){
   pending = {lat, lng};
   document.getElementById('p-coord').value = lat.toFixed(5) + ', ' + lng.toFixed(5);
   zeigeHoehe(lat, lng);
-  document.getElementById('placeform').style.display = 'block';
+  zeigeForm(true);
   syncForm();
   drawPlaces();
 }
@@ -1474,7 +1442,7 @@ function paintFormRose(){
   t.classList.toggle('hat', gewaehlt.length > 0);
 }
 
-/* Die Windrose gibt es nur bei Startplätzen, auch den experimentellen. Fehlt die
+/* Die Windrose gibt es nur bei Startplätzen. Fehlt die
    Spalte `dirs` in der Datenbank, steht dort stattdessen ein Hinweis. */
 function syncRose(){
   const feld = document.getElementById('p-dirfield');
@@ -1609,7 +1577,7 @@ window.resetFilter = () => {
 function renderChips(){
   const c = [];
   if (F.text) c.push(['text', '„' + F.text + '“']);
-  ['start','exp','land','ground'].filter(t => F.typen.includes(t))
+  ['start','land','ground'].filter(t => F.typen.includes(t))
     .forEach(t => c.push(['typ:' + t, ARTLBL[t]]));
   if (F.min !== '') c.push(['min', 'ab ' + F.min + ' m']);
   if (F.max !== '') c.push(['max', 'bis ' + F.max + ' m']);
@@ -1661,19 +1629,6 @@ function setFilterState(){
                   : ohne + ' Orte ohne bekannte Höhe sind dabei ausgeblendet.') : '';
 }
 
-/* Die Kennzahlen über der Seite, solange der Reiter „Orte“ offen ist. */
-function renderOrteZahlen(){
-  const alle = S.places.length;
-  const geflogen = S.places.filter(p => fluegeAn(p.id)).length;
-  const hoch = S.places.filter(p => startet(p.type))
-    .map(hoeheOrt).filter(Number.isFinite);
-  document.getElementById('o-total').textContent = alle;
-  document.getElementById('o-flown').textContent = geflogen;
-  document.getElementById('o-open').textContent  = alle - geflogen;
-  document.getElementById('o-high').innerHTML = hoch.length
-    ? Math.round(Math.max(...hoch)).toLocaleString('de-DE') + '<small>m</small>' : '—';
-}
-
 window.toggleArm = () => mitRueckfrage(armUm);
 
 function armUm(){
@@ -1686,7 +1641,7 @@ function armUm(){
   else {
     /* Gleich das Formular zeigen: so lassen sich Koordinaten auch einfügen,
        ohne vorher in die Karte zu klicken. */
-    document.getElementById('placeform').style.display = 'block';
+    zeigeForm(true);
     syncForm(); placeFormLabels(); formMerken();
     nameFokus();
   }
@@ -1747,16 +1702,12 @@ function ringStueck(ri, ra, w1, w2){
    (leer heißt: nur der Punkt), `offen` heißt „noch kein Flug eingetragen“,
    `voll` färbt den Punkt, solange sein Infofeld offen ist. */
 function symbolSVG(dirs, farbe, opt = {}){
-  /* `kontur` ist der dünne dunkle Rand, den nur das Neongrün braucht. */
-  const rand = opt.kontur ? ` stroke="${opt.kontur}" stroke-width=".7"` : '';
   const deko = dirSort(dirs).map(d => {
     const w = RICHTUNGEN.indexOf(d) * 45;
-    return `<path d="${ringStueck(10.5, 14.5, w - 19, w + 19)}" fill="${farbe}"${rand}/>`;
+    return `<path d="${ringStueck(10.5, 14.5, w - 19, w + 19)}" fill="${farbe}"/>`;
   }).join('');
   return `<svg width="${SYMBOX}" height="${SYMBOX}" viewBox="0 0 ${SYMBOX} ${SYMBOX}" aria-hidden="true">`
     + deko
-    + (opt.kontur ? `<circle cx="${SYMM}" cy="${SYMM}" r="7" fill="none"`
-                    + ` stroke="${opt.kontur}" stroke-width="4"/>` : '')
     + `<circle cx="${SYMM}" cy="${SYMM}" r="7" fill="${opt.voll ? farbe : '#fff'}"`
     + ` fill-opacity="${opt.voll ? '.35' : '1'}" stroke="${farbe}" stroke-width="2.5"`
     + (opt.offen ? ' stroke-dasharray="4 3"' : '') + '/></svg>';
@@ -1764,8 +1715,7 @@ function symbolSVG(dirs, farbe, opt = {}){
 
 /* Das Symbol für einen bestimmten Ort. */
 const ortSVG = p => symbolSVG(startet(p.type) ? dirsIn(p.dirs) : [], farbeVon(p),
-                              {offen: !fluegeAn(p.id), voll: infoId === p.id,
-                               kontur: KONTUR[p.type]});
+                              {offen: !fluegeAn(p.id), voll: infoId === p.id});
 
 function drawPlaces(){
   if (!layer) return;
@@ -1778,9 +1728,7 @@ function drawPlaces(){
        alle anderen Orte den schlichten Punkt. Ohne Eintrag im Flugbuch ist er
        gestrichelt — der Unterschied hängt so nicht allein an der Farbe, die sich
        von Rot nur wenig abhebt. */
-    /* Ein experimenteller Platz bekommt das gezeichnete Symbol auch ohne Richtungen,
-       weil nur dort der dunkle Rand ums Neongrün mitkommt. */
-    const mitRichtung = (startet(p.type) && dirsIn(p.dirs).length) || !!KONTUR[p.type];
+    const mitRichtung = startet(p.type) && dirsIn(p.dirs).length;
     const punkt = (mitRichtung
       ? L.marker([p.lat,p.lng], {keyboard:false, icon: L.divIcon({className:'',
           iconSize:[SYMBOX,SYMBOX], iconAnchor:[SYMM,SYMM], html: ortSVG(p)})})
@@ -1844,7 +1792,7 @@ function oeffneOrt(id){
   document.getElementById('p-coord').value = p.lat.toFixed(5)+', '+p.lng.toFixed(5);
   zeigeHoehe(p.lat, p.lng, p.elev);
   pendingDirs = dirsIn(p.dirs);
-  document.getElementById('placeform').style.display = 'block';
+  zeigeForm(true);
   placeFormLabels();
   syncForm();
   cursorStil();
@@ -1872,6 +1820,13 @@ const formWerte = () => JSON.stringify({
 });
 
 const formMerken = () => { formStand = formWerte(); };
+/* Das Formular rechts neben der Karte ein- oder ausblenden. Die Karte wird dabei
+   schmaler oder breiter — Leaflet muss das gesagt bekommen. */
+function zeigeForm(an){
+  document.getElementById('placeform').style.display = an ? 'block' : 'none';
+  document.querySelector('#v-orte .cols').classList.toggle('mitform', an);
+  if (map) setTimeout(() => map.invalidateSize(), 60);
+}
 const formOffen  = () => document.getElementById('placeform').style.display !== 'none';
 const formGeaendert = () => formOffen() && formStand !== null && formWerte() !== formStand;
 
@@ -1944,7 +1899,7 @@ window.savePlace = async () => {
     /* Warnen, wenn die neue Art nicht mehr zu den Flügen passt, die den Ort benutzen. */
     const alsStart = S.flights.filter(f=>f.start===editId && !isGH(f)).length;
     const alsLand  = S.flights.filter(f=>f.land===editId).length;
-    const passt = { start:['start'], exp:['start'], land:['land'], ground:[] }[type] || [];
+    const passt = { start:['start'], land:['land'], ground:[] }[type] || [];
     const flg = n => n === 1 ? '1 Flug' : n + ' Flügen';
     const kaputt = [ (alsStart && !passt.includes('start')) ? 'bei '+flg(alsStart)+' als Startplatz' : '',
                      (alsLand  && !passt.includes('land'))  ? 'bei '+flg(alsLand) +' als Landeplatz'  : '' ]
@@ -1974,7 +1929,7 @@ window.cancelPlace = () => {
   formStand = null;
   pending = null;
   editId  = null;
-  document.getElementById('placeform').style.display = 'none';
+  zeigeForm(false);
   document.getElementById('p-name').value = '';
   document.getElementById('p-type').value = 'start';
   document.getElementById('p-info').value = '';
@@ -2057,44 +2012,18 @@ window.openPlaceInfo = id => {
   infoId = id;
   document.getElementById('pp-body').innerHTML = placeInfoHTML(p);
   document.getElementById('pp-edit').onclick = () => editPlace(id);
+  document.getElementById('pp-del').onclick  = () => delPlace(id);
   document.getElementById('placepanel').hidden = false;
-  /* Der offene Ort wird in der Karte gefüllt gezeichnet und in der Liste
-     hervorgehoben. Erst im nächsten Moment, damit der gerade angeklickte Punkt
-     nicht mitten im Klick verschwindet. */
-  setTimeout(() => {
-    drawPlaces();
-    renderPlaceList();
-    zeigeZeile();
-  }, 0);
+  /* Der offene Ort wird in der Karte gefüllt gezeichnet. Erst im nächsten Moment,
+     damit der gerade angeklickte Punkt nicht mitten im Klick verschwindet. */
+  setTimeout(drawPlaces, 0);
 };
-
-/* Die hervorgehobene Zeile ins Sichtfenster der Liste holen — nur innerhalb der
-   Liste, damit die Seite und mit ihr die Karte stehen bleiben. Scrollt die Liste
-   nicht selbst (schmaler Bildschirm), passiert gar nichts. */
-function zeigeZeile(){
-  const box = document.getElementById('placelist');
-  const zeile = box.querySelector('tr.aktiv');
-  if (!zeile || box.scrollHeight <= box.clientHeight + 2) return;
-  const oben = zeile.offsetTop, hoch = zeile.offsetHeight;
-  if (oben < box.scrollTop || oben + hoch > box.scrollTop + box.clientHeight){
-    box.scrollTop = Math.max(0, oben - (box.clientHeight - hoch) / 2);
-  }
-}
 
 window.closePlaceInfo = () => {
   if (!infoId) return;
   infoId = null;
   document.getElementById('placepanel').hidden = true;
   drawPlaces();
-  renderPlaceList();
-};
-
-/* Aus der Liste heraus: Karte auf den Ort schieben und sein Infofeld öffnen. */
-window.zeigeOrt = id => {
-  const p = S.places.find(x=>x.id===id); if (!p) return;
-  show('orte');
-  if (map) map.setView([p.lat, p.lng], Math.max(map.getZoom(), 13));
-  openPlaceInfo(id);
 };
 
 window.delPlace = id => {
@@ -2105,6 +2034,7 @@ window.delPlace = id => {
     async () => {
       const { error } = await sb.from('places').delete().eq('id', id);
       if (error) return oops(error);
+      if (infoId === id) closePlaceInfo();
       closeConfirm(); await loadAll(); toast('Ort gelöscht.');
     });
 };
@@ -2172,10 +2102,7 @@ function kindOpts(cur){
     `<option value="${k}"${k===cur?' selected':''}>${esc(t)}</option>`).join('');
 }
 function placeOpts(which, kind, cur){
-  /* Beim Startplatz stehen auch die experimentellen zur Wahl — sonst ließe sich der
-     erste Flug von dort gar nicht eintragen. */
-  let list = kind === 'gh' ? S.places
-    : S.places.filter(p => which === 'start' ? startet(p.type) : p.type === 'land');
+  let list = kind === 'gh' ? S.places : S.places.filter(p => p.type === which);
   if (cur && !list.some(p=>p.id===cur)){
     const p = S.places.find(x=>x.id===cur); if (p) list = [p, ...list];
   }
@@ -2665,63 +2592,17 @@ window.askDelete = id => {
 };
 
 /* ══════════ RENDERN ══════════ */
-/* Die Spalte, nach der sortiert wird, merkt sich das Flugbuch in `SORT`. */
-function sortiert(liste){
-  const r = SORT.ab ? 1 : -1;
-  const wert = p =>
-      SORT.key === 'elev'   ? (Number.isFinite(hoeheOrt(p)) ? hoeheOrt(p) : -1)
-    : SORT.key === 'fluege' ? fluegeAn(p.id)
-    : SORT.key === 'type'   ? TYPEN[p.type]
-    : (p.name || '').toLowerCase();
-  return [...liste].sort((a, b) => {
-    const x = wert(a), y = wert(b);
-    if (x < y) return -r;
-    if (x > y) return r;
-    return (a.name || '').localeCompare(b.name || '');   /* gleich? dann nach Namen */
-  });
-}
-
-window.sortBy = k => {
-  if (SORT.key === k) SORT.ab = !SORT.ab; else { SORT.key = k; SORT.ab = true; }
-  renderPlaceList();
-};
-
-const sortKopf = (k, titel, rechts) => {
-  const an = SORT.key === k;
-  return `<th class="sortbar${an ? ' an' : ''}"${rechts ? ' style="text-align:right"' : ''}>
-    <button onclick="sortBy('${k}')" aria-label="Nach ${esc(titel)} sortieren"${
-      an ? ` aria-sort="${SORT.ab ? 'ascending' : 'descending'}"` : ''}>
-    ${esc(titel)}<span class="pfeilchen">${SORT.ab ? '▲' : '▼'}</span></button></th>`;
-};
-
-/* Die Liste der Orte. Steht extra, weil sie auch neu gezeichnet wird,
-   sobald die Höhen aus dem Netz eingetroffen sind. */
+/* Was unter der Karte zu den Orten steht: der Stand des Filters und — nur wenn
+   nichts zu sehen ist — ein Hinweis, warum. Wird auch neu aufgerufen, sobald die
+   Höhen aus dem Netz eingetroffen sind. */
 function renderPlaceList(){
   setFilterState();
-  renderOrteZahlen();
-  const liste = sortiert(sichtbareOrte());
   const leer = !S.places.length
-    ? '<div class="empty"><b>Noch keine Orte.</b><br>Klick auf „Ort hinzufügen“ und dann in die Karte.</div>'
-    : '<div class="empty"><b>Kein Ort passt zum Filter.</b><br>'
-      + 'Stell den Filter anders ein oder setz ihn zurück.</div>';
-  document.getElementById('placelist').innerHTML = liste.length ? `<table>
-    <tr>${sortKopf('name','Name')}${sortKopf('type','Art')}${sortKopf('elev','Höhe')}${sortKopf('fluege','Flüge')}<th></th></tr>
-    ${liste.map(p=>{
-      const n = fluegeAn(p.id);
-      const zusatz = p.info ? 'Infos' : '';
-      return `<tr${infoId === p.id ? ' class="aktiv"' : ''} data-id="${p.id}">
-        <td class="click" onclick="zeigeOrt('${p.id}')" title="Auf der Karte zeigen">
-          <span class="dot${n ? '' : ' offen'}" style="color:${farbeVon(p)}"></span> <span class="placename">${esc(p.name)}</span>
-          <br><span class="num" style="color:var(--muted);font-size:11.5px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}${zusatz ? ' · '+zusatz : ''}</span></td>
-        <td><span class="tag ${{start:'s',land:'l',both:'b',ground:'g',exp:'e'}[p.type]}">${TYPEN[p.type]}</span>
-          ${dirTxt(p.dirs) ? `<span class="dirlist">${esc(dirTxt(p.dirs))}</span>` : ''}</td>
-        <td class="num">${hoeheTxtOrt(p)}</td>
-        <td class="num">${n || '—'}</td>
-        <td style="text-align:right;white-space:nowrap">
-          <button class="iconbtn" title="Ort bearbeiten" aria-label="${esc(p.name)} bearbeiten"
-            onclick="editPlace('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
-          <button class="del" title="Ort löschen" onclick="delPlace('${p.id}')">×</button></td>
-      </tr>`;}).join('')}</table>` : leer;
+    ? 'Noch keine Orte. Klick auf „Ort hinzufügen“ und dann in die Karte.'
+    : !sichtbareOrte().length ? 'Kein Ort passt zum Filter. Stell ihn anders ein oder setz ihn zurück.' : '';
+  const el = document.getElementById('o-leer');
+  el.textContent = leer;
+  el.style.display = leer ? '' : 'none';
 }
 
 function renderAll(){
