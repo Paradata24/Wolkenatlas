@@ -227,7 +227,7 @@ verlangt:
 
 **Filtern und Suchen verändern den Ausschnitt nicht.** Es verschwinden nur die Punkte, die
 nicht mehr passen; Zoom und Mitte bleiben stehen. Liegen die Treffer außerhalb des Bildes,
-holt sie *Treffer ins Bild* in der Filterleiste oder der Knopf mit der Kartennadel herbei.
+holt sie der Knopf mit der Kartennadel herbei.
 
 ### Die Art des Orts
 
@@ -396,19 +396,20 @@ Von links nach rechts:
 - **Höhe (m)** — ab / bis. Orte, deren Höhe noch nicht bekannt ist, fallen dabei heraus;
   ein kurzer Satz unter der Leiste sagt, wie viele das sind.
 - Ganz rechts steht, wie viele Orte gerade zu sehen sind („2 von 23 Orten“), darunter
-  **Treffer ins Bild** (holt alle passenden Orte in den Kartenausschnitt) und
   **Zurücksetzen** (alle Orte wieder sichtbar).
 
-Ist der Bildschirm zu schmal für eine Zeile, brechen die Gruppen in eine zweite Zeile um.
+Die Leiste steht **immer in einer einzigen Zeile** — egal, was eingestellt ist. Reicht die
+Breite der Karte dafür nicht (Handy, schmales Fenster oder wenn rechts das Formular offen
+ist), klappt sie stattdessen zu einer Zeile **Filter** zusammen, die sich auf Tipp öffnet.
+Entscheidend ist dabei die Breite der Karte, nicht die des Bildschirms.
 
 **Filtern verändert den Kartenausschnitt nicht** — es verschwinden nur die Punkte, die nicht
-passen. Wer die Treffer sehen will, nimmt *Treffer ins Bild*. Gespeichert wird der Filter
+passen. Wer die Treffer sehen will, nimmt den Knopf mit der Kartennadel links in der Karte. Gespeichert wird der Filter
 nicht; beim nächsten Laden der Seite sind wieder alle Orte da.
 
-Auf dem **Handy** ist die Leiste zugeklappt und zeigt nur die Zeile **Filter**. Ein Tipp
+Zugeklappt (etwa auf dem **Handy**) zeigt die Leiste nur die Zeile **Filter**. Ein Tipp
 darauf klappt sie auf und wieder zu. Ist etwas eingestellt, steht in der Zeile kurz, was
-gilt — etwa „W · neu · 2 von 23“. *Treffer ins Bild* klappt sie von selbst zu, damit die
-Karte frei ist.
+gilt — etwa „W · neu · 2 von 23“.
 
 **Ort hinzufügen** sitzt als Knopf **oben rechts in der Karte**. Solange ein Ort gesetzt
 wird, ist er rot und heißt *Abbrechen*. Im Vollbild beendet er das Vollbild, weil das

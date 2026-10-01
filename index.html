@@ -342,8 +342,10 @@
 
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   /* ---------- Filterleiste über der Karte ----------
-     Steht dort, wo in den anderen Reitern die Kennzahlen stehen. Die Gruppen
-     stehen nebeneinander und brechen um, wenn der Platz nicht reicht. */
+     Steht dort, wo in den anderen Reitern die Kennzahlen stehen. Ob alles in eine
+     Zeile passt, entscheidet die Breite der Karte selbst (nicht die des Bildschirms) —
+     so klappt die Leiste auch zusammen, wenn rechts das Formular offen ist. */
+  #mapwrap{container-type:inline-size;container-name:karte}
   .fbar{background:var(--panel);border-bottom:1px solid var(--line);flex:none}
   .fgruppen{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 14px;padding:12px 15px}
   .fgr{display:flex;flex-direction:column;min-width:0}
@@ -359,15 +361,19 @@
   .fsegs button[aria-pressed="true"]{background:#FCEEF3;color:var(--start);font-weight:600}
   .fsegs .dot{width:9px;height:9px;border-width:2px}
   /* Die acht Windrichtungen: angetippt kräftig rot wie in der Windrose. */
-  .fsegs.wind button{font-family:var(--mono);font-size:12px;padding:7px 0;width:34px;flex:none}
+  .fsegs.wind button{font-family:var(--mono);font-size:12px;padding:7px 0;width:32px;flex:none}
   .fsegs.wind button[aria-pressed="true"]{background:var(--start);color:#fff}
-  .fsuche{flex:1 1 130px}
+  .fsuche{flex:1 1 130px;min-width:100px}
   .fsuche input{width:100%;padding:6px 9px;font-size:13.5px}
   .fvonbis{display:flex;align-items:center;gap:5px;color:var(--muted)}
-  .fvonbis input{width:62px;padding:6px 8px;font-size:13.5px}
+  .fvonbis input{width:62px;padding:6px 7px;font-size:13.5px;-moz-appearance:textfield}
+  /* Ohne die kleinen Pfeile passen vierstellige Höhen ins schmale Feld. */
+  .fvonbis input::-webkit-outer-spin-button,.fvonbis input::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0}
   .fende{margin-left:auto;align-items:flex-end}
   .fende .fstand{margin-bottom:5px}
-  .fknoepfe{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .fknoepfe{display:flex;gap:6px;justify-content:flex-end}
+  .fstand{white-space:nowrap}
   .fstand{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
     color:var(--muted);line-height:1.2}
   /* „Ort hinzufügen“ sitzt als Knopf oben rechts in der Karte. */
@@ -377,9 +383,16 @@
   .armknopf:hover{background:#F2F5F8}
   .armknopf.an{background:var(--start);color:#fff}
   .fstand.an{color:var(--start);font-weight:600}
-  /* Die Kopfzeile zum Auf- und Zuklappen gibt es nur auf dem Handy. */
+  /* Genug Platz: alles in einer Zeile, nichts bricht um. */
   .fbarkopf{display:none}
-  @media(max-width:820px){
+  @container karte (min-width:1070px){
+    .fgruppen{flex-wrap:nowrap}
+    .fgr{flex:none}
+    .fsuche{flex:1 1 130px}
+  }
+  /* Zu wenig Platz (Handy, schmales Fenster, Formular offen): die Leiste klappt zu
+     einer Zeile „Filter“ zusammen und öffnet sich auf Tipp darunter. */
+  @container karte (max-width:1069px){
     .fbarkopf{display:flex;width:100%;align-items:center;gap:8px;font:inherit;font-size:14px;
       color:var(--ink);background:none;border:none;cursor:pointer;padding:11px 15px;text-align:left}
     .fbarkopf svg{width:15px;height:15px;flex:none}
@@ -531,7 +544,6 @@
               <div class="fgr fende">
                 <span class="fstand" id="f-state"></span>
                 <div class="fknoepfe">
-                  <button class="btn small" onclick="trefferZeigen()">Treffer ins Bild</button>
                   <button class="btn small ghost" onclick="resetFilter()">Zurücksetzen</button>
                 </div>
               </div>
@@ -1598,17 +1610,10 @@ window.applyFilter = () => {
   renderPlaceList();
   drawPlaces();
   /* Der Kartenausschnitt bleibt beim Filtern, wie er ist — sonst springt der
-     Zoom bei jeder Änderung. Wer die Treffer ins Bild holen will, nimmt den
-     Knopf „Treffer ins Bild“ in der Filterleiste oder die Kartennadel links in der Karte. */
+     Zoom bei jeder Änderung. Wer die Treffer ins Bild holen will, nimmt die
+     Kartennadel links in der Karte. */
 };
 
-/* Alle Orte, die zum Filter passen, ins Bild holen. Auf dem Handy klappt die
-   Leiste dabei zu, damit man die Treffer auch sieht. */
-window.trefferZeigen = () => {
-  if (!sichtbareOrte().length){ toast('Kein Ort passt zum Filter.'); return; }
-  passeKarteAn();
-  if (schmal()) toggleFilter(false);
-};
 
 window.resetFilter = () => {
   F.typen = [...ALLETYPEN];
@@ -1620,8 +1625,8 @@ window.resetFilter = () => {
   applyFilter();
 };
 
-/* Die Filterleiste auf- oder zuklappen — nur auf dem Handy, auf großen
-   Bildschirmen ist sie immer offen. Ohne Angabe wird umgeschaltet. */
+/* Die Filterleiste auf- oder zuklappen — nur wenn sie zusammengeklappt ist
+   (zu wenig Platz für eine Zeile); sonst ist sie immer offen. Ohne Angabe wird umgeschaltet. */
 window.toggleFilter = auf => {
   const bar = document.getElementById('fbar');
   if (typeof auf !== 'boolean') auf = !bar.classList.contains('auf');
@@ -1630,7 +1635,8 @@ window.toggleFilter = auf => {
   /* Die Karte wird dabei kleiner oder größer — Leaflet muss das wissen. */
   if (map) setTimeout(() => map.invalidateSize(), 60);
 };
-const filterOffen = () => schmal() && document.getElementById('fbar').classList.contains('auf');
+const filterOffen = () => getComputedStyle(document.getElementById('f-kopf')).display !== 'none'
+                       && document.getElementById('fbar').classList.contains('auf');
 
 /* Die Kurzform in der Kopfzeile, solange die Leiste auf dem Handy zu ist:
    „W · neu“, „SW/W · geflogen“ … — was gerade eingestellt ist, auf einen Blick. */
