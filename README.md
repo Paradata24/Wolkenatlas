@@ -196,7 +196,7 @@ Der Ortsteil ist die **Sammlung aller Plätze** — die geflogenen und die, die 
 Liste stehen. Er steht darum gleich hinter „Flüge“.
 
 Beim Öffnen ist **nur die Karte** zu sehen, über die ganze Breite — ohne Kennzahlenleiste
-oben und ohne Liste daneben. Unter der Karte steht die Legende, oben rechts in der Karte der Filter. Was zu einem
+oben und ohne Liste daneben. Über der Karte steht die Filterleiste, unter ihr die Legende. Was zu einem
 Ort gespeichert ist, zeigt ein **Klick auf den Punkt** (siehe „Auf einen Ort klicken“).
 Nur solange ein Ort angelegt oder bearbeitet wird, rückt **rechts das Formular** neben die
 Karte; danach ist die Karte wieder allein.
@@ -227,7 +227,7 @@ verlangt:
 
 **Filtern und Suchen verändern den Ausschnitt nicht.** Es verschwinden nur die Punkte, die
 nicht mehr passen; Zoom und Mitte bleiben stehen. Liegen die Treffer außerhalb des Bildes,
-holt sie *Treffer ins Bild* im Filter oder der Knopf mit der Kartennadel herbei.
+holt sie *Treffer ins Bild* in der Filterleiste oder der Knopf mit der Kartennadel herbei.
 
 ### Die Art des Orts
 
@@ -284,7 +284,7 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise blau oder grün), sobald der
 erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
-der Schlüssel für die Farben; gefiltert wird im Filter oben rechts in der Karte.
+der Schlüssel für die Farben; gefiltert wird in der Filterleiste über der Karte.
 
 Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
 hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
@@ -324,7 +324,7 @@ Klick legt sie als `46.43454, 11.85043` in die Zwischenablage — in dieser Form
 Google Maps, Komoot und fast jede Karten-App direkt. Der Knopf zeigt kurz ein grünes Häkchen,
 und eine Meldung bestätigt, was kopiert wurde. Im Vollbild funktioniert er genauso.
 
-- **Neu anlegen:** „Ort hinzufügen“ (oben rechts über der Karte), dann in die Karte klicken, Name und Art eintragen, speichern.
+- **Neu anlegen:** „Ort hinzufügen“ (Knopf oben rechts in der Karte), dann in die Karte klicken, Name und Art eintragen, speichern.
   Das Formular geht sofort auf, damit sich die Stelle auch über die Koordinaten eintragen lässt.
 - **Ändern:** *Bearbeiten* im Infofeld. Solange du bearbeitest,
   ist der Ort in der Karte gestrichelt eingekreist. *Änderungen speichern* übernimmt alles,
@@ -375,53 +375,53 @@ es dafür nicht; die frühere Spalte `link` wird nirgends mehr verwendet.
 Der Filter ist für eine Frage gemacht: **Morgen kommt der Wind aus West — wo kann ich
 starten?**
 
-Er sitzt **oben rechts in der Karte** als Knopf *Filter*. Weil er in der Karte liegt, ist er
-**auch im Vollbild** da und lässt sich dort genauso bedienen. Ein Klick klappt ihn auf, das ×
-oder Escape klappt ihn wieder zu. Ist etwas eingestellt, wird der Knopf rosa und zeigt kurz,
-was gilt — etwa „W · neu“.
+Er steht als **Leiste oben über der Karte** — dort, wo in den anderen Reitern die Kennzahlen
+stehen. Die Karte darunter nimmt den restlichen Platz ein. Die Leiste gehört zum
+Vollbild-Bereich: **im Vollbild bleibt sie oben stehen** und lässt sich genauso bedienen.
 
-Von oben nach unten:
+Von links nach rechts:
 
-- **Wind kommt aus** — eine Windrose mit acht Feldern. Tipp an, woher der Wind kommt, zum
-  Beispiel **W**. Dann bleiben nur die **Startplätze** stehen, an denen bei West gestartet
-  werden kann. Mehrere Felder heißen „oder“: **SW und W** zeigt jeden Platz, der bei
-  mindestens einer der beiden Richtungen geht. Nochmal antippen nimmt eine Richtung wieder
-  weg. Landeplätze und Übungsgelände haben keine Startrichtung und fallen heraus, sobald hier
-  etwas angetippt ist.
-- **Neu oder schon geflogen** — drei Knöpfe:
-  *Alle* · *Neue* (noch kein Flug im Flugbuch) · *Geflogen* (schon mindestens ein Flug dort).
-  Zusammen mit dem Wind heißt das zum Beispiel: *W* + *Neue* = „neue Startplätze, die bei
-  Westwind gehen“.
-- **Zeigen** — *Start*, *Landung*, *Übung*: welche Arten von Orten überhaupt zu sehen sind.
-  Anfangs sind alle drei an; ein Klick blendet eine Art aus, ein zweiter wieder ein.
-- **Suche und Höhe** (zum Aufklappen) — Suche im **Namen und Infotext** („seilbahn“ findet
-  auch den Ort, bei dem das nur in den Infos steht) und **Höhe ab / bis** in Metern. Orte,
-  deren Höhe noch nicht bekannt ist, fallen bei der Höhe heraus; ein kurzer Satz sagt, wie
-  viele das sind.
+- **Wind kommt aus** — acht Knöpfe, N bis NW. Tipp an, woher der Wind kommt, zum Beispiel
+  **W**: Dann bleiben nur die **Startplätze** stehen, an denen bei West gestartet werden
+  kann. Mehrere Richtungen heißen „oder“: **SW und W** zeigt jeden Platz, der bei mindestens
+  einer der beiden geht. Nochmal antippen nimmt eine Richtung wieder weg. Landeplätze und
+  Übungsgelände haben keine Startrichtung und fallen heraus, sobald hier etwas gewählt ist.
+- **Neu oder geflogen** — *Alle* · *Neue* (noch kein Flug im Flugbuch) · *Geflogen* (schon
+  mindestens ein Flug dort). *W* + *Neue* heißt also: „neue Startplätze, die bei Westwind
+  gehen“.
+- **Zeigen** — *Start*, *Landung*, *Übung*: welche Arten von Orten zu sehen sind. Anfangs
+  sind alle drei an; ein Klick blendet eine Art aus, ein zweiter wieder ein.
+- **Suche** — im **Namen und Infotext** („seilbahn“ findet auch den Ort, bei dem das nur in
+  den Infos steht).
+- **Höhe (m)** — ab / bis. Orte, deren Höhe noch nicht bekannt ist, fallen dabei heraus;
+  ein kurzer Satz unter der Leiste sagt, wie viele das sind.
+- Ganz rechts steht, wie viele Orte gerade zu sehen sind („2 von 23 Orten“), darunter
+  **Treffer ins Bild** (holt alle passenden Orte in den Kartenausschnitt) und
+  **Zurücksetzen** (alle Orte wieder sichtbar).
 
-Oben im Filter steht immer, wie viele Orte gerade zu sehen sind („2 von 23 Orten“). Unten
-zwei Knöpfe, die auch beim Rollen stehen bleiben:
-
-- **Treffer ins Bild** — holt alle passenden Orte in den Kartenausschnitt.
-- **Zurücksetzen** — alles wieder auf Anfang, alle Orte sind zu sehen.
+Ist der Bildschirm zu schmal für eine Zeile, brechen die Gruppen in eine zweite Zeile um.
 
 **Filtern verändert den Kartenausschnitt nicht** — es verschwinden nur die Punkte, die nicht
 passen. Wer die Treffer sehen will, nimmt *Treffer ins Bild*. Gespeichert wird der Filter
 nicht; beim nächsten Laden der Seite sind wieder alle Orte da.
 
-Auf dem **Handy** nimmt der aufgeklappte Filter die ganze Breite der Karte ein. Ein Klick in
-die Karte, auf einen Ort oder auf *Treffer ins Bild* macht ihn zu, damit die Karte wieder frei
-ist. Infofeld und Filter sind dort nie gleichzeitig offen. Auf großen Bildschirmen geht das:
-der Filter rechts oben, das Infofeld links unten.
+Auf dem **Handy** ist die Leiste zugeklappt und zeigt nur die Zeile **Filter**. Ein Tipp
+darauf klappt sie auf und wieder zu. Ist etwas eingestellt, steht in der Zeile kurz, was
+gilt — etwa „W · neu · 2 von 23“. *Treffer ins Bild* klappt sie von selbst zu, damit die
+Karte frei ist.
 
-Die **Legende unter der Karte** erklärt nur noch die Farben; gefiltert wird im Filter.
+**Ort hinzufügen** sitzt als Knopf **oben rechts in der Karte**. Solange ein Ort gesetzt
+wird, ist er rot und heißt *Abbrechen*. Im Vollbild beendet er das Vollbild, weil das
+Formular neben der Karte steht.
+
+Die **Legende unter der Karte** erklärt nur die Farben; gefiltert wird in der Leiste.
 
 ### Vollbild
 
 Links unter den Zoomknöpfen sitzt der **Vollbildknopf**. Er legt die Karte über den ganzen
 Bildschirm; derselbe Knopf bringt sie wieder zurück, ebenso Escape. Auch im Vollbild öffnet
 ein Klick auf einen Ort sein Infofeld, und ein Klick irgendwo in die Karte schließt es
-wieder. Der **Filter** oben rechts funktioniert im Vollbild genauso. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Karte steht.
+wieder. Die **Filterleiste** bleibt im Vollbild oben stehen. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Karte steht.
 
 Kann ein Browser kein Vollbild für einen einzelnen Ausschnitt (ältere iPhones), wird die
 Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann dasselbe.
