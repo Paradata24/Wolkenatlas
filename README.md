@@ -391,12 +391,18 @@ Von links nach rechts:
   gehen“.
 - **Zeigen** — *Start*, *Landung*, *Übung*: welche Arten von Orten zu sehen sind. Anfangs
   sind alle drei an; ein Klick blendet eine Art aus, ein zweiter wieder ein.
-- **Suche** — im **Namen und Infotext** („seilbahn“ findet auch den Ort, bei dem das nur in
-  den Infos steht).
+- **Ort suchen** — schon beim ersten Buchstaben klappt unter dem Feld eine **Liste mit
+  passenden Orten** auf, wie man es von vielen Webseiten kennt. Bei „S“ stehen oben die Orte,
+  deren Name mit S beginnt, danach die, bei denen ein späteres Wort mit S beginnt („Monte
+  Stivo“). Ab zwei Buchstaben kommen Orte dazu, in deren Namen das Getippte irgendwo steht,
+  ab drei auch Treffer im **Infotext** („seilbahn“) — die sind als solche gekennzeichnet.
+  Jeder Eintrag zeigt Farbpunkt, Art und Höhe. Ein Klick (oder Pfeiltasten und Enter)
+  **schiebt die Karte auf den Ort und öffnet sein Infofeld**. Die Suche blendet selbst keine
+  Punkte aus; vorgeschlagen wird, was der übrige Filter gerade zeigt. Findet sie nichts,
+  weil der Filter Orte ausblendet, sagt die Liste das.
 - **Höhe (m)** — ab / bis. Orte, deren Höhe noch nicht bekannt ist, fallen dabei heraus;
   ein kurzer Satz unter der Leiste sagt, wie viele das sind.
-- Ganz rechts steht, wie viele Orte gerade zu sehen sind („2 von 23 Orten“), darunter
-  **Zurücksetzen** (alle Orte wieder sichtbar).
+- Ganz rechts **Zurücksetzen** (alle Orte wieder sichtbar).
 
 Die Leiste steht **immer in einer einzigen Zeile** — egal, was eingestellt ist. Reicht die
 Breite der Karte dafür nicht (Handy, schmales Fenster oder wenn rechts das Formular offen
@@ -409,7 +415,8 @@ nicht; beim nächsten Laden der Seite sind wieder alle Orte da.
 
 Zugeklappt (etwa auf dem **Handy**) zeigt die Leiste nur die Zeile **Filter**. Ein Tipp
 darauf klappt sie auf und wieder zu. Ist etwas eingestellt, steht in der Zeile kurz, was
-gilt — etwa „W · neu · 2 von 23“.
+gilt — etwa „W · neu“. Ein Ort aus der Suchliste klappt die Leiste wieder zu, damit die
+Karte frei ist.
 
 **Ort hinzufügen** sitzt als Knopf **oben rechts in der Karte**. Solange ein Ort gesetzt
 wird, ist er rot und heißt *Abbrechen*. Im Vollbild beendet er das Vollbild, weil das
@@ -422,7 +429,14 @@ Die **Legende unter der Karte** erklärt nur die Farben; gefiltert wird in der L
 Links unter den Zoomknöpfen sitzt der **Vollbildknopf**. Er legt die Karte über den ganzen
 Bildschirm; derselbe Knopf bringt sie wieder zurück, ebenso Escape. Auch im Vollbild öffnet
 ein Klick auf einen Ort sein Infofeld, und ein Klick irgendwo in die Karte schließt es
-wieder. Die **Filterleiste** bleibt im Vollbild oben stehen. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Karte steht.
+wieder. Die **Filterleiste** bleibt im Vollbild oben stehen.
+
+Auf dem **Handy** gehört im Vollbild **der ganze Bildschirm der Karte**: Die Filterleiste
+schwebt dort nur als kleiner Knopf **Filter** oben rechts über der Karte und klappt beim
+Antippen als Feld auf; *Ort hinzufügen* ist im Vollbild ausgeblendet. Die Seite dahinter
+rollt nicht mit, und die Höhe passt sich an, wenn die Adressleiste des Browsers ein- oder
+ausfährt. *Löschen* im Infofeld beendet das Vollbild, weil die Rückfrage außerhalb der
+Karte steht. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Karte steht.
 
 Kann ein Browser kein Vollbild für einen einzelnen Ausschnitt (ältere iPhones), wird die
 Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann dasselbe.

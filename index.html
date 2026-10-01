@@ -289,7 +289,9 @@
   #mapwrap:fullscreen #map,#mapwrap:-webkit-full-screen #map{height:auto;flex:1 1 auto;min-height:0}
   /* Ersatz-Vollbild für Browser, die es für einzelne Felder nicht können (iPhone). */
   #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:#fff;
-    display:flex;flex-direction:column}
+    display:flex;flex-direction:column;height:100vh;height:100dvh}
+  /* Solange die Karte das Ersatz-Vollbild füllt, rollt die Seite dahinter nicht mit. */
+  html.kartevoll, html.kartevoll body{overflow:hidden;overscroll-behavior:none}
   #mapwrap.fsfake #map{height:auto;flex:1 1 auto;min-height:0}
   a.mapfs{display:flex;align-items:center;justify-content:center;color:var(--ink)}
   a.mapfs svg{width:15px;height:15px;display:block}
@@ -363,7 +365,21 @@
   /* Die acht Windrichtungen: angetippt kräftig rot wie in der Windrose. */
   .fsegs.wind button{font-family:var(--mono);font-size:12px;padding:7px 0;width:32px;flex:none}
   .fsegs.wind button[aria-pressed="true"]{background:var(--start);color:#fff}
-  .fsuche{flex:1 1 130px;min-width:100px}
+  .fsuche{flex:1 1 130px;min-width:100px;position:relative}
+  /* Die Vorschlagsliste unter dem Suchfeld — wie man sie von vielen Seiten kennt. */
+  .vorschlag{position:absolute;top:100%;left:0;z-index:1200;margin:3px 0 0;padding:4px 0;
+    list-style:none;min-width:100%;width:max-content;max-width:min(360px,90vw);
+    max-height:320px;overflow:auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r);box-shadow:0 8px 24px rgba(21,32,43,.18)}
+  .vorschlag[hidden]{display:none}
+  .vorschlag li{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;
+    font-size:14px;line-height:1.3}
+  .vorschlag li.an, .vorschlag li:hover{background:#FCEEF3}
+  .vorschlag li .wo{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .vorschlag li mark{background:none;color:var(--start);font-weight:650}
+  .vorschlag li.leer{cursor:default;color:var(--muted);font-size:13px}
+  .vorschlag li.leer:hover{background:none}
   .fsuche input{width:100%;padding:6px 9px;font-size:13.5px}
   .fvonbis{display:flex;align-items:center;gap:5px;color:var(--muted)}
   .fvonbis input{width:62px;padding:6px 7px;font-size:13.5px;-moz-appearance:textfield}
@@ -371,18 +387,13 @@
   .fvonbis input::-webkit-outer-spin-button,.fvonbis input::-webkit-inner-spin-button{
     -webkit-appearance:none;margin:0}
   .fende{margin-left:auto;align-items:flex-end}
-  .fende .fstand{margin-bottom:5px}
   .fknoepfe{display:flex;gap:6px;justify-content:flex-end}
-  .fstand{white-space:nowrap}
-  .fstand{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
-    color:var(--muted);line-height:1.2}
   /* „Ort hinzufügen“ sitzt als Knopf oben rechts in der Karte. */
   .armknopf{font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--panel);
     border:2px solid rgba(0,0,0,.2);border-radius:4px;background-clip:padding-box;cursor:pointer;
     padding:5px 11px}
   .armknopf:hover{background:#F2F5F8}
   .armknopf.an{background:var(--start);color:#fff}
-  .fstand.an{color:var(--start);font-weight:600}
   /* Genug Platz: alles in einer Zeile, nichts bricht um. */
   .fbarkopf{display:none}
   @container karte (min-width:1070px){
@@ -393,6 +404,24 @@
   /* Zu wenig Platz (Handy, schmales Fenster, Formular offen): die Leiste klappt zu
      einer Zeile „Filter“ zusammen und öffnet sich auf Tipp darunter. */
   @container karte (max-width:1069px){
+    /* Zugeklappte Leiste: die Vorschläge stehen direkt unter dem Suchfeld in der
+       Leiste selbst, statt darüber zu schweben — so schneidet nichts sie ab. */
+    .vorschlag{position:static;width:auto;max-width:none;max-height:none;box-shadow:none}
+    /* Im Vollbild auf dem Handy gehört der ganze Schirm der Karte: die Leiste
+       schwebt nur als kleiner Knopf „Filter“ oben rechts darüber und klappt beim
+       Antippen als Feld auf. „Ort hinzufügen“ ist dort ausgeblendet. */
+    #mapwrap.fsfake .fbar{position:absolute;top:10px;right:10px;z-index:1001;
+      width:auto;max-width:calc(100% - 70px);max-height:calc(100% - 20px);overflow:auto;
+      border:1px solid var(--line);border-radius:22px;box-shadow:0 2px 12px rgba(21,32,43,.2)}
+    #mapwrap.fsfake .fbar.auf{width:calc(100% - 70px);border-radius:var(--r)}
+    #mapwrap.fsfake .fbarkopf{padding:8px 14px}
+    #mapwrap.fsfake .armknopf{display:none}
+    #mapwrap:fullscreen .fbar{position:absolute;top:10px;right:10px;z-index:1001;
+      width:auto;max-width:calc(100% - 70px);max-height:calc(100% - 20px);overflow:auto;
+      border:1px solid var(--line);border-radius:22px;box-shadow:0 2px 12px rgba(21,32,43,.2)}
+    #mapwrap:fullscreen .fbar.auf{width:calc(100% - 70px);border-radius:var(--r)}
+    #mapwrap:fullscreen .fbarkopf{padding:8px 14px}
+    #mapwrap:fullscreen .armknopf{display:none}
     .fbarkopf{display:flex;width:100%;align-items:center;gap:8px;font:inherit;font-size:14px;
       color:var(--ink);background:none;border:none;cursor:pointer;padding:11px 15px;text-align:left}
     .fbarkopf svg{width:15px;height:15px;flex:none}
@@ -530,8 +559,12 @@
                 </div>
               </div>
               <div class="fgr fsuche">
-                <label for="f-text">Suche</label>
-                <input type="search" id="f-text" placeholder="Name oder Infotext" autocomplete="off">
+                <label for="f-text">Ort suchen</label>
+                <!-- Beim Tippen klappt darunter eine Liste mit passenden Orten auf.
+                     Ein Klick darauf zeigt den Ort in der Karte. -->
+                <input type="search" id="f-text" placeholder="Name eintippen …" autocomplete="off"
+                  role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="f-vorschlag">
+                <ul class="vorschlag" id="f-vorschlag" role="listbox" hidden></ul>
               </div>
               <div class="fgr fhoehe">
                 <label for="f-min">Höhe (m)</label>
@@ -542,7 +575,6 @@
                 </div>
               </div>
               <div class="fgr fende">
-                <span class="fstand" id="f-state"></span>
                 <div class="fknoepfe">
                   <button class="btn small ghost" onclick="resetFilter()">Zurücksetzen</button>
                 </div>
@@ -782,7 +814,7 @@ let kartePasst = false;
 const ALLETYPEN = ['start','land','ground'];
 /* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
    Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
-const F = { text:'', typen:[...ALLETYPEN], min:'', max:'', log:'alle', dirs:[] };
+const F = { typen:[...ALLETYPEN], min:'', max:'', log:'alle', dirs:[] };
 
 const pad = n => String(n).padStart(2,'0');
 const fmt = m => { const v = +m || 0; return Math.floor(v/60) + ':' + pad(v%60); };
@@ -1425,6 +1457,7 @@ window.toggleVollbild = () => {
 
 function ersatzVollbild(){
   document.getElementById('mapwrap').classList.add('fsfake');
+  document.documentElement.classList.add('kartevoll');
   nachVollbild();
 }
 
@@ -1435,6 +1468,7 @@ window.verlasseVollbild = () => {
     if (aus) aus.call(document);
   } else if (el.classList.contains('fsfake')){
     el.classList.remove('fsfake');
+    document.documentElement.classList.remove('kartevoll');
     nachVollbild();
   }
 };
@@ -1542,7 +1576,7 @@ function syncExtraFelder(){
 function syncForm(){ syncRose(); syncExtraFelder(); }
 
 /* ---------- Filter über den Orten ---------- */
-const filterAn = () => F.text !== '' || F.typen.length < ALLETYPEN.length
+const filterAn = () => F.typen.length < ALLETYPEN.length
                     || F.min !== '' || F.max !== '' || F.log !== 'alle' || F.dirs.length > 0;
 
 function passtFilter(p){
@@ -1550,11 +1584,6 @@ function passtFilter(p){
   /* Art des Orts — nur die angewählten Arten bleiben stehen. Eine alte Art, die
      es im Filter nicht gibt, ist nur zu sehen, solange alle drei angewählt sind. */
   if (F.typen.length < ALLETYPEN.length && !F.typen.includes(p.type)) return false;
-  /* Die Suche schaut in den Namen und in den Infotext. */
-  if (F.text){
-    const wo = ((p.name || '') + ' ' + (p.info || '')).toLowerCase();
-    if (!wo.includes(F.text)) return false;
-  }
   if (F.log === 'mit'  && !n) return false;
   if (F.log === 'ohne' &&  n) return false;
   if (F.min !== '' || F.max !== ''){
@@ -1590,8 +1619,9 @@ function initFilter(){
     F.typen = F.typen.includes(t) ? F.typen.filter(x => x !== t) : [...F.typen, t];
     applyFilter();
   });
-  ['f-min','f-max','f-text'].forEach(id =>
+  ['f-min','f-max'].forEach(id =>
     document.getElementById(id).addEventListener('input', applyFilter));
+  initSuche();
   /* Wind: jede Richtung einzeln an- und abwählbar, mehrere heißen „oder“. */
   document.getElementById('f-wind').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1602,7 +1632,6 @@ function initFilter(){
 }
 
 window.applyFilter = () => {
-  F.text = document.getElementById('f-text').value.trim().toLowerCase();
   F.min = document.getElementById('f-min').value.trim();
   F.max = document.getElementById('f-max').value.trim();
   /* Ein Infofeld zu einem Ort, der jetzt weggefiltert ist, geht zu. */
@@ -1619,10 +1648,123 @@ window.resetFilter = () => {
   F.typen = [...ALLETYPEN];
   F.log = 'alle';
   document.getElementById('f-text').value = '';
+  schliesseVorschlag();
   document.getElementById('f-min').value = '';
   document.getElementById('f-max').value = '';
   F.dirs = [];
   applyFilter();
+};
+
+/* ---------- Ort suchen ----------
+   Beim Tippen erscheint unter dem Suchfeld eine Liste passender Orte: zuerst die,
+   deren Name mit dem Getippten beginnt, dann die, in deren Namen es irgendwo
+   vorkommt, zuletzt die, bei denen es nur im Infotext steht. Ein Klick (oder
+   Pfeiltasten und Enter) schiebt die Karte auf den Ort und öffnet sein Infofeld.
+   Die Suche blendet keine Punkte aus — sie springt nur hin. Vorgeschlagen wird,
+   was der Filter gerade zeigt. */
+let vorschlagListe = [], vorschlagAn = -1;
+
+function vorschlaege(text){
+  const t = text.trim().toLowerCase();
+  if (!t) return [];
+  const name = p => (p.name || '').toLowerCase();
+  const orte = sichtbareOrte();
+  /* 1. Name beginnt damit („S“ → Speikboden), 2. ein späteres Wort im Namen beginnt
+     damit („S“ → Monte Stivo), 3. steht irgendwo im Namen, 4. nur im Infotext.
+     Bei einem einzelnen Buchstaben zählen nur 1 und 2 — sonst passt fast alles. */
+  const worte = p => name(p).split(/[\s\-\/(),]+/).slice(1);
+  const g1 = orte.filter(p => name(p).startsWith(t));
+  const g2 = orte.filter(p => !g1.includes(p) && worte(p).some(w => w.startsWith(t)));
+  const g3 = t.length < 2 ? [] : orte.filter(p => !g1.includes(p) && !g2.includes(p) && name(p).includes(t));
+  const g4 = t.length < 3 ? [] : orte.filter(p => !name(p).includes(t)
+                                               && (p.info || '').toLowerCase().includes(t));
+  const abc = l => l.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+  return [...abc(g1), ...abc(g2), ...abc(g3), ...abc(g4)].slice(0, 10);
+}
+
+/* Den getippten Teil im Namen hervorheben. */
+function markiere(name, text){
+  const i = name.toLowerCase().indexOf(text.trim().toLowerCase());
+  if (!text.trim() || i < 0) return esc(name);
+  const n = text.trim().length;
+  return esc(name.slice(0, i)) + '<mark>' + esc(name.slice(i, i + n)) + '</mark>' + esc(name.slice(i + n));
+}
+
+function zeigeVorschlag(){
+  const feld = document.getElementById('f-text');
+  const box = document.getElementById('f-vorschlag');
+  const text = feld.value;
+  vorschlagListe = vorschlaege(text);
+  vorschlagAn = vorschlagListe.length ? 0 : -1;
+  if (!text.trim()){ schliesseVorschlag(); return; }
+  if (!vorschlagListe.length){
+    const versteckt = S.places.length - sichtbareOrte().length;
+    box.innerHTML = `<li class="leer">Kein Ort gefunden${versteckt ? ' — der Filter blendet gerade '
+      + (versteckt === 1 ? '1 Ort' : versteckt + ' Orte') + ' aus' : ''}.</li>`;
+  } else {
+    box.innerHTML = vorschlagListe.map((p, i) => {
+      const nurInfo = !(p.name || '').toLowerCase().includes(text.trim().toLowerCase());
+      const wo = [TYPEN[p.type], hoeheTxtOrt(p), nurInfo ? 'Treffer im Infotext' : ''].filter(Boolean).join(' · ');
+      return `<li role="option" id="vs-${i}" data-i="${i}"${i === vorschlagAn ? ' class="an" aria-selected="true"' : ''}>
+        <span class="dot${fluegeAn(p.id) ? '' : ' offen'}" style="color:${farbeVon(p)}"></span>
+        <span>${markiere(p.name || '', text)}<span class="wo">${esc(wo)}</span></span></li>`;
+    }).join('');
+  }
+  box.hidden = false;
+  feld.setAttribute('aria-expanded', 'true');
+}
+
+function markiereVorschlag(i){
+  vorschlagAn = i;
+  document.querySelectorAll('#f-vorschlag li[data-i]').forEach(li => {
+    const an = +li.dataset.i === i;
+    li.classList.toggle('an', an);
+    li.setAttribute('aria-selected', an ? 'true' : 'false');
+    if (an) li.scrollIntoView({block:'nearest'});
+  });
+}
+
+window.schliesseVorschlag = () => {
+  document.getElementById('f-vorschlag').hidden = true;
+  document.getElementById('f-text').setAttribute('aria-expanded', 'false');
+};
+
+function waehleVorschlag(i){
+  const p = vorschlagListe[i]; if (!p) return;
+  document.getElementById('f-text').value = p.name;
+  schliesseVorschlag();
+  /* Ist die Leiste zugeklappt (Handy), geht sie zu, damit die Karte frei ist. */
+  if (filterOffen()) toggleFilter(false);
+  zeigeOrt(p.id);
+}
+
+function initSuche(){
+  const feld = document.getElementById('f-text');
+  const box = document.getElementById('f-vorschlag');
+  feld.addEventListener('input', zeigeVorschlag);
+  feld.addEventListener('focus', () => { if (feld.value.trim()) zeigeVorschlag(); });
+  feld.addEventListener('keydown', e => {
+    const offen = !box.hidden && vorschlagListe.length;
+    if (e.key === 'ArrowDown' && offen){ e.preventDefault(); markiereVorschlag((vorschlagAn + 1) % vorschlagListe.length); }
+    else if (e.key === 'ArrowUp' && offen){ e.preventDefault();
+      markiereVorschlag((vorschlagAn - 1 + vorschlagListe.length) % vorschlagListe.length); }
+    else if (e.key === 'Enter' && offen){ e.preventDefault(); waehleVorschlag(vorschlagAn); }
+    else if (e.key === 'Escape' && !box.hidden){ e.preventDefault(); e.stopPropagation(); schliesseVorschlag(); }
+  });
+  /* mousedown statt click: sonst verliert das Feld zuerst den Fokus und die Liste
+     ist schon zu, bevor der Klick ankommt. */
+  box.addEventListener('mousedown', e => {
+    const li = e.target.closest('li[data-i]'); if (!li) return;
+    e.preventDefault(); waehleVorschlag(+li.dataset.i);
+  });
+  feld.addEventListener('blur', () => setTimeout(schliesseVorschlag, 120));
+}
+
+/* Karte auf einen Ort schieben und sein Infofeld öffnen. */
+window.zeigeOrt = id => {
+  const p = S.places.find(x=>x.id===id); if (!p) return;
+  if (map) map.setView([p.lat, p.lng], Math.max(map.getZoom(), 13));
+  openPlaceInfo(id);
 };
 
 /* Die Filterleiste auf- oder zuklappen — nur wenn sie zusammengeklappt ist
@@ -1644,20 +1786,14 @@ function filterKurz(){
   const teile = [];
   if (F.dirs.length) teile.push(dirSort(F.dirs).join('/'));
   if (F.log !== 'alle') teile.push(F.log === 'ohne' ? 'neu' : 'geflogen');
-  const rest = F.text !== '' || F.min !== '' || F.max !== '' || F.typen.length < ALLETYPEN.length;
+  const rest = F.min !== '' || F.max !== '' || F.typen.length < ALLETYPEN.length;
   if (rest) teile.push('+');
   return teile.join(' · ');
 }
 
 /* Kopf und Knöpfe des Filters auf den aktuellen Stand bringen. */
 function setFilterState(){
-  const alle = S.places.length, sicht = sichtbareOrte().length;
-  const an = filterAn();
-  const st = document.getElementById('f-state');
-  st.textContent = an ? sicht + ' von ' + alle + ' Orten' : (alle === 1 ? '1 Ort' : 'alle ' + alle + ' Orte');
-  st.classList.toggle('an', an);
-  document.getElementById('f-kurz').textContent =
-    an ? [filterKurz(), sicht + ' von ' + alle].filter(Boolean).join(' · ') : '';
+  document.getElementById('f-kurz').textContent = filterAn() ? filterKurz() : '';
   document.querySelectorAll('#f-wind button').forEach(b =>
     b.setAttribute('aria-pressed', F.dirs.includes(b.dataset.dir) ? 'true' : 'false'));
   document.querySelectorAll('#f-log button').forEach(b =>
@@ -2078,6 +2214,7 @@ window.closePlaceInfo = () => {
 
 window.delPlace = id => {
   const p = S.places.find(x=>x.id===id);
+  if (imVollbild()) verlasseVollbild();   /* die Rückfrage steht außerhalb der Karte */
   if (S.flights.some(f=>f.start===id || f.land===id)){
     toast('„'+p.name+'“ wird noch von Flügen verwendet.'); return; }
   ask(`<b>${esc(p.name)} löschen?</b><br>${TYPEN[p.type]}<br><br>Das lässt sich nicht rückgängig machen.`,
