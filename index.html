@@ -283,11 +283,14 @@
 
 
   /* ---------- Orte: Vollbild, Infofeld, Filter ---------- */
-  #mapwrap:fullscreen,#mapwrap:-webkit-full-screen{width:100%;height:100%;background:#fff}
-  #mapwrap:fullscreen #map,#mapwrap:-webkit-full-screen #map{height:100%}
+  /* Im Vollbild steht die Filterleiste oben, die Karte füllt den Rest. */
+  #mapwrap:fullscreen,#mapwrap:-webkit-full-screen{width:100%;height:100%;background:#fff;
+    display:flex;flex-direction:column}
+  #mapwrap:fullscreen #map,#mapwrap:-webkit-full-screen #map{height:auto;flex:1 1 auto;min-height:0}
   /* Ersatz-Vollbild für Browser, die es für einzelne Felder nicht können (iPhone). */
-  #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:#fff}
-  #mapwrap.fsfake #map{height:100%}
+  #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:#fff;
+    display:flex;flex-direction:column}
+  #mapwrap.fsfake #map{height:auto;flex:1 1 auto;min-height:0}
   a.mapfs{display:flex;align-items:center;justify-content:center;color:var(--ink)}
   a.mapfs svg{width:15px;height:15px;display:block}
 
@@ -338,60 +341,58 @@
   .legsep{width:1px;height:17px;background:var(--line);margin:0 3px;flex:none}
 
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  /* ---------- Filter in der Karte ----------
-     Er schwebt oben rechts über der Karte und ist darum auch im Vollbild da.
-     Zu sehen ist erst nur der Knopf; ein Klick klappt das Feld auf. */
-  .fknopf{position:absolute;top:10px;right:10px;z-index:1000;display:inline-flex;
-    align-items:center;gap:7px;font:inherit;font-size:13.5px;font-weight:550;color:var(--ink);
-    background:var(--panel);border:1px solid var(--line);border-radius:99px;cursor:pointer;
-    padding:7px 14px 7px 11px;box-shadow:0 2px 10px rgba(21,32,43,.16)}
-  .fknopf:hover{background:#F2F5F8}
-  .fknopf svg{width:15px;height:15px;display:block;flex:none}
-  .fknopf.an{background:var(--start);border-color:var(--start);color:#fff}
-  .fknopf.an:hover{background:#A92A5C}
-  .fknopf .fkurz:empty{display:none}
-  .fknopf .fkurz{font-family:var(--mono);font-size:11px;letter-spacing:.04em;font-weight:500;
-    opacity:.92}
-  .fknopf[aria-expanded="true"]{display:none}
-  .fpanel{position:absolute;top:10px;right:10px;z-index:1001;width:300px;
-    max-height:calc(100% - 20px);overflow:auto;overscroll-behavior:contain;
-    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-    box-shadow:0 6px 24px rgba(21,32,43,.2)}
-  .fpanel[hidden]{display:none}
-  .fkopf{display:flex;align-items:center;gap:8px;padding:10px 12px 10px 15px;
-    border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:1}
-  .fkopf b{font-size:14px;font-weight:600}
-  .fkopf .st{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--muted)}
-  .fkopf .st.an{color:var(--start)}
-  .fkopf .x{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);
-    font-family:var(--mono);font-size:18px;line-height:1;padding:2px 6px;border-radius:2px}
-  .fkopf .x:hover{color:var(--ink);background:#EAEFF4}
-  .fteil{padding:12px 15px;border-bottom:1px solid var(--line)}
-  .fteil > label{margin-bottom:7px}
-  .fnote{font-size:12px;color:var(--muted);margin:7px 0 0;line-height:1.45}
-  .fnote:empty{display:none}
+  /* ---------- Filterleiste über der Karte ----------
+     Steht dort, wo in den anderen Reitern die Kennzahlen stehen. Die Gruppen
+     stehen nebeneinander und brechen um, wenn der Platz nicht reicht. */
+  .fbar{background:var(--panel);border-bottom:1px solid var(--line);flex:none}
+  .fgruppen{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 14px;padding:12px 15px}
+  .fgr{display:flex;flex-direction:column;min-width:0}
+  .fgr > label{margin-bottom:5px}
+  .fnote{font-size:12px;color:var(--muted);margin:-4px 15px 10px;line-height:1.45}
   /* Knöpfe nebeneinander, bei denen der gewählte rosa hinterlegt ist. */
   .fsegs{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-  .fsegs button{flex:1 1 0;min-width:0;font:inherit;font-size:13px;color:var(--muted);
-    background:var(--panel);border:none;cursor:pointer;padding:8px 4px;
+  .fsegs button{flex:1 1 auto;min-width:0;font:inherit;font-size:13px;color:var(--muted);
+    background:var(--panel);border:none;cursor:pointer;padding:7px 10px;
     display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
   .fsegs button + button{border-left:1px solid var(--line)}
   .fsegs button:hover{background:#F2F5F8;color:var(--ink)}
   .fsegs button[aria-pressed="true"]{background:#FCEEF3;color:var(--start);font-weight:600}
   .fsegs .dot{width:9px;height:9px;border-width:2px}
-  .fmehr summary{cursor:pointer;font-size:13px;color:var(--ink);list-style:revert}
-  .fmehr .pair{gap:10px}
-  /* Die beiden Knöpfe unten bleiben stehen, auch wenn der Filter rollt. */
-  .ffuss{display:flex;gap:8px;padding:12px 15px;flex-wrap:wrap;position:sticky;bottom:0;
-    background:var(--panel);border-top:1px solid var(--line);margin-top:-1px}
-  .rose.mini{max-width:156px}
-  .rose.mini .seg text{font-size:15px}
-  /* Auf dem Handy nimmt der Filter die ganze Breite der Karte ein, und das
-     Infofeld eines Orts macht ihm Platz (siehe toggleFilter). */
-  @media(max-width:560px){
-    .fpanel{left:8px;right:8px;top:8px;width:auto;max-height:calc(100% - 16px)}
-    .fknopf{top:8px;right:8px}
+  /* Die acht Windrichtungen: angetippt kräftig rot wie in der Windrose. */
+  .fsegs.wind button{font-family:var(--mono);font-size:12px;padding:7px 0;width:34px;flex:none}
+  .fsegs.wind button[aria-pressed="true"]{background:var(--start);color:#fff}
+  .fsuche{flex:1 1 130px}
+  .fsuche input{width:100%;padding:6px 9px;font-size:13.5px}
+  .fvonbis{display:flex;align-items:center;gap:5px;color:var(--muted)}
+  .fvonbis input{width:62px;padding:6px 8px;font-size:13.5px}
+  .fende{margin-left:auto;align-items:flex-end}
+  .fende .fstand{margin-bottom:5px}
+  .fknoepfe{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .fstand{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted);line-height:1.2}
+  /* „Ort hinzufügen“ sitzt als Knopf oben rechts in der Karte. */
+  .armknopf{font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--panel);
+    border:2px solid rgba(0,0,0,.2);border-radius:4px;background-clip:padding-box;cursor:pointer;
+    padding:5px 11px}
+  .armknopf:hover{background:#F2F5F8}
+  .armknopf.an{background:var(--start);color:#fff}
+  .fstand.an{color:var(--start);font-weight:600}
+  /* Die Kopfzeile zum Auf- und Zuklappen gibt es nur auf dem Handy. */
+  .fbarkopf{display:none}
+  @media(max-width:820px){
+    .fbarkopf{display:flex;width:100%;align-items:center;gap:8px;font:inherit;font-size:14px;
+      color:var(--ink);background:none;border:none;cursor:pointer;padding:11px 15px;text-align:left}
+    .fbarkopf svg{width:15px;height:15px;flex:none}
+    .fbarkopf .chev{margin-left:auto;color:var(--muted);transition:transform .15s ease}
+    .fbarkopf[aria-expanded="true"] .chev{transform:rotate(180deg)}
+    .fbarkopf .fkurz{font-family:var(--mono);font-size:11px;color:var(--start)}
+    .fbar:not(.auf) .fgruppen, .fbar:not(.auf) .fnote{display:none}
+    .fgruppen{padding-top:0}
+    .fgr{flex:1 1 100%}
+    .fsegs.wind button{flex:1 1 0;width:auto}
+    .fsuche input{width:100%}
+    .fende{margin-left:0;align-items:stretch}
+    .fknoepfe{justify-content:flex-start}
   }
   /* Im Reiter „Orte“ steht die Karte allein über die ganze Breite. Nur solange ein
      Ort angelegt oder bearbeitet wird, rückt das Formular rechts daneben. */
@@ -399,7 +400,7 @@
   #v-orte .cols.mitform{grid-template-columns:1.6fr 1fr}
   #v-orte .cols:not(.mitform) #placecard{display:none}
   @media(max-width:820px){#v-orte .cols.mitform{grid-template-columns:1fr}}
-  @media(min-width:821px){#v-orte #map{height:max(520px, calc(100vh - 290px))}}
+  @media(min-width:821px){#v-orte #map{height:max(520px, calc(100vh - 230px))}}
   /* Der Punkt, der gerade gesetzt oder verschoben wird — er lässt sich ziehen. */
   .pinmark{display:block;width:21px;height:21px;box-sizing:border-box;border-radius:50%;
     border:2.5px dashed currentColor;background:rgba(255,255,255,.55);cursor:grab}
@@ -481,8 +482,62 @@
   <section class="view" id="v-orte">
     <div class="cols">
       <div class="card">
-        <h2>Karte <button class="btn small" id="armbtn" style="margin-left:auto" onclick="toggleArm()">Ort hinzufügen</button></h2>
         <div id="mapwrap">
+          <!-- Die Filterleiste steht oben über der Karte. Sie liegt mit im Vollbild-Bereich,
+               damit sie auch dort zu bedienen ist. -->
+          <div class="fbar" id="fbar">
+            <!-- Nur auf dem Handy: eine Kopfzeile, die die Leiste auf- und zuklappt. -->
+            <button type="button" class="fbarkopf" id="f-kopf" onclick="toggleFilter()"
+              aria-expanded="false" aria-controls="f-gruppen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5Z"></path></svg>
+              <b>Filter</b><span class="fkurz" id="f-kurz"></span>
+              <span class="chev" aria-hidden="true">▾</span></button>
+            <div class="fgruppen" id="f-gruppen">
+              <div class="fgr" id="f-dirfield">
+                <label>Wind kommt aus</label>
+                <div class="fsegs wind" id="f-wind" role="group" aria-label="Wind kommt aus">
+                  <button type="button" data-dir="N">N</button><button type="button" data-dir="NO">NO</button><button type="button" data-dir="O">O</button><button type="button" data-dir="SO">SO</button><button type="button" data-dir="S">S</button><button type="button" data-dir="SW">SW</button><button type="button" data-dir="W">W</button><button type="button" data-dir="NW">NW</button>
+                </div>
+              </div>
+              <div class="fgr">
+                <label>Neu oder geflogen</label>
+                <div class="fsegs" id="f-log" role="group" aria-label="Eintrag im Flugbuch">
+                  <button type="button" data-log="alle">Alle</button>
+                  <button type="button" data-log="ohne" title="Noch kein Flug im Flugbuch">Neue</button>
+                  <button type="button" data-log="mit" title="Schon mindestens ein Flug im Flugbuch">Geflogen</button>
+                </div>
+              </div>
+              <div class="fgr">
+                <label>Zeigen</label>
+                <div class="fsegs" id="f-typen" role="group" aria-label="Art des Orts">
+                  <button type="button" data-typ="start">Start</button>
+                  <button type="button" data-typ="land">Landung</button>
+                  <button type="button" data-typ="ground">Übung</button>
+                </div>
+              </div>
+              <div class="fgr fsuche">
+                <label for="f-text">Suche</label>
+                <input type="search" id="f-text" placeholder="Name oder Infotext" autocomplete="off">
+              </div>
+              <div class="fgr fhoehe">
+                <label for="f-min">Höhe (m)</label>
+                <div class="fvonbis">
+                  <input type="number" id="f-min" placeholder="ab" step="50" aria-label="Höhe ab">
+                  <span aria-hidden="true">–</span>
+                  <input type="number" id="f-max" placeholder="bis" step="50" aria-label="Höhe bis">
+                </div>
+              </div>
+              <div class="fgr fende">
+                <span class="fstand" id="f-state"></span>
+                <div class="fknoepfe">
+                  <button class="btn small" onclick="trefferZeigen()">Treffer ins Bild</button>
+                  <button class="btn small ghost" onclick="resetFilter()">Zurücksetzen</button>
+                </div>
+              </div>
+            </div>
+            <p class="fnote" id="f-ohnehoehe" style="display:none"></p>
+          </div>
           <div id="map"></div>
           <!-- Das Infofeld liegt in der Karte drin, damit es auch im Vollbild aufgeht. -->
           <div class="placepanel" id="placepanel" hidden>
@@ -494,60 +549,8 @@
               <button class="btn small ghost" id="pp-del" style="margin-left:auto">Löschen</button>
             </div>
           </div>
-          <!-- Der Filter liegt ebenfalls in der Karte drin — so lässt er sich auch im
-               Vollbild bedienen. Zu sehen ist erst nur der Knopf oben rechts. -->
-          <button type="button" class="fknopf" id="f-knopf" onclick="toggleFilter()"
-            aria-expanded="false" aria-controls="fpanel">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5Z"></path></svg>
-            <span>Filter</span><span class="fkurz" id="f-kurz"></span></button>
-          <div class="fpanel" id="fpanel" hidden role="region" aria-label="Filter">
-            <div class="fkopf">
-              <b>Filter</b><span class="st" id="f-state"></span>
-              <button class="x" title="Filter schließen" aria-label="Filter schließen" onclick="toggleFilter(false)">×</button>
-            </div>
-            <div class="fteil" id="f-dirfield">
-              <label>Wind kommt aus</label>
-              <svg class="rose mini" id="f-rose" viewBox="0 0 200 200" role="group"
-                   aria-label="Filter: Wind kommt aus"></svg>
-              <p class="dirsum" id="f-dirtext"></p>
-            </div>
-            <div class="fteil">
-              <label>Neu oder schon geflogen</label>
-              <div class="fsegs" id="f-log" role="group" aria-label="Eintrag im Flugbuch">
-                <button type="button" data-log="alle">Alle</button>
-                <button type="button" data-log="ohne">Neue</button>
-                <button type="button" data-log="mit">Geflogen</button>
-              </div>
-              <p class="fnote" id="f-logtext"></p>
-            </div>
-            <div class="fteil">
-              <label>Zeigen</label>
-              <div class="fsegs" id="f-typen" role="group" aria-label="Art des Orts">
-                <button type="button" data-typ="start"><i class="dot" style="color:var(--start)"></i>Start</button>
-                <button type="button" data-typ="land"><i class="dot" style="color:var(--chart)"></i>Landung</button>
-                <button type="button" data-typ="ground"><i class="dot" style="color:var(--ground)"></i>Übung</button>
-              </div>
-            </div>
-            <details class="fteil fmehr" id="f-mehr">
-              <summary>Suche und Höhe</summary>
-              <div class="field" style="margin-top:10px"><label for="f-text">Name oder Infotext</label>
-                <input type="search" id="f-text" placeholder="z. B. Seilbahn" autocomplete="off"></div>
-              <div class="pair">
-                <div class="field"><label for="f-min">Höhe ab (m)</label>
-                  <input type="number" id="f-min" placeholder="1000" step="50"></div>
-                <div class="field"><label for="f-max">Höhe bis (m)</label>
-                  <input type="number" id="f-max" placeholder="2200" step="50"></div>
-              </div>
-              <p class="fnote" id="f-ohnehoehe" style="display:none;margin-top:0"></p>
-            </details>
-            <div class="ffuss">
-              <button class="btn small" onclick="trefferZeigen()">Treffer ins Bild</button>
-              <button class="btn small ghost" onclick="resetFilter()">Zurücksetzen</button>
-            </div>
-          </div>
         </div>
-        <!-- Nur zur Erklärung der Farben. Gefiltert wird im Feld „Filter“ in der Karte. -->
+        <!-- Nur zur Erklärung der Farben. Gefiltert wird in der Leiste über der Karte. -->
         <div class="legend" id="legend">
           <span class="legitem"><i class="dot" style="color:var(--start)"></i> Startplatz</span>
           <span class="legitem"><i class="dot" style="color:var(--chart)"></i> Landeplatz</span>
@@ -1248,16 +1251,15 @@ function initMap(){
   layer = L.layerGroup().addTo(map);
   addVollbildKnopf();
   addAlleZeigenKnopf();
+  addOrtKnopf();
   /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
      und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
   document.getElementById('p-type').addEventListener('change', () => { drawPlaces(); syncForm(); });
   buildRose('p-rose', toggleDir);
   initFilter();
   map.on('click', e => {
-    /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild.
-       Auf dem Handy, wo der Filter die Karte fast verdeckt, schließt er auch den. */
+    /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild. */
     if (infoId) closePlaceInfo();
-    if (schmal() && filterOffen()) toggleFilter(false);
     if (!armed && !editId) return;
     const neu = !pending && !editId;
     setzePending(e.latlng.lat, e.latlng.lng);
@@ -1342,6 +1344,23 @@ function addAlleZeigenKnopf(){
         + '<path d="M12 21.5c4-4.6 6-7.9 6-10.4a6 6 0 1 0-12 0c0 2.5 2 5.8 6 10.4Z"></path></svg>';
       L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', () => passeKarteAn());
       return box;
+    }
+  });
+  map.addControl(new Knopf());
+}
+
+/* „Ort hinzufügen“ oben rechts in der Karte. Während ein Ort gesetzt wird,
+   heißt der Knopf „Abbrechen“ und ist rot. */
+function addOrtKnopf(){
+  const Knopf = L.Control.extend({
+    options: {position:'topright'},
+    onAdd(){
+      const b = L.DomUtil.create('button', 'armknopf');
+      b.type = 'button'; b.id = 'armbtn';
+      b.textContent = 'Ort hinzufügen';
+      L.DomEvent.disableClickPropagation(b);
+      L.DomEvent.on(b, 'click', () => toggleArm());
+      return b;
     }
   });
   map.addControl(new Knopf());
@@ -1561,43 +1580,30 @@ function initFilter(){
   });
   ['f-min','f-max','f-text'].forEach(id =>
     document.getElementById(id).addEventListener('input', applyFilter));
-  buildRose('f-rose', d => {
+  /* Wind: jede Richtung einzeln an- und abwählbar, mehrere heißen „oder“. */
+  document.getElementById('f-wind').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = b.dataset.dir;
     F.dirs = F.dirs.includes(d) ? F.dirs.filter(x=>x!==d) : [...F.dirs, d];
     applyFilter();
   });
-  paintFilterRose();
-}
-
-/* „N“, „N oder W“, „N, W oder NW“ — Aufzählung wie in normalem Deutsch. */
-const oderListe = l => l.length < 2 ? (l[0] || '')
-  : l.slice(0, -1).join(', ') + ' oder ' + l[l.length - 1];
-
-function paintFilterRose(){
-  paintRose('f-rose', F.dirs);
-  const gewaehlt = dirSort(F.dirs);
-  const t = document.getElementById('f-dirtext');
-  t.textContent = gewaehlt.length
-    ? 'Startplätze, die bei ' + oderListe(gewaehlt) + ' gehen'
-    : 'Tipp an, woher der Wind kommt';
-  t.classList.toggle('hat', gewaehlt.length > 0);
 }
 
 window.applyFilter = () => {
   F.text = document.getElementById('f-text').value.trim().toLowerCase();
   F.min = document.getElementById('f-min').value.trim();
   F.max = document.getElementById('f-max').value.trim();
-  paintFilterRose();
   /* Ein Infofeld zu einem Ort, der jetzt weggefiltert ist, geht zu. */
   if (infoId && !S.places.some(p => p.id === infoId && passtFilter(p))) closePlaceInfo();
   renderPlaceList();
   drawPlaces();
   /* Der Kartenausschnitt bleibt beim Filtern, wie er ist — sonst springt der
      Zoom bei jeder Änderung. Wer die Treffer ins Bild holen will, nimmt den
-     Knopf „Treffer ins Bild“ im Filter oder die Kartennadel links in der Karte. */
+     Knopf „Treffer ins Bild“ in der Filterleiste oder die Kartennadel links in der Karte. */
 };
 
-/* Alle Orte, die zum Filter passen, ins Bild holen. Auf dem Handy geht der
-   Filter dabei zu, damit man die Treffer auch sieht. */
+/* Alle Orte, die zum Filter passen, ins Bild holen. Auf dem Handy klappt die
+   Leiste dabei zu, damit man die Treffer auch sieht. */
 window.trefferZeigen = () => {
   if (!sichtbareOrte().length){ toast('Kein Ort passt zum Filter.'); return; }
   passeKarteAn();
@@ -1614,18 +1620,19 @@ window.resetFilter = () => {
   applyFilter();
 };
 
-/* Den Filter auf- oder zuklappen. Ohne Angabe wird umgeschaltet. Auf dem Handy
-   ist neben dem Filter kein Platz fürs Infofeld eines Orts — es geht dann zu. */
+/* Die Filterleiste auf- oder zuklappen — nur auf dem Handy, auf großen
+   Bildschirmen ist sie immer offen. Ohne Angabe wird umgeschaltet. */
 window.toggleFilter = auf => {
-  const panel = document.getElementById('fpanel');
-  if (typeof auf !== 'boolean') auf = panel.hidden;
-  panel.hidden = !auf;
-  document.getElementById('f-knopf').setAttribute('aria-expanded', auf ? 'true' : 'false');
-  if (auf && schmal() && infoId) closePlaceInfo();
+  const bar = document.getElementById('fbar');
+  if (typeof auf !== 'boolean') auf = !bar.classList.contains('auf');
+  bar.classList.toggle('auf', auf);
+  document.getElementById('f-kopf').setAttribute('aria-expanded', auf ? 'true' : 'false');
+  /* Die Karte wird dabei kleiner oder größer — Leaflet muss das wissen. */
+  if (map) setTimeout(() => map.invalidateSize(), 60);
 };
-const filterOffen = () => !document.getElementById('fpanel').hidden;
+const filterOffen = () => schmal() && document.getElementById('fbar').classList.contains('auf');
 
-/* Die Kurzform auf dem Filterknopf, solange der Filter zu ist:
+/* Die Kurzform in der Kopfzeile, solange die Leiste auf dem Handy zu ist:
    „W · neu“, „SW/W · geflogen“ … — was gerade eingestellt ist, auf einen Blick. */
 function filterKurz(){
   const teile = [];
@@ -1643,20 +1650,15 @@ function setFilterState(){
   const st = document.getElementById('f-state');
   st.textContent = an ? sicht + ' von ' + alle + ' Orten' : (alle === 1 ? '1 Ort' : 'alle ' + alle + ' Orte');
   st.classList.toggle('an', an);
-  const knopf = document.getElementById('f-knopf');
-  knopf.classList.toggle('an', an);
-  document.getElementById('f-kurz').textContent = an ? filterKurz() : '';
-  knopf.title = an ? sicht + ' von ' + alle + ' Orten zu sehen' : 'Orte filtern';
+  document.getElementById('f-kurz').textContent =
+    an ? [filterKurz(), sicht + ' von ' + alle].filter(Boolean).join(' · ') : '';
+  document.querySelectorAll('#f-wind button').forEach(b =>
+    b.setAttribute('aria-pressed', F.dirs.includes(b.dataset.dir) ? 'true' : 'false'));
   document.querySelectorAll('#f-log button').forEach(b =>
     b.setAttribute('aria-pressed', F.log === b.dataset.log ? 'true' : 'false'));
   document.querySelectorAll('#f-typen button').forEach(b =>
     b.setAttribute('aria-pressed', F.typen.includes(b.dataset.typ) ? 'true' : 'false'));
-  document.getElementById('f-logtext').textContent =
-      F.log === 'ohne' ? 'Nur Orte, an denen noch kein Flug im Flugbuch steht.'
-    : F.log === 'mit'  ? 'Nur Orte, an denen schon ein Flug im Flugbuch steht.' : '';
   document.getElementById('f-dirfield').style.display = HAS.dirs ? '' : 'none';
-  /* Suche und Höhe bleiben aufgeklappt, solange dort etwas eingestellt ist. */
-  if (F.text !== '' || F.min !== '' || F.max !== '') document.getElementById('f-mehr').open = true;
   /* Wer nach Höhe filtert, verliert Orte, deren Höhe noch nicht bekannt ist —
      das soll nicht unbemerkt passieren. */
   const ohne = (F.min !== '' || F.max !== '')
@@ -1673,7 +1675,9 @@ window.toggleArm = () => mitRueckfrage(armUm);
 function armUm(){
   if (editId) endEditPlace();          /* ein offenes Bearbeiten zuerst schließen */
   armed = !armed;
+  if (armed && imVollbild()) verlasseVollbild();   /* das Formular steht neben der Karte */
   document.getElementById('armbtn').textContent = armed ? 'Abbrechen' : 'Ort hinzufügen';
+  document.getElementById('armbtn').classList.toggle('an', armed);
   setzeHint(armed ? 'Klick jetzt in die Karte auf den Start- oder Landeplatz — '
                   + 'oder trag rechts die Koordinaten ein.' : '');
   if (!armed) cancelPlace();
@@ -1820,7 +1824,8 @@ window.editPlace = id => {
 
 function oeffneOrt(id){
   const p = S.places.find(x=>x.id===id); if (!p) return;
-  if (armed){ armed = false; document.getElementById('armbtn').textContent = 'Ort hinzufügen'; }
+  if (armed){ armed = false; document.getElementById('armbtn').textContent = 'Ort hinzufügen';
+    document.getElementById('armbtn').classList.remove('an'); }
   if (imVollbild()) verlasseVollbild();   /* das Formular steht neben der Karte */
   closePlaceInfo();
   editId  = id;
@@ -2053,8 +2058,6 @@ window.openPlaceInfo = id => {
   document.getElementById('pp-edit').onclick = () => editPlace(id);
   document.getElementById('pp-del').onclick  = () => delPlace(id);
   document.getElementById('placepanel').hidden = false;
-  /* Auf dem Handy teilen sich Infofeld und Filter keinen Platz. */
-  if (schmal() && filterOffen()) toggleFilter(false);
   /* Der offene Ort wird in der Karte gefüllt gezeichnet. Erst im nächsten Moment,
      damit der gerade angeklickte Punkt nicht mitten im Klick verschwindet. */
   setTimeout(drawPlaces, 0);
