@@ -9,7 +9,7 @@
   :root{
     --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
     --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
-    --noflight:#E07A1F; --r:3px;
+    --noflight:#E07A1F; --landneu:#8BC34A; --r:3px;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -601,6 +601,7 @@
           <span class="legitem"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</span>
           <span class="legsep" aria-hidden="true"></span>
           <span class="legitem"><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug</span>
+          <span class="legitem"><i class="dot" style="color:var(--landneu)"></i> Landeplatz, noch kein Flug</span>
         </div>
 
         <!-- Steht nur da, solange ein Ort gesetzt oder verschoben wird — sonst leer und weg. -->
@@ -846,6 +847,9 @@ const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände'}
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
+/* Ausnahme: Ein Landeplatz ohne Flug ist hellgrün und durchgezogen gezeichnet —
+   also wie ein geflogener Landeplatz, nur in einer anderen Farbe. */
+const LANDNEU = '#8BC34A';
 /* Wie viele Flüge an einem Ort hängen. Gezählt wird einmal für alle Orte und erst
    wieder, wenn die Flüge neu geladen wurden — die Zahl wird beim Zeichnen von
    Karte und Liste sehr oft gebraucht. */
@@ -858,7 +862,10 @@ const fluegeAn = id => {
   }
   return flugZahl.get(id) || 0;
 };
-const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B') : KEINFLUG;
+const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B')
+                   : p.type === 'land' ? LANDNEU : KEINFLUG;
+/* Gestrichelt heißt „noch kein Flug“ — außer beim Landeplatz, der dafür hellgrün ist. */
+const gestrichelt = p => !fluegeAn(p.id) && p.type !== 'land';
 /* Ein Link darf auch ohne „https://“ eingetippt werden. */
 const linkNorm = v => {
   const t = String(v ?? '').trim();
@@ -1706,7 +1713,7 @@ function zeigeVorschlag(){
       const nurInfo = !(p.name || '').toLowerCase().includes(text.trim().toLowerCase());
       const wo = [TYPEN[p.type], hoeheTxtOrt(p), nurInfo ? 'Treffer im Infotext' : ''].filter(Boolean).join(' · ');
       return `<li role="option" id="vs-${i}" data-i="${i}"${i === vorschlagAn ? ' class="an" aria-selected="true"' : ''}>
-        <span class="dot${fluegeAn(p.id) ? '' : ' offen'}" style="color:${farbeVon(p)}"></span>
+        <span class="dot${gestrichelt(p) ? ' offen' : ''}" style="color:${farbeVon(p)}"></span>
         <span>${markiere(p.name || '', text)}<span class="wo">${esc(wo)}</span></span></li>`;
     }).join('');
   }
@@ -1900,7 +1907,7 @@ function symbolSVG(dirs, farbe, opt = {}){
 
 /* Das Symbol für einen bestimmten Ort. */
 const ortSVG = p => symbolSVG(startet(p.type) ? dirsIn(p.dirs) : [], farbeVon(p),
-                              {offen: !fluegeAn(p.id), voll: infoId === p.id});
+                              {offen: gestrichelt(p), voll: infoId === p.id});
 
 function drawPlaces(){
   if (!layer) return;
@@ -1919,7 +1926,7 @@ function drawPlaces(){
           iconSize:[SYMBOX,SYMBOX], iconAnchor:[SYMM,SYMM], html: ortSVG(p)})})
       : L.circleMarker([p.lat,p.lng],
       {radius:7, color:farbeVon(p), weight:2.5,
-       dashArray: fluegeAn(p.id) ? null : '4 3',
+       dashArray: gestrichelt(p) ? '4 3' : null,
        fillColor: infoId === p.id ? farbeVon(p) : '#fff',
        fillOpacity: infoId === p.id ? .35 : 1}))
       /* Zeigen auf den Punkt blendet die kurze Infozeile ein,
