@@ -454,18 +454,14 @@ Solange eine der beiden Farbschichten an ist, ist der Bergknopf rosa. Ein Klick 
 Bergknopf oder irgendwo in die Karte schließt das Feld; die Farben bleiben trotzdem liegen,
 bis *Aus* gewählt wird. Beim Öffnen der Seite ist das Gelände immer aus.
 
-**Neigung** färbt die Hänge nach Steilheit. Ab 30° sind es dieselben Farben wie auf
-Lawinenkarten:
+**Neigung** färbt die steilen Hänge, wie bei gängigen Touren-Apps:
 
 | Neigung | Farbe |
 |---|---|
-| unter 10° | keine |
-| 10–20° | hellgrün |
-| 20–30° | grün |
-| 30–35° | gelb |
-| 35–40° | orange |
-| 40–45° | rot |
-| über 45° | violett |
+| unter 30° | keine |
+| 30–35° | hellgelb |
+| 35–40° | hellorange |
+| 40° und mehr | rot |
 
 **Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
 Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
@@ -474,8 +470,9 @@ schwarz**, dazwischen die Übergänge (NO hellblau, SO lachsfarben, SW dunkelbra
 NW dunkelblau). Die Legende ist eine kleine Windrose in diesen Farben. Fast flache Stellen (unter 5°) bleiben ohne
 Farbe, weil sie in keine Richtung schauen.
 
-Die Farben sind **halb durchsichtig** und liegen über der grauen Karte; die Ortspunkte
-bleiben obendrauf. Sie erscheinen erst **ab Zoomstufe 11** — weiter draußen wären die Hänge
+Die Farben sind **durchsichtig** und liegen über der grauen Karte; die Ortspunkte
+bleiben obendrauf. Die Neigung ist kräftiger (sie färbt nur die steilen Stellen), die
+Ausrichtung durchsichtiger (sie färbt fast alles). Sie erscheinen erst **ab Zoomstufe 11** — weiter draußen wären die Hänge
 so stark geglättet, dass fast alles flach aussähe. Ist man weiter weg, steht im Feld
 „Bitte näher heranzoomen“.
 

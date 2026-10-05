@@ -1450,14 +1450,12 @@ function addOrtKnopf(){
 const GEL_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const GEL_DATENZOOM = 15;   /* feiner gibt es die Höhenkacheln nicht — darüber wird vergrössert */
 const GEL_MINZOOM = 11;     /* weiter draußen wären die Hänge zu stark geglättet */
-/* Steilheit in Grad: ab welcher Neigung welche Farbe. Ab 30° wie auf Lawinenkarten. */
+/* Steilheit in Grad: ab welcher Neigung welche Farbe. Wie bei gängigen Touren-Apps
+   nur die steilen Hänge ab 30° — darunter bleibt die Karte grau. */
 const NEIGUNG = [
-  {ab:10, rgb:[174,213,129], txt:'10–20°'},
-  {ab:20, rgb:[104,159,56],  txt:'20–30°'},
-  {ab:30, rgb:[253,216,53],  txt:'30–35°'},
-  {ab:35, rgb:[251,140,0],   txt:'35–40°'},
-  {ab:40, rgb:[229,57,53],   txt:'40–45°'},
-  {ab:45, rgb:[142,36,170],  txt:'über 45°'}
+  {ab:30, rgb:[245,240,110], txt:'30–35°'},
+  {ab:35, rgb:[240,170,105], txt:'35–40°'},
+  {ab:40, rgb:[235,90,70],   txt:'40° und mehr'}
 ];
 /* Himmelsrichtung, in die der Hang abfällt — dieselben acht wie in der Windrose.
    Farben wie bei gängigen Touren-Apps: Norden blau, Osten weiß, Süden orange,
@@ -1562,6 +1560,9 @@ function setzeGelaende(modus){
       minZoom: GEL_MINZOOM, maxZoom: 18, opacity: .55, zIndex: 2,
       attribution: 'Gelände: Terrain Tiles, EU-DEM © Copernicus'
     });
+    /* Die Neigung färbt nur die steilen Stellen und darf darum kräftiger sein;
+       die Ausrichtung deckt fast alles und bleibt durchsichtiger. */
+    gelLayer.setOpacity(modus === 'neigung' ? .8 : .55);
     if (map.hasLayer(gelLayer)) gelLayer.redraw(); else gelLayer.addTo(map);
   }
   zeichneGelPanel();
@@ -1595,8 +1596,8 @@ function zeichneGelPanel(){
     b.setAttribute('aria-pressed', String(b.dataset.gel === gelModus)));
   const leg = panel.querySelector('.gelleg');
   if (gelModus === 'neigung'){
-    leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter 10°</li>'
-      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},.7)"></i>${c.txt}</li>`).join('')
+    leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter ' + NEIGUNG[0].ab + '°</li>'
+      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},.85)"></i>${c.txt}</li>`).join('')
       + '</ul>';
   } else if (gelModus === 'ausrichtung'){
     leg.innerHTML = '<div class="gelrosezeile">' + gelRose()
