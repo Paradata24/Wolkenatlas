@@ -448,24 +448,36 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 ### Gelände: Hangneigung und Hangausrichtung
 
-Links unter der Kartennadel sitzt der **Knopf mit dem Berg**. Er öffnet ein kleines Feld mit
-drei Knöpfen: **Aus**, **Neigung** und **Ausrichtung**. Darunter steht die passende Legende.
-Solange eine der beiden Farbschichten an ist, ist der Bergknopf rosa. Ein Klick auf den
-Bergknopf oder irgendwo in die Karte schließt das Feld; die Farben bleiben trotzdem liegen,
-bis *Aus* gewählt wird. Beim Öffnen der Seite ist das Gelände immer aus.
+Links unter der Kartennadel sitzen **zwei Knöpfe**: oben der **Kompass** für die
+Ausrichtung, darunter der **Hang mit Winkel** für die Neigung. Ein Klick schaltet die
+Schicht ein — der Knopf wird rosa, und **ganz oben in der Karte**, rechts neben den
+Zoomknöpfen, erscheint nur ihre Legende, ganz klein, ohne Überschrift und ohne Kasten direkt
+auf der Karte (ein weißer Rand um die Schrift hält sie lesbar) (die Windrose ist nur mit N, O, S und W beschriftet). Ein zweiter
+Klick auf denselben Knopf schaltet die Schicht wieder aus.
+**Beide Schichten können gleichzeitig an sein**; dann stehen die beiden Legenden
+nebeneinander, und die Ausrichtung scheint unter der Neigung durch. Beim Öffnen der Seite
+ist beides aus.
 
-**Neigung** färbt die Hänge nach Steilheit. Ab 30° sind es die Farben gängiger
-Touren-Apps; das ruhige Grün darunter zeigt, wo meist gestartet wird. Es ist
-durchsichtiger als die anderen Farben, weil es große Flächen bedeckt — so bleiben
-Höhenlinien und Namen lesbar:
+**Neigung** färbt die Hänge nach Steilheit, in **5°-Schritten** und drei Farbfamilien. Bei
+30° und bei 45° wechselt die Familie; ab 40° steht Rot als Warnfarbe:
 
-| Neigung | Farbe |
-|---|---|
-| unter 10° | keine |
-| 10–30° | hellgrün |
-| 30–35° | hellgelb |
-| 35–40° | hellorange |
-| 40° und mehr | rot |
+| Neigung | Farbe | |
+|---|---|---|
+| unter 10° | keine | |
+| 10–15° | Sand, sehr hell | ruhig |
+| 15–20° | Sand, hell | ruhig |
+| 20–25° | Sand | ruhig |
+| 25–30° | Sand, dunkel | ruhig |
+| 30–35° | Gelb | steil |
+| 35–40° | Orange | steil |
+| 40–45° | **Rot** | Warnung |
+| 45–50° | Violett, hell | extrem |
+| 50–55° | Violett | extrem |
+| 55–60° | Violett, dunkel | extrem |
+| über 60° | Violett, sehr dunkel | extrem |
+
+Die Sandtöne bedecken große Flächen und sind darum durchsichtiger, damit Höhenlinien und
+Namen lesbar bleiben.
 
 **Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
 Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
@@ -475,10 +487,10 @@ NW dunkelblau). Die Legende ist eine kleine Windrose in diesen Farben. Fast flac
 Farbe, weil sie in keine Richtung schauen.
 
 Die Farben sind **durchsichtig** und liegen über der grauen Karte; die Ortspunkte
-bleiben obendrauf. Die Neigung ist kräftiger (sie färbt nur die steilen Stellen), die
+bleiben obendrauf. Die Neigung ist kräftiger, die
 Ausrichtung durchsichtiger (sie färbt fast alles). Sie erscheinen erst **ab Zoomstufe 11** — weiter draußen wären die Hänge
-so stark geglättet, dass fast alles flach aussähe. Ist man weiter weg, steht im Feld
-„Bitte näher heranzoomen“.
+so stark geglättet, dass fast alles flach aussähe. Ist man weiter weg, steht in der
+Legende „Näher zoomen“.
 
 **Woher die Farben kommen.** Fertige Kacheln mit Neigung und Ausrichtung gibt es nicht
 frei. Der Browser rechnet sie darum selbst aus den freien **Terrain Tiles** auf Amazon

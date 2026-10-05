@@ -295,27 +295,24 @@
   #mapwrap.fsfake #map{height:auto;flex:1 1 auto;min-height:0}
   a.mapfs{display:flex;align-items:center;justify-content:center;color:var(--ink)}
   a.mapfs svg{width:15px;height:15px;display:block}
-  /* Gelände-Knopf: rosa, solange Neigung oder Ausrichtung über der Karte liegt. */
+  /* Gelände-Knöpfe: rosa, solange ihre Schicht über der Karte liegt. */
   .leaflet-bar a.mapfs.an{background:var(--start);color:#fff}
   .gelbox{position:relative}
-  .gelpanel{position:absolute;left:calc(100% + 8px);top:0;width:252px;max-width:calc(100vw - 80px);
-    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-    box-shadow:0 6px 24px rgba(21,32,43,.18);padding:10px 12px 11px;
-    font-size:12.5px;line-height:1.45;color:var(--ink);cursor:default}
-  .gelpanel[hidden]{display:none}
-  .gelpanel .gelkopf{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--muted);margin:0 0 7px}
-  .gelpanel .fsegs button{font-size:12.5px;padding:6px 7px}
-  .gelliste{list-style:none;margin:10px 0 0;padding:0;display:grid;
-    grid-template-columns:1fr 1fr;gap:4px 10px}
-  .gelliste li{display:flex;align-items:center;gap:7px;white-space:nowrap}
-  .gelliste i{width:16px;height:11px;border-radius:2px;flex:none;border:1px solid rgba(0,0,0,.12)}
-  .gelliste i.leer{background:repeating-linear-gradient(135deg,#fff 0 3px,#E6EBF0 3px 5px)}
-  .gelrosezeile{display:flex;align-items:center;gap:10px;margin-top:10px}
-  .gelrose{width:92px;height:92px;flex:none}
-  .gelrose text{font-family:var(--mono);font-size:9px;text-anchor:middle;fill:var(--ink)}
-  .gelnote{margin:9px 0 0;font-size:11.5px;color:var(--muted)}
-  .gelnote b{color:var(--start);font-weight:600}
+  /* Ganz oben in der Karte, rechts neben den Zoomknöpfen: nur die Legenden der
+     eingeschalteten Schichten. */
+  .gelleg{position:absolute;left:54px;top:10px;z-index:1000;display:flex;
+    gap:8px;align-items:flex-start;cursor:default}
+  .gelleg[hidden]{display:none}
+  /* Ohne Kasten direkt auf der Karte; ein weißer Rand um die Schrift hält sie lesbar. */
+  .gelkarte{color:var(--ink);
+    text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 4px rgba(255,255,255,.9)}
+  .gelweit{font-size:9.5px;font-weight:600;color:var(--start);margin:0 0 3px;white-space:nowrap}
+  .gelliste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+  .gelliste li{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9.5px;line-height:1.2;font-weight:600}
+  .gelliste i{width:10px;height:7px;border-radius:1px;flex:none;border:1px solid rgba(0,0,0,.25)}
+  .gelrose{width:62px;height:62px;display:block;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9))}
+  .gelrose text{font-family:var(--mono);font-size:15px;font-weight:700;text-anchor:middle;fill:var(--ink);text-shadow:none}
+  .gelrose text.hell{fill:#fff}
 
   .placepanel{position:absolute;left:12px;bottom:26px;z-index:1000;
     width:min(330px,calc(100% - 24px));max-height:calc(100% - 52px);overflow:auto;
@@ -1333,7 +1330,6 @@ function initMap(){
   map.on('click', e => {
     /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild. */
     if (infoId) closePlaceInfo();
-    zeigeGelPanel(false);
     if (!armed && !editId) return;
     const neu = !pending && !editId;
     setzePending(e.latlng.lat, e.latlng.lng);
@@ -1450,22 +1446,32 @@ function addOrtKnopf(){
 const GEL_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const GEL_DATENZOOM = 15;   /* feiner gibt es die Höhenkacheln nicht — darüber wird vergrössert */
 const GEL_MINZOOM = 11;     /* weiter draußen wären die Hänge zu stark geglättet */
-/* Steilheit in Grad: ab welcher Neigung welche Farbe. Ab 30° wie bei gängigen
-   Touren-Apps; dazu ein ruhiges Grün für 10–30°, wo meist gestartet wird. Das Grün
-   bedeckt große Flächen und ist darum durchsichtiger (deckung: 0 bis 255), damit
-   Höhenlinien und Namen lesbar bleiben. */
+/* Steilheit in Grad: in 5°-Schritten, in drei Farbfamilien.
+   bis 30°: Sand, von hell nach dunkel — ruhiges Gelände.
+   30–45°: Gelb, Orange und ab 40° Rot als Warnfarbe.
+   ab 45°: Violett, von hell nach dunkel — extrem steil.
+   Die Sandtöne bedecken große Flächen und sind darum durchsichtiger
+   (deckung: 0 bis 255), damit Höhenlinien und Namen lesbar bleiben. */
 const NEIGUNG = [
-  {ab:10, rgb:[165,210,135], txt:'10–30°', deckung:120},
-  {ab:30, rgb:[245,240,110], txt:'30–35°'},
-  {ab:35, rgb:[240,170,105], txt:'35–40°'},
-  {ab:40, rgb:[235,90,70],   txt:'40° und mehr'}
+  {ab:10, rgb:[240,228,190], txt:'10–15°', deckung:90},
+  {ab:15, rgb:[232,212,160], txt:'15–20°', deckung:115},
+  {ab:20, rgb:[222,194,128], txt:'20–25°', deckung:140},
+  {ab:25, rgb:[208,172,98],  txt:'25–30°', deckung:165},
+  {ab:30, rgb:[250,225,70],  txt:'30–35°'},
+  {ab:35, rgb:[245,160,40],  txt:'35–40°'},
+  {ab:40, rgb:[225,40,35],   txt:'40–45°'},
+  {ab:45, rgb:[200,70,170],  txt:'45–50°'},
+  {ab:50, rgb:[160,45,155],  txt:'50–55°'},
+  {ab:55, rgb:[120,30,135],  txt:'55–60°'},
+  {ab:60, rgb:[75,20,100],   txt:'über 60°'}
 ];
 /* Himmelsrichtung, in die der Hang abfällt — dieselben acht wie in der Windrose.
    Farben wie bei gängigen Touren-Apps: Norden blau, Osten weiß, Süden orange,
    Westen schwarz — dazwischen die Übergänge. */
 const AUSRICHTUNG = {N:[30,120,255],  NO:[160,198,245], O:[255,255,255], SO:[248,176,130],
                      S:[255,110,20],  SW:[110,45,15],   W:[15,15,15],    NW:[15,40,90]};
-let gelModus = 'aus', gelLayer = null;
+/* Beide Schichten lassen sich einzeln ein- und ausschalten, auch gleichzeitig. */
+const gelAn = {ausrichtung:false, neigung:false}, gelLayer = {};
 
 /* Höhenkacheln merken, damit Umschalten und Verschieben nicht alles neu laden.
    Die ältesten fliegen raus, sobald es zu viele werden. */
@@ -1536,17 +1542,17 @@ function gelFaerben(h, z, x, y, modus){
   return c;
 }
 
-/* Die Schicht selbst. Näher als Zoomstufe 15 wird die passende Höhenkachel
-   ausgeschnitten und vergrössert — genauer werden die Daten dadurch nicht. */
+/* Die Schicht selbst — eine für die Ausrichtung, eine für die Neigung. Näher als
+   Zoomstufe 15 wird die passende Höhenkachel ausgeschnitten und vergrössert —
+   genauer werden die Daten dadurch nicht. */
 const GelLayer = L.GridLayer.extend({
   createTile(k, fertig){
     const tile = document.createElement('canvas');
     tile.width = tile.height = 256;
     const dz = Math.min(k.z, GEL_DATENZOOM), f = 2 ** (k.z - dz);
     const x = Math.floor(k.x / f), y = Math.floor(k.y / f), g = 256 / f;
-    const modus = gelModus;
     gelHoehen(dz, x, y).then(h => {
-      tile.getContext('2d').drawImage(gelFaerben(h, dz, x, y, modus),
+      tile.getContext('2d').drawImage(gelFaerben(h, dz, x, y, this.options.modus),
         (k.x % f) * g, (k.y % f) * g, g, g, 0, 0, 256, 256);
       fertig(null, tile);
     }).catch(() => fertig(null, tile));   /* nicht erreichbar: Stelle bleibt einfach grau */
@@ -1554,28 +1560,28 @@ const GelLayer = L.GridLayer.extend({
   }
 });
 
-function setzeGelaende(modus){
-  gelModus = modus;
-  if (modus === 'aus'){
-    if (gelLayer && map.hasLayer(gelLayer)) map.removeLayer(gelLayer);
-  } else {
-    if (!gelLayer) gelLayer = new GelLayer({
-      minZoom: GEL_MINZOOM, maxZoom: 18, opacity: .55, zIndex: 2,
+/* Die Neigung liegt über der Ausrichtung und ist kräftiger (ihre flachen Stufen sind
+   schon selbst durchsichtig); die Ausrichtung deckt fast alles und bleibt
+   durchsichtiger. Sind beide an, scheint die Ausrichtung unter der Neigung durch. */
+function schalteGelaende(modus){
+  gelAn[modus] = !gelAn[modus];
+  if (gelAn[modus]){
+    if (!gelLayer[modus]) gelLayer[modus] = new GelLayer({
+      modus, minZoom: GEL_MINZOOM, maxZoom: 18,
+      opacity: modus === 'neigung' ? .85 : .55, zIndex: modus === 'neigung' ? 3 : 2,
       attribution: 'Gelände: Terrain Tiles, EU-DEM © Copernicus'
     });
-    /* Die Neigung färbt nur die steilen Stellen und darf darum kräftiger sein;
-       die Ausrichtung deckt fast alles und bleibt durchsichtiger. */
-    gelLayer.setOpacity(modus === 'neigung' ? .8 : .55);
-    if (map.hasLayer(gelLayer)) gelLayer.redraw(); else gelLayer.addTo(map);
-  }
-  zeichneGelPanel();
+    gelLayer[modus].addTo(map);
+  } else if (gelLayer[modus]) map.removeLayer(gelLayer[modus]);
+  zeichneGelLegende();
 }
 
-/* Kleine Windrose in den Farben der Ausrichtung, als Legende.
+/* Kleine Windrose in den Farben der Ausrichtung, als Legende. Nur N, O, S und W
+   sind beschriftet, damit die Schrift trotz der kleinen Rose lesbar bleibt.
    Auf dunklen Feldern ist die Beschriftung weiß. */
 const dunkel = ([r,g,b]) => .299*r + .587*g + .114*b < 110;
 function gelRose(){
-  const M = 50, A = 46, I = 17;
+  const M = 50, A = 48, I = 12;
   const pt = (gr, r) => {
     const b = gr * Math.PI / 180;
     return [(M + r*Math.sin(b)).toFixed(1), (M - r*Math.cos(b)).toFixed(1)];
@@ -1586,83 +1592,72 @@ function gelRose(){
     const [tx,ty] = pt(i*45, (A+I)/2);
     return `<path d="M${x1} ${y1}L${x2} ${y2}A${A} ${A} 0 0 1 ${x3} ${y3}L${x4} ${y4}A${I} ${I} 0 0 0 ${x1} ${y1}Z"
       fill="rgb(${AUSRICHTUNG[d]})" fill-opacity=".85" stroke="#C9D2DB" stroke-width="1"></path>
-      <text x="${tx}" y="${ty}" dy=".35em"${dunkel(AUSRICHTUNG[d]) ? ' fill="#fff"' : ''}>${d}</text>`;
-  }).join('') + '</svg>';
+      ${i % 2 ? '' : `<text x="${tx}" y="${ty}" dy=".35em"${dunkel(AUSRICHTUNG[d]) ? ' class="hell"' : ''}>${d}</text>`}`;
+  }).join('') + `<circle cx="${M}" cy="${M}" r="${I}" fill="#fff" stroke="#C9D2DB" stroke-width="1"></circle></svg>`;
 }
 
-function zeichneGelPanel(){
-  const knopf = document.getElementById('gelknopf');
-  const panel = document.getElementById('gelpanel');
-  if (!knopf || !panel) return;
-  knopf.classList.toggle('an', gelModus !== 'aus');
-  panel.querySelectorAll('[data-gel]').forEach(b =>
-    b.setAttribute('aria-pressed', String(b.dataset.gel === gelModus)));
-  const leg = panel.querySelector('.gelleg');
-  if (gelModus === 'neigung'){
-    leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter ' + NEIGUNG[0].ab + '°</li>'
-      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},${(c.deckung ?? 255)/255*.85})"></i>${c.txt}</li>`).join('')
-      + '</ul>';
-  } else if (gelModus === 'ausrichtung'){
-    leg.innerHTML = '<div class="gelrosezeile">' + gelRose()
-      + '<span>Die Farbe zeigt, wohin der Hang schaut — also bergab. '
-      + 'Flache Stellen bleiben ohne Farbe.</span></div>';
-  } else leg.innerHTML = '';
-  const note = panel.querySelector('.gelnote');
-  if (gelModus === 'aus'){
-    note.textContent = 'Färbt die Hänge nach Steilheit oder nach Himmelsrichtung.';
-  } else {
-    note.innerHTML = (map.getZoom() < GEL_MINZOOM
-        ? '<b>Bitte näher heranzoomen</b> — die Farben erscheinen erst in einer näheren Ansicht. '
-        : '')
-      + 'Berechnet aus freien Höhendaten mit etwa 30 m Raster. Kleine Kanten fehlen; '
-      + 'weit herausgezoomt wirkt alles etwas flacher.';
+/* Ganz oben in der Karte steht für jede eingeschaltete Schicht nur ihre Legende —
+   klein, aber gut lesbar. Ist man zu weit weg, steht darin „Näher heranzoomen“. */
+function zeichneGelLegende(){
+  const spalte = document.getElementById('gelleg');
+  if (!spalte) return;
+  const weit = map.getZoom() < GEL_MINZOOM ? '<p class="gelweit">Näher zoomen</p>' : '';
+  let html = '';
+  if (gelAn.ausrichtung) html += '<div class="gelkarte" title="Hangausrichtung">'
+    + weit + gelRose() + '</div>';
+  if (gelAn.neigung) html += '<div class="gelkarte" title="Hangneigung">' + weit
+    + '<ul class="gelliste">'
+    + NEIGUNG.slice().reverse().map(c =>
+        `<li><i style="background:rgba(${c.rgb},${(.35 + .65*(c.deckung ?? 255)/255) * .9})"></i>${c.txt}</li>`).join('')
+    + '</ul></div>';
+  spalte.innerHTML = html;
+  spalte.hidden = !html;
+  for (const m of ['ausrichtung', 'neigung']){
+    const a = document.getElementById('gel-' + m);
+    a.classList.toggle('an', gelAn[m]);
+    a.setAttribute('aria-pressed', String(gelAn[m]));
   }
 }
 
-function zeigeGelPanel(an){
-  const panel = document.getElementById('gelpanel');
-  if (!panel || panel.hidden === !an) return;
-  panel.hidden = !an;
-  const knopf = document.getElementById('gelknopf');
-  knopf.setAttribute('aria-expanded', String(an));
-  if (an) zeichneGelPanel();
-}
-
-/* Knopf links unter der Kartennadel. Er öffnet ein kleines Feld mit
-   Aus / Neigung / Ausrichtung und der passenden Legende. */
+/* Zwei Knöpfe links unter der Kartennadel: oben die Ausrichtung (Kompass), darunter
+   die Neigung (Hang mit Winkel). Ein Klick schaltet die Schicht ein und zeigt ihre
+   Legende, ein zweiter Klick schaltet sie wieder aus. */
+const GELICON = {
+  ausrichtung: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<circle cx="12" cy="12" r="9"></circle><path d="M12 5.5 14.6 12H9.4Z" fill="currentColor"></path>'
+    + '<path d="M12 18.5 9.4 12h5.2Z"></path></svg>',
+  neigung: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M3 19h18V5Z"></path><path d="M8.5 19a5.5 5.5 0 0 0-1.3-3.6"></path></svg>'
+};
+const GELNAME = {ausrichtung: 'Hangausrichtung', neigung: 'Hangneigung'};
 function addGelaendeKnopf(){
   const Knopf = L.Control.extend({
     options: {position:'topleft'},
     onAdd(){
       const box = L.DomUtil.create('div', 'gelbox');
       const bar = L.DomUtil.create('div', 'leaflet-bar', box);
-      const a = L.DomUtil.create('a', 'mapfs', bar);
-      a.id = 'gelknopf'; a.href = '#';
-      a.setAttribute('role', 'button');
-      a.setAttribute('aria-expanded', 'false');
-      a.title = 'Hangneigung und Hangausrichtung';
-      a.setAttribute('aria-label', 'Hangneigung und Hangausrichtung');
-      a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
-        + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-        + '<path d="M2.5 19.5 9 8l4 6.5 2.5-3.5 6 8.5Z"></path></svg>';
-      const panel = L.DomUtil.create('div', 'gelpanel', box);
-      panel.id = 'gelpanel'; panel.hidden = true;
-      panel.innerHTML = '<p class="gelkopf">Gelände</p>'
-        + '<div class="fsegs" role="group" aria-label="Gelände einfärben">'
-        + '<button type="button" data-gel="aus">Aus</button>'
-        + '<button type="button" data-gel="neigung">Neigung</button>'
-        + '<button type="button" data-gel="ausrichtung">Ausrichtung</button></div>'
-        + '<div class="gelleg"></div><p class="gelnote"></p>';
+      for (const m of ['ausrichtung', 'neigung']){
+        const a = L.DomUtil.create('a', 'mapfs', bar);
+        a.id = 'gel-' + m; a.href = '#';
+        a.setAttribute('role', 'button');
+        a.setAttribute('aria-pressed', 'false');
+        a.title = GELNAME[m] + ' ein- oder ausblenden';
+        a.setAttribute('aria-label', a.title);
+        a.innerHTML = GELICON[m];
+        L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', () => schalteGelaende(m));
+      }
+      /* Die Legenden hängen direkt in der Karte, damit sie immer ganz oben stehen. */
+      const spalte = L.DomUtil.create('div', 'gelleg', map.getContainer());
+      spalte.id = 'gelleg'; spalte.hidden = true;
       L.DomEvent.disableClickPropagation(box);
       L.DomEvent.disableScrollPropagation(box);
-      L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', () => zeigeGelPanel(panel.hidden));
-      panel.querySelectorAll('[data-gel]').forEach(b =>
-        b.addEventListener('click', () => setzeGelaende(b.dataset.gel)));
+      L.DomEvent.disableClickPropagation(spalte);
+      L.DomEvent.disableScrollPropagation(spalte);
       return box;
     }
   });
   map.addControl(new Knopf());
-  map.on('zoomend', () => { if (gelModus !== 'aus') zeichneGelPanel(); });
+  map.on('zoomend', () => { if (gelAn.ausrichtung || gelAn.neigung) zeichneGelLegende(); });
 }
 
 /* ---------- Vollbild ----------
