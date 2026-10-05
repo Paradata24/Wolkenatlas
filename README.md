@@ -450,8 +450,9 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 Links unter der Kartennadel sitzen **zwei Knöpfe**: oben der **Kompass** für die
 Ausrichtung, darunter der **Hang mit Winkel** für die Neigung. Ein Klick schaltet die
-Schicht ein — der Knopf wird rosa, und rechts daneben erscheint nur ihre Legende, klein,
-aber gut lesbar. Ein zweiter Klick auf denselben Knopf schaltet die Schicht wieder aus.
+Schicht ein — der Knopf wird rosa, und rechts daneben erscheint nur ihre Legende, ganz
+klein und ohne Überschrift (die Windrose ist nur mit N, O, S und W beschriftet). Ein zweiter
+Klick auf denselben Knopf schaltet die Schicht wieder aus.
 **Beide Schichten können gleichzeitig an sein**; dann stehen die beiden Legenden
 nebeneinander, und die Ausrichtung scheint unter der Neigung durch. Beim Öffnen der Seite
 ist beides aus.
@@ -488,7 +489,7 @@ Die Farben sind **durchsichtig** und liegen über der grauen Karte; die Ortspunk
 bleiben obendrauf. Die Neigung ist kräftiger, die
 Ausrichtung durchsichtiger (sie färbt fast alles). Sie erscheinen erst **ab Zoomstufe 11** — weiter draußen wären die Hänge
 so stark geglättet, dass fast alles flach aussähe. Ist man weiter weg, steht in der
-Legende „Näher heranzoomen“.
+Legende „Näher zoomen“.
 
 **Woher die Farben kommen.** Fertige Kacheln mit Neigung und Ausrichtung gibt es nicht
 frei. Der Browser rechnet sie darum selbst aus den freien **Terrain Tiles** auf Amazon
