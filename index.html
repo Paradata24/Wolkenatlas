@@ -303,14 +303,16 @@
   .gelleg{position:absolute;left:54px;top:10px;z-index:1000;display:flex;
     gap:8px;align-items:flex-start;cursor:default}
   .gelleg[hidden]{display:none}
-  .gelkarte{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:var(--r);
-    box-shadow:0 1px 6px rgba(21,32,43,.14);padding:4px 6px;color:var(--ink)}
+  /* Ohne Kasten direkt auf der Karte; ein weißer Rand um die Schrift hält sie lesbar. */
+  .gelkarte{color:var(--ink);
+    text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 4px rgba(255,255,255,.9)}
   .gelweit{font-size:9.5px;font-weight:600;color:var(--start);margin:0 0 3px;white-space:nowrap}
   .gelliste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
-  .gelliste li{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9.5px;line-height:1.2}
-  .gelliste i{width:10px;height:7px;border-radius:1px;flex:none;border:1px solid rgba(0,0,0,.12)}
-  .gelrose{width:62px;height:62px;display:block}
-  .gelrose text{font-family:var(--mono);font-size:15px;font-weight:700;text-anchor:middle;fill:var(--ink)}
+  .gelliste li{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9.5px;line-height:1.2;font-weight:600}
+  .gelliste i{width:10px;height:7px;border-radius:1px;flex:none;border:1px solid rgba(0,0,0,.25)}
+  .gelrose{width:62px;height:62px;display:block;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9))}
+  .gelrose text{font-family:var(--mono);font-size:15px;font-weight:700;text-anchor:middle;fill:var(--ink);text-shadow:none}
+  .gelrose text.hell{fill:#fff}
 
   .placepanel{position:absolute;left:12px;bottom:26px;z-index:1000;
     width:min(330px,calc(100% - 24px));max-height:calc(100% - 52px);overflow:auto;
@@ -1590,8 +1592,8 @@ function gelRose(){
     const [tx,ty] = pt(i*45, (A+I)/2);
     return `<path d="M${x1} ${y1}L${x2} ${y2}A${A} ${A} 0 0 1 ${x3} ${y3}L${x4} ${y4}A${I} ${I} 0 0 0 ${x1} ${y1}Z"
       fill="rgb(${AUSRICHTUNG[d]})" fill-opacity=".85" stroke="#C9D2DB" stroke-width="1"></path>
-      ${i % 2 ? '' : `<text x="${tx}" y="${ty}" dy=".35em"${dunkel(AUSRICHTUNG[d]) ? ' fill="#fff"' : ''}>${d}</text>`}`;
-  }).join('') + '</svg>';
+      ${i % 2 ? '' : `<text x="${tx}" y="${ty}" dy=".35em"${dunkel(AUSRICHTUNG[d]) ? ' class="hell"' : ''}>${d}</text>`}`;
+  }).join('') + `<circle cx="${M}" cy="${M}" r="${I}" fill="#fff" stroke="#C9D2DB" stroke-width="1"></circle></svg>`;
 }
 
 /* Ganz oben in der Karte steht für jede eingeschaltete Schicht nur ihre Legende —
