@@ -298,17 +298,14 @@
   /* Gelände-Knopf: rosa, solange Neigung oder Ausrichtung über der Karte liegt. */
   .leaflet-bar a.mapfs.an{background:var(--start);color:#fff}
   .gelbox{position:relative}
-  .gelpanel{position:absolute;left:calc(100% + 8px);top:0;width:300px;max-width:calc(100vw - 80px);
+  .gelpanel{position:absolute;left:calc(100% + 8px);top:0;width:262px;max-width:calc(100vw - 80px);
     background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
     box-shadow:0 6px 24px rgba(21,32,43,.18);padding:10px 12px 11px;
     font-size:12.5px;line-height:1.45;color:var(--ink);cursor:default}
   .gelpanel[hidden]{display:none}
   .gelpanel .gelkopf{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--muted);margin:0 0 7px}
-  .gelpanel .fsegs button{font-size:12.5px;padding:6px 6px}
-  .gelpfeil{display:flex;align-items:center;gap:8px;margin-top:9px}
-  .gelpfeil svg{width:26px;height:13px;flex:none;fill:none;stroke-linecap:round;stroke-linejoin:round}
-  .gelpfeil svg path{stroke:#1D2733;stroke-width:1.8;paint-order:stroke}
+  .gelpanel .fsegs button{font-size:12.5px;padding:6px 7px}
   .gelliste{list-style:none;margin:10px 0 0;padding:0;display:grid;
     grid-template-columns:1fr 1fr;gap:4px 10px}
   .gelliste li{display:flex;align-items:center;gap:7px;white-space:nowrap}
@@ -1453,13 +1450,13 @@ function addOrtKnopf(){
 const GEL_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const GEL_DATENZOOM = 15;   /* feiner gibt es die Höhenkacheln nicht — darüber wird vergrössert */
 const GEL_MINZOOM = 11;     /* weiter draußen wären die Hänge zu stark geglättet */
-/* Steilheit in Grad: ab welcher Neigung welche Farbe. Von hellgrün über gelb und
-   rot bis violett — ohne Blau, Orange-Braun, Weiß und Schwarz, damit sie sich nicht
-   mit den Farben der Ausrichtung beißt. Die flachen Stufen bedecken große Flächen und
-   sind darum durchsichtiger (deckung: 0 bis 255), damit Höhenlinien lesbar bleiben. */
+/* Steilheit in Grad: ab welcher Neigung welche Farbe. Eine Skala von hell nach
+   dunkel — Sand, Gelb, Orange, Rot, Violett —, je steiler, desto kräftiger. Die
+   flachen Stufen bedecken große Flächen und sind darum durchsichtiger
+   (deckung: 0 bis 255), damit Höhenlinien und Namen lesbar bleiben. */
 const NEIGUNG = [
-  {ab:10, rgb:[200,228,170], txt:'10–20°', deckung:90},
-  {ab:20, rgb:[140,200,110], txt:'20–30°', deckung:130},
+  {ab:10, rgb:[235,215,160], txt:'10–20°', deckung:110},
+  {ab:20, rgb:[225,190,115], txt:'20–30°', deckung:160},
   {ab:30, rgb:[245,235,90],  txt:'30–35°'},
   {ab:35, rgb:[245,175,60],  txt:'35–40°'},
   {ab:40, rgb:[230,75,60],   txt:'40–50°'},
@@ -1525,7 +1522,7 @@ function gelFaerben(h, z, x, y, modus){
       const nord = (h[r0*256+s] - h[r1*256+s]) / ((r1-r0)*m);
       const grad = Math.atan(Math.hypot(ost, nord)) * 180/Math.PI;
       let rgb = null, deckung = 255;
-      if (modus !== 'ausrichtung'){
+      if (modus === 'neigung'){
         for (let i = NEIGUNG.length-1; i >= 0; i--)
           if (grad >= NEIGUNG[i].ab){ rgb = NEIGUNG[i].rgb; deckung = NEIGUNG[i].deckung ?? 255; break; }
       } else if (grad >= 5){
@@ -1552,54 +1549,13 @@ const GelLayer = L.GridLayer.extend({
     const x = Math.floor(k.x / f), y = Math.floor(k.y / f), g = 256 / f;
     const modus = gelModus;
     gelHoehen(dz, x, y).then(h => {
-      const cx = tile.getContext('2d');
-      cx.drawImage(gelFaerben(h, dz, x, y, modus),
+      tile.getContext('2d').drawImage(gelFaerben(h, dz, x, y, modus),
         (k.x % f) * g, (k.y % f) * g, g, g, 0, 0, 256, 256);
-      if (modus === 'beides') gelPfeile(cx, h, dz, y, (k.x % f) * g, (k.y % f) * g, f);
       fertig(null, tile);
     }).catch(() => fertig(null, tile));   /* nicht erreichbar: Stelle bleibt einfach grau */
     return tile;
   }
 });
-
-/* Für „Beides“: kleine Pfeile im Raster, die bergab zeigen — die Richtung, in die
-   der Hang schaut. Sie werden erst nach dem Vergrössern gezeichnet und bleiben so
-   in jeder Zoomstufe gleich groß und scharf. Gemessen wird über eine etwas größere
-   Strecke, damit die Pfeile ruhig liegen und nicht jede kleine Delle anzeigen. */
-const GEL_PFEILE = 5;                       /* Pfeile je Kachelreihe — gleichmäßig über Kachelgrenzen */
-const GEL_PFEILABSTAND = 256 / GEL_PFEILE;
-function gelPfeile(cx, h, z, y, ox, oy, f){
-  const n = 256 * 2**z, d = Math.max(2, Math.round(GEL_PFEILABSTAND / f / 4));
-  const L = 16, spitze = 5;
-  const zeichne = (breite, farbe) => {
-    cx.lineWidth = breite; cx.strokeStyle = farbe; cx.lineCap = 'round'; cx.lineJoin = 'round';
-    cx.stroke();
-  };
-  cx.beginPath();
-  for (let j = 0; j < GEL_PFEILE; j++){
-    for (let i = 0; i < GEL_PFEILE; i++){
-      const px = (i + .5) * GEL_PFEILABSTAND, py = (j + .5) * GEL_PFEILABSTAND;
-      const s = Math.round(ox + px / f), r = Math.round(oy + py / f);
-      const s0 = Math.max(s-d, 0), s1 = Math.min(s+d, 255);
-      const r0 = Math.max(r-d, 0), r1 = Math.min(r+d, 255);
-      const lat = Math.atan(Math.sinh(Math.PI * (1 - 2*(y*256 + r + .5)/n)));
-      const m = 40075016.686 * Math.cos(lat) / n;
-      const ost  = (h[r*256+s1] - h[r*256+s0]) / ((s1-s0)*m);
-      const nord = (h[r0*256+s] - h[r1*256+s]) / ((r1-r0)*m);
-      const steil = Math.hypot(ost, nord);
-      if (Math.atan(steil) * 180/Math.PI < NEIGUNG[0].ab) continue;   /* flach: kein Pfeil */
-      /* Bergab heißt: gegen den Anstieg. Auf dem Bild zeigt y nach Süden. */
-      const ux = -ost / steil, uy = nord / steil;
-      const ax = px - ux*L/2, ay = py - uy*L/2, bx = px + ux*L/2, by = py + uy*L/2;
-      cx.moveTo(ax, ay); cx.lineTo(bx, by);
-      cx.moveTo(bx - ux*spitze - uy*spitze*.8, by - uy*spitze + ux*spitze*.8);
-      cx.lineTo(bx, by);
-      cx.lineTo(bx - ux*spitze + uy*spitze*.8, by - uy*spitze - ux*spitze*.8);
-    }
-  }
-  zeichne(4, 'rgba(255,255,255,.85)');
-  zeichne(1.6, '#1D2733');
-}
 
 function setzeGelaende(modus){
   gelModus = modus;
@@ -1612,7 +1568,7 @@ function setzeGelaende(modus){
     });
     /* Die Neigung darf kräftiger sein (ihre flachen Stufen sind schon selbst
        durchsichtig); die Ausrichtung deckt fast alles und bleibt durchsichtiger. */
-    gelLayer.setOpacity(modus === 'ausrichtung' ? .55 : .85);
+    gelLayer.setOpacity(modus === 'neigung' ? .85 : .55);
     if (map.hasLayer(gelLayer)) gelLayer.redraw(); else gelLayer.addTo(map);
   }
   zeichneGelPanel();
@@ -1645,14 +1601,10 @@ function zeichneGelPanel(){
   panel.querySelectorAll('[data-gel]').forEach(b =>
     b.setAttribute('aria-pressed', String(b.dataset.gel === gelModus)));
   const leg = panel.querySelector('.gelleg');
-  if (gelModus === 'neigung' || gelModus === 'beides'){
+  if (gelModus === 'neigung'){
     leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter ' + NEIGUNG[0].ab + '°</li>'
       + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},${Math.max((c.deckung ?? 255)/255, .5)*.85})"></i>${c.txt}</li>`).join('')
-      + '</ul>'
-      + (gelModus === 'beides'
-        ? '<div class="gelpfeil"><svg viewBox="0 0 24 12" aria-hidden="true"><path d="M3 6h17M15 2.5 20 6l-5 3.5"></path></svg>'
-          + 'Pfeile zeigen bergab — dorthin, wohin der Hang schaut.</div>'
-        : '');
+      + '</ul>';
   } else if (gelModus === 'ausrichtung'){
     leg.innerHTML = '<div class="gelrosezeile">' + gelRose()
       + '<span>Die Farbe zeigt, wohin der Hang schaut — also bergab. '
@@ -1702,8 +1654,7 @@ function addGelaendeKnopf(){
         + '<div class="fsegs" role="group" aria-label="Gelände einfärben">'
         + '<button type="button" data-gel="aus">Aus</button>'
         + '<button type="button" data-gel="neigung">Neigung</button>'
-        + '<button type="button" data-gel="ausrichtung">Ausrichtung</button>'
-        + '<button type="button" data-gel="beides">Beides</button></div>'
+        + '<button type="button" data-gel="ausrichtung">Ausrichtung</button></div>'
         + '<div class="gelleg"></div><p class="gelnote"></p>';
       L.DomEvent.disableClickPropagation(box);
       L.DomEvent.disableScrollPropagation(box);
