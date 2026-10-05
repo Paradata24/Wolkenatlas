@@ -454,11 +454,15 @@ Solange eine der beiden Farbschichten an ist, ist der Bergknopf rosa. Ein Klick 
 Bergknopf oder irgendwo in die Karte schließt das Feld; die Farben bleiben trotzdem liegen,
 bis *Aus* gewählt wird. Beim Öffnen der Seite ist das Gelände immer aus.
 
-**Neigung** färbt die steilen Hänge, wie bei gängigen Touren-Apps:
+**Neigung** färbt die Hänge nach Steilheit. Ab 30° sind es die Farben gängiger
+Touren-Apps; das ruhige Grün darunter zeigt, wo meist gestartet wird. Es ist
+durchsichtiger als die anderen Farben, weil es große Flächen bedeckt — so bleiben
+Höhenlinien und Namen lesbar:
 
 | Neigung | Farbe |
 |---|---|
-| unter 30° | keine |
+| unter 10° | keine |
+| 10–30° | hellgrün |
 | 30–35° | hellgelb |
 | 35–40° | hellorange |
 | 40° und mehr | rot |

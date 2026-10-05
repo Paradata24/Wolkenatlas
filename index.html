@@ -1450,9 +1450,12 @@ function addOrtKnopf(){
 const GEL_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const GEL_DATENZOOM = 15;   /* feiner gibt es die Höhenkacheln nicht — darüber wird vergrössert */
 const GEL_MINZOOM = 11;     /* weiter draußen wären die Hänge zu stark geglättet */
-/* Steilheit in Grad: ab welcher Neigung welche Farbe. Wie bei gängigen Touren-Apps
-   nur die steilen Hänge ab 30° — darunter bleibt die Karte grau. */
+/* Steilheit in Grad: ab welcher Neigung welche Farbe. Ab 30° wie bei gängigen
+   Touren-Apps; dazu ein ruhiges Grün für 10–30°, wo meist gestartet wird. Das Grün
+   bedeckt große Flächen und ist darum durchsichtiger (deckung: 0 bis 255), damit
+   Höhenlinien und Namen lesbar bleiben. */
 const NEIGUNG = [
+  {ab:10, rgb:[165,210,135], txt:'10–30°', deckung:120},
   {ab:30, rgb:[245,240,110], txt:'30–35°'},
   {ab:35, rgb:[240,170,105], txt:'35–40°'},
   {ab:40, rgb:[235,90,70],   txt:'40° und mehr'}
@@ -1515,10 +1518,10 @@ function gelFaerben(h, z, x, y, modus){
       const ost  = (h[r*256+s1] - h[r*256+s0]) / ((s1-s0)*m);
       const nord = (h[r0*256+s] - h[r1*256+s]) / ((r1-r0)*m);
       const grad = Math.atan(Math.hypot(ost, nord)) * 180/Math.PI;
-      let rgb = null;
+      let rgb = null, deckung = 255;
       if (modus === 'neigung'){
         for (let i = NEIGUNG.length-1; i >= 0; i--)
-          if (grad >= NEIGUNG[i].ab){ rgb = NEIGUNG[i].rgb; break; }
+          if (grad >= NEIGUNG[i].ab){ rgb = NEIGUNG[i].rgb; deckung = NEIGUNG[i].deckung ?? 255; break; }
       } else if (grad >= 5){
         /* Flache Stellen schauen nirgendwohin und bleiben ohne Farbe. */
         const az = (Math.atan2(-ost, -nord) * 180/Math.PI + 360) % 360;
@@ -1526,7 +1529,7 @@ function gelFaerben(h, z, x, y, modus){
       }
       if (!rgb) continue;
       const i = (r*256 + s) * 4;
-      px[i] = rgb[0]; px[i+1] = rgb[1]; px[i+2] = rgb[2]; px[i+3] = 255;
+      px[i] = rgb[0]; px[i+1] = rgb[1]; px[i+2] = rgb[2]; px[i+3] = deckung;
     }
   }
   cx.putImageData(bild, 0, 0);
@@ -1597,7 +1600,7 @@ function zeichneGelPanel(){
   const leg = panel.querySelector('.gelleg');
   if (gelModus === 'neigung'){
     leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter ' + NEIGUNG[0].ab + '°</li>'
-      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},.85)"></i>${c.txt}</li>`).join('')
+      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},${(c.deckung ?? 255)/255*.85})"></i>${c.txt}</li>`).join('')
       + '</ul>';
   } else if (gelModus === 'ausrichtung'){
     leg.innerHTML = '<div class="gelrosezeile">' + gelRose()
