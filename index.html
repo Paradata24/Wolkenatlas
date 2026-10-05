@@ -298,8 +298,9 @@
   /* Gelände-Knöpfe: rosa, solange ihre Schicht über der Karte liegt. */
   .leaflet-bar a.mapfs.an{background:var(--start);color:#fff}
   .gelbox{position:relative}
-  /* Rechts neben den Knöpfen: nur die Legenden der eingeschalteten Schichten. */
-  .gelleg{position:absolute;left:calc(100% + 8px);top:0;display:flex;
+  /* Ganz oben in der Karte, rechts neben den Zoomknöpfen: nur die Legenden der
+     eingeschalteten Schichten. */
+  .gelleg{position:absolute;left:54px;top:10px;z-index:1000;display:flex;
     gap:8px;align-items:flex-start;cursor:default}
   .gelleg[hidden]{display:none}
   .gelkarte{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:var(--r);
@@ -1593,7 +1594,7 @@ function gelRose(){
   }).join('') + '</svg>';
 }
 
-/* Neben den beiden Knöpfen steht für jede eingeschaltete Schicht nur ihre Legende —
+/* Ganz oben in der Karte steht für jede eingeschaltete Schicht nur ihre Legende —
    klein, aber gut lesbar. Ist man zu weit weg, steht darin „Näher heranzoomen“. */
 function zeichneGelLegende(){
   const spalte = document.getElementById('gelleg');
@@ -1643,10 +1644,13 @@ function addGelaendeKnopf(){
         a.innerHTML = GELICON[m];
         L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', () => schalteGelaende(m));
       }
-      const spalte = L.DomUtil.create('div', 'gelleg', box);
+      /* Die Legenden hängen direkt in der Karte, damit sie immer ganz oben stehen. */
+      const spalte = L.DomUtil.create('div', 'gelleg', map.getContainer());
       spalte.id = 'gelleg'; spalte.hidden = true;
       L.DomEvent.disableClickPropagation(box);
       L.DomEvent.disableScrollPropagation(box);
+      L.DomEvent.disableClickPropagation(spalte);
+      L.DomEvent.disableScrollPropagation(spalte);
       return box;
     }
   });
