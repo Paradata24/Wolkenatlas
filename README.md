@@ -13,7 +13,7 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
 - **Karte:** Leaflet mit OpenTopoMap, im Browser entfärbt — ohne Schlüssel und ohne Konto.
-- **Höhen der Orte:** Open Topo Data, ebenfalls ohne Schlüssel und ohne Konto.
+- **Höhen der Orte:** Open-Meteo, ebenfalls ohne Schlüssel und ohne Konto.
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
 Ganz oben im `<script type="module">`-Block stehen `SUPABASE_URL` und `SUPABASE_KEY`.
@@ -488,31 +488,30 @@ Wann sie geschrieben wird:
 - **Orte von früher:** beim nächsten Laden werden alle Orte ohne Höhe in *einer* Anfrage
   nachgetragen; eine kurze Meldung sagt, bei wie vielen. Danach steht die Höhe fest in der
   Datenbank und wird nicht mehr abgefragt.
-- **Nach einem Wechsel des Höhenmodells:** einmalig werden *alle* Höhen neu berechnet und
-  die alten, gröberen Werte überschrieben — ebenfalls mit einer kurzen Meldung. Danach
+- **Nach einem Wechsel der Höhenquelle:** einmalig werden *alle* Höhen neu geholt und,
+  wo sie abweichen, überschrieben — ebenfalls mit einer kurzen Meldung. Danach
   passiert das nicht wieder. Woran das Flugbuch erkennt, ob das schon gelaufen ist, merkt
   es sich im Browser; auf einem zweiten Gerät läuft es deshalb noch einmal, mit demselben
   Ergebnis.
 
-Die Zahl kommt von [Open Topo Data](https://www.opentopodata.org/), kostenlos und ohne
-Schlüssel. Gefragt werden **zwei Höhenmodelle nacheinander**:
+Die Zahl kommt von [Open-Meteo](https://open-meteo.com/en/docs/elevation-api), kostenlos
+und ohne Schlüssel. Grundlage ist das Copernicus-Höhenmodell mit **90-Meter-Raster**.
 
-1. **`eudem25m`** — das europäische Modell mit **25-Meter-Raster**. Für die Alpen das
-   genaueste, das ohne Anmeldung zu haben ist.
-2. **`srtm30m`** — 30-Meter-Raster, weltweit. Springt überall dort ein, wo das europäische
-   Modell nichts weiß, also außerhalb Europas. Es ist dieselbe Grundlage, aus der die
-   Höhenlinien der Topo-Karte gezeichnet sind — Zahl und Karte passen damit zusammen.
+Trotzdem steht „etwa“ dabei: Ein 90-Meter-Raster mittelt das Gelände über 90 Meter. Auf
+einem schmalen Grat oder Gipfel kommt die Höhe deshalb eher zu niedrig heraus, in einer
+Mulde zu hoch. **Genauer wird sie vor allem dadurch, dass du beim Setzen des Punktes weit
+hineinzoomst** — bei Zoomstufe 10 entspricht ein Bildpunkt rund 100 Metern im Gelände, und
+an einem steilen Hang sind das schnell 50 Höhenmeter Unterschied.
 
-Trotzdem steht „etwa“ dabei: Ein 25-Meter-Raster mittelt das Gelände über 25 Meter. Auf
-einem schmalen Grat kommt die Höhe deshalb eher zu niedrig heraus, in einer Mulde zu hoch.
-**Genauer wird sie vor allem dadurch, dass du beim Setzen des Punktes weit hineinzoomst** —
-bei Zoomstufe 10 entspricht ein Bildpunkt rund 100 Metern im Gelände, und an einem steilen
-Hang sind das schnell 50 Höhenmeter Unterschied.
+Der kostenlose Dienst erlaubt **100 Punkte pro Anfrage** und rund **10.000 Anfragen pro
+Tag**. Weil jede Höhe nur einmal geholt und dann in der Datenbank gespeichert wird, ist das
+auch bei vielen Orten kein Thema.
 
-Der kostenlose Dienst erlaubt **100 Punkte pro Anfrage, eine Anfrage pro Sekunde und
-1000 pro Tag**. Das Flugbuch hält den Sekundenabstand von selbst ein. Weil jede Höhe nur
-einmal geholt und dann in der Datenbank gespeichert wird, ist das Tageslimit auch bei
-vielen Orten kein Thema.
+**Warum nicht das genauere Open Topo Data?** Vom 20. September bis Anfang Oktober 2026 kam
+die Höhe von dort (europäisches 25-Meter-Modell). Der Dienst schickt aber die Freigabe für
+Abfragen aus dem Browser (die sogenannte CORS-Kopfzeile) nicht mit — der Browser verwirft
+deshalb jede Antwort. In dieser Zeit bekam kein neuer Ort eine Höhe; bei 60 Orten blieb das
+Feld leer. Mit Open-Meteo werden sie beim nächsten Laden von selbst nachgetragen.
 
 Ist der Dienst gerade nicht erreichbar, etwa ohne Netz, bleibt das Feld leer und wird beim
 nächsten Laden nachgetragen; in derselben Sitzung wird nicht dauernd neu gefragt. Bei einem
