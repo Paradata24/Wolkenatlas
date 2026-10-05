@@ -14,6 +14,8 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
 - **Karte:** Leaflet mit OpenTopoMap, im Browser entfärbt — ohne Schlüssel und ohne Konto.
 - **Höhen der Orte:** Open Topo Data, ebenfalls ohne Schlüssel und ohne Konto.
+- **Hangneigung und Hangausrichtung:** selbst berechnet aus den „Terrain Tiles“ auf Amazon,
+  ebenfalls ohne Schlüssel und ohne Konto (siehe „Gelände: Hangneigung und Hangausrichtung“).
 - **Externe Bibliotheken** werden per CDN geladen (Leaflet, supabase-js). Nichts wird installiert.
 
 Ganz oben im `<script type="module">`-Block stehen `SUPABASE_URL` und `SUPABASE_KEY`.
@@ -202,7 +204,8 @@ Nur solange ein Ort angelegt oder bearbeitet wird, rückt **rechts das Formular*
 Karte; danach ist die Karte wieder allein.
 
 Es gibt **genau eine Ansicht**: die Topo-Karte mit Höhenlinien und Geländeschattierung,
-**in Grau**. Einen Umschalter braucht es dafür nicht mehr.
+**in Grau**. Einen Umschalter braucht es dafür nicht mehr. Wer will, legt Hangneigung oder
+Hangausrichtung als Farbe darüber (siehe „Gelände: Hangneigung und Hangausrichtung“).
 
 Höhenlinien, Schummerung, Wege, Straßen und alle Beschriftungen bleiben vollständig
 erhalten — nur die bunten Wald-, Fels- und Wasserflächen treten zurück. Dadurch sind die
@@ -443,6 +446,52 @@ Karte steht. *Bearbeiten* beendet das Vollbild, weil das Formular neben der Kart
 Kann ein Browser kein Vollbild für einen einzelnen Ausschnitt (ältere iPhones), wird die
 Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann dasselbe.
 
+### Gelände: Hangneigung und Hangausrichtung
+
+Links unter der Kartennadel sitzt der **Knopf mit dem Berg**. Er öffnet ein kleines Feld mit
+drei Knöpfen: **Aus**, **Neigung** und **Ausrichtung**. Darunter steht die passende Legende.
+Solange eine der beiden Farbschichten an ist, ist der Bergknopf rosa. Ein Klick auf den
+Bergknopf oder irgendwo in die Karte schließt das Feld; die Farben bleiben trotzdem liegen,
+bis *Aus* gewählt wird. Beim Öffnen der Seite ist das Gelände immer aus.
+
+**Neigung** färbt die Hänge nach Steilheit. Ab 30° sind es dieselben Farben wie auf
+Lawinenkarten:
+
+| Neigung | Farbe |
+|---|---|
+| unter 10° | keine |
+| 10–20° | hellgrün |
+| 20–30° | grün |
+| 30–35° | gelb |
+| 35–40° | orange |
+| 40–45° | rot |
+| über 45° | violett |
+
+**Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
+Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
+Legende ist eine kleine Windrose in diesen Farben. Fast flache Stellen (unter 5°) bleiben ohne
+Farbe, weil sie in keine Richtung schauen.
+
+Die Farben sind **halb durchsichtig** und liegen über der grauen Karte; die Ortspunkte
+bleiben obendrauf. Sie erscheinen erst **ab Zoomstufe 11** — weiter draußen wären die Hänge
+so stark geglättet, dass fast alles flach aussähe. Ist man weiter weg, steht im Feld
+„Bitte näher heranzoomen“.
+
+**Woher die Farben kommen.** Fertige Kacheln mit Neigung und Ausrichtung gibt es nicht
+frei. Der Browser rechnet sie darum selbst aus den freien **Terrain Tiles** auf Amazon
+(`elevation-tiles-prod`): Jeder Bildpunkt dieser Kacheln ist eine Höhe, und aus dem
+Unterschied zu den Nachbarpunkten ergibt sich, wie steil der Hang ist und wohin er schaut.
+Die Höhenkacheln gibt es bis Zoomstufe 15; näher wird die letzte Kachel vergrössert.
+
+**Wie genau das ist.** Die Messdaten hinter den Kacheln haben in Südtirol, Italien, Bayern
+und der Schweiz etwa **30 m Abstand** (EU-DEM), in Österreich etwa **10 m**. Ganze Hänge,
+Flanken und Grate sind gut zu erkennen; kleine Geländekanten, eine kurze Startrampe oder ein
+Absatz von 20 m fehlen. Weit herausgezoomt wirkt alles etwas flacher, weil dann mehrere
+Messpunkte zu einem Bildpunkt zusammenfallen. Zum Vergleich: Alpenverein aktiv rechnet mit
+10 m (in Italien mit dem Datensatz TINITALY).
+
+Ist der Höhendienst nicht erreichbar, bleibt die Karte an diesen Stellen einfach grau.
+
 ### Startrichtungen — die Windrose
 
 Sobald die Art **Startplatz** gewählt ist, erscheint im Formular
@@ -609,3 +658,4 @@ Der CSV-Export ist zum Auswerten in Excel gedacht, **nicht** zum Wiederherstelle
 - IGC-Dateien importieren (Vario/XCTrack), damit Flugzeit und Koordinaten automatisch entstehen
 - Reminder abhaken können
 - Höhenmeter-Feld nur bei Hike & Fly einblenden
+- Gelände genauer: TINITALY (10 m, frei) für Südtirol aufbereiten und als eigene Höhenkacheln ablegen

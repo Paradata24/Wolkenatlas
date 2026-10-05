@@ -295,6 +295,27 @@
   #mapwrap.fsfake #map{height:auto;flex:1 1 auto;min-height:0}
   a.mapfs{display:flex;align-items:center;justify-content:center;color:var(--ink)}
   a.mapfs svg{width:15px;height:15px;display:block}
+  /* Gelände-Knopf: rosa, solange Neigung oder Ausrichtung über der Karte liegt. */
+  .leaflet-bar a.mapfs.an{background:var(--start);color:#fff}
+  .gelbox{position:relative}
+  .gelpanel{position:absolute;left:calc(100% + 8px);top:0;width:252px;max-width:calc(100vw - 80px);
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:0 6px 24px rgba(21,32,43,.18);padding:10px 12px 11px;
+    font-size:12.5px;line-height:1.45;color:var(--ink);cursor:default}
+  .gelpanel[hidden]{display:none}
+  .gelpanel .gelkopf{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 7px}
+  .gelpanel .fsegs button{font-size:12.5px;padding:6px 7px}
+  .gelliste{list-style:none;margin:10px 0 0;padding:0;display:grid;
+    grid-template-columns:1fr 1fr;gap:4px 10px}
+  .gelliste li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .gelliste i{width:16px;height:11px;border-radius:2px;flex:none;border:1px solid rgba(0,0,0,.12)}
+  .gelliste i.leer{background:repeating-linear-gradient(135deg,#fff 0 3px,#E6EBF0 3px 5px)}
+  .gelrosezeile{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .gelrose{width:92px;height:92px;flex:none}
+  .gelrose text{font-family:var(--mono);font-size:9px;text-anchor:middle;fill:var(--ink)}
+  .gelnote{margin:9px 0 0;font-size:11.5px;color:var(--muted)}
+  .gelnote b{color:var(--start);font-weight:600}
 
   .placepanel{position:absolute;left:12px;bottom:26px;z-index:1000;
     width:min(330px,calc(100% - 24px));max-height:calc(100% - 52px);overflow:auto;
@@ -1302,6 +1323,7 @@ function initMap(){
   layer = L.layerGroup().addTo(map);
   addVollbildKnopf();
   addAlleZeigenKnopf();
+  addGelaendeKnopf();
   addOrtKnopf();
   /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
      und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
@@ -1311,6 +1333,7 @@ function initMap(){
   map.on('click', e => {
     /* Ein Klick irgendwo in die Karte schließt ein offenes Infofeld — auch im Vollbild. */
     if (infoId) closePlaceInfo();
+    zeigeGelPanel(false);
     if (!armed && !editId) return;
     const neu = !pending && !editId;
     setzePending(e.latlng.lat, e.latlng.lng);
@@ -1415,6 +1438,223 @@ function addOrtKnopf(){
     }
   });
   map.addControl(new Knopf());
+}
+
+/* ---------- Gelände: Hangneigung und Hangausrichtung ----------
+   Eine zuschaltbare Farbschicht über der grauen Karte. Fertige Kacheln dafür gibt
+   es nicht; der Browser rechnet sie selbst aus freien Höhendaten („Terrain Tiles“
+   auf Amazon, ohne Schlüssel und ohne Konto). Jeder Bildpunkt dieser Kacheln ist
+   eine Höhe; aus dem Unterschied zu den Nachbarpunkten ergibt sich, wie steil der
+   Hang ist und wohin er schaut. Die Messdaten dahinter haben in Südtirol etwa
+   30 m Abstand (EU-DEM), in Österreich etwa 10 m — kleine Geländekanten fehlen. */
+const GEL_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+const GEL_DATENZOOM = 15;   /* feiner gibt es die Höhenkacheln nicht — darüber wird vergrössert */
+const GEL_MINZOOM = 11;     /* weiter draußen wären die Hänge zu stark geglättet */
+/* Steilheit in Grad: ab welcher Neigung welche Farbe. Ab 30° wie auf Lawinenkarten. */
+const NEIGUNG = [
+  {ab:10, rgb:[174,213,129], txt:'10–20°'},
+  {ab:20, rgb:[104,159,56],  txt:'20–30°'},
+  {ab:30, rgb:[253,216,53],  txt:'30–35°'},
+  {ab:35, rgb:[251,140,0],   txt:'35–40°'},
+  {ab:40, rgb:[229,57,53],   txt:'40–45°'},
+  {ab:45, rgb:[142,36,170],  txt:'über 45°'}
+];
+/* Himmelsrichtung, in die der Hang abfällt — dieselben acht wie in der Windrose. */
+const AUSRICHTUNG = {N:[229,57,53], NO:[251,140,0], O:[253,216,53], SO:[124,179,66],
+                     S:[38,198,218], SW:[66,165,245], W:[57,73,171], NW:[171,71,188]};
+let gelModus = 'aus', gelLayer = null;
+
+/* Höhenkacheln merken, damit Umschalten und Verschieben nicht alles neu laden.
+   Die ältesten fliegen raus, sobald es zu viele werden. */
+const gelCache = new Map();
+function gelHoehen(z, x, y){
+  const k = z + '/' + x + '/' + y;
+  if (gelCache.has(k)){
+    const v = gelCache.get(k);
+    gelCache.delete(k); gelCache.set(k, v);
+    return v;
+  }
+  const p = new Promise((ok, fehler) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 256;
+      const cx = c.getContext('2d', {willReadFrequently:true});
+      cx.drawImage(img, 0, 0);
+      const d = cx.getImageData(0, 0, 256, 256).data;
+      /* So steckt die Höhe in den Farben: Rot·256 + Grün + Blau/256 − 32768 Meter. */
+      const h = new Float32Array(256*256);
+      for (let i = 0; i < h.length; i++) h[i] = d[i*4]*256 + d[i*4+1] + d[i*4+2]/256 - 32768;
+      ok(h);
+    };
+    img.onerror = fehler;
+    img.src = GEL_URL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+  });
+  p.catch(() => gelCache.delete(k));
+  gelCache.set(k, p);
+  if (gelCache.size > 64) gelCache.delete(gelCache.keys().next().value);
+  return p;
+}
+
+/* Aus den Höhen einer Kachel ein Farbbild machen. */
+function gelFaerben(h, z, x, y, modus){
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const cx = c.getContext('2d');
+  const bild = cx.createImageData(256, 256), px = bild.data;
+  const n = 256 * 2**z;
+  for (let r = 0; r < 256; r++){
+    /* Wie viele Meter ein Bildpunkt misst — je weiter nördlich, desto weniger. */
+    const lat = Math.atan(Math.sinh(Math.PI * (1 - 2*(y*256 + r + .5)/n)));
+    const m = 40075016.686 * Math.cos(lat) / n;
+    const r0 = Math.max(r-1, 0), r1 = Math.min(r+1, 255);
+    for (let s = 0; s < 256; s++){
+      const s0 = Math.max(s-1, 0), s1 = Math.min(s+1, 255);
+      /* Anstieg nach Osten und nach Norden, in Metern pro Meter. */
+      const ost  = (h[r*256+s1] - h[r*256+s0]) / ((s1-s0)*m);
+      const nord = (h[r0*256+s] - h[r1*256+s]) / ((r1-r0)*m);
+      const grad = Math.atan(Math.hypot(ost, nord)) * 180/Math.PI;
+      let rgb = null;
+      if (modus === 'neigung'){
+        for (let i = NEIGUNG.length-1; i >= 0; i--)
+          if (grad >= NEIGUNG[i].ab){ rgb = NEIGUNG[i].rgb; break; }
+      } else if (grad >= 5){
+        /* Flache Stellen schauen nirgendwohin und bleiben ohne Farbe. */
+        const az = (Math.atan2(-ost, -nord) * 180/Math.PI + 360) % 360;
+        rgb = AUSRICHTUNG[RICHTUNGEN[Math.round(az/45) % 8]];
+      }
+      if (!rgb) continue;
+      const i = (r*256 + s) * 4;
+      px[i] = rgb[0]; px[i+1] = rgb[1]; px[i+2] = rgb[2]; px[i+3] = 255;
+    }
+  }
+  cx.putImageData(bild, 0, 0);
+  return c;
+}
+
+/* Die Schicht selbst. Näher als Zoomstufe 15 wird die passende Höhenkachel
+   ausgeschnitten und vergrössert — genauer werden die Daten dadurch nicht. */
+const GelLayer = L.GridLayer.extend({
+  createTile(k, fertig){
+    const tile = document.createElement('canvas');
+    tile.width = tile.height = 256;
+    const dz = Math.min(k.z, GEL_DATENZOOM), f = 2 ** (k.z - dz);
+    const x = Math.floor(k.x / f), y = Math.floor(k.y / f), g = 256 / f;
+    const modus = gelModus;
+    gelHoehen(dz, x, y).then(h => {
+      tile.getContext('2d').drawImage(gelFaerben(h, dz, x, y, modus),
+        (k.x % f) * g, (k.y % f) * g, g, g, 0, 0, 256, 256);
+      fertig(null, tile);
+    }).catch(() => fertig(null, tile));   /* nicht erreichbar: Stelle bleibt einfach grau */
+    return tile;
+  }
+});
+
+function setzeGelaende(modus){
+  gelModus = modus;
+  if (modus === 'aus'){
+    if (gelLayer && map.hasLayer(gelLayer)) map.removeLayer(gelLayer);
+  } else {
+    if (!gelLayer) gelLayer = new GelLayer({
+      minZoom: GEL_MINZOOM, maxZoom: 18, opacity: .55, zIndex: 2,
+      attribution: 'Gelände: Terrain Tiles, EU-DEM © Copernicus'
+    });
+    if (map.hasLayer(gelLayer)) gelLayer.redraw(); else gelLayer.addTo(map);
+  }
+  zeichneGelPanel();
+}
+
+/* Kleine Windrose in den Farben der Ausrichtung, als Legende. */
+function gelRose(){
+  const M = 50, A = 46, I = 17;
+  const pt = (gr, r) => {
+    const b = gr * Math.PI / 180;
+    return [(M + r*Math.sin(b)).toFixed(1), (M - r*Math.cos(b)).toFixed(1)];
+  };
+  return '<svg class="gelrose" viewBox="0 0 100 100" aria-hidden="true">' + RICHTUNGEN.map((d,i) => {
+    const [x1,y1] = pt(i*45-22.5, I), [x2,y2] = pt(i*45-22.5, A);
+    const [x3,y3] = pt(i*45+22.5, A), [x4,y4] = pt(i*45+22.5, I);
+    const [tx,ty] = pt(i*45, (A+I)/2);
+    return `<path d="M${x1} ${y1}L${x2} ${y2}A${A} ${A} 0 0 1 ${x3} ${y3}L${x4} ${y4}A${I} ${I} 0 0 0 ${x1} ${y1}Z"
+      fill="rgb(${AUSRICHTUNG[d]})" fill-opacity=".6" stroke="#fff" stroke-width="1"></path>
+      <text x="${tx}" y="${ty}" dy=".35em">${d}</text>`;
+  }).join('') + '</svg>';
+}
+
+function zeichneGelPanel(){
+  const knopf = document.getElementById('gelknopf');
+  const panel = document.getElementById('gelpanel');
+  if (!knopf || !panel) return;
+  knopf.classList.toggle('an', gelModus !== 'aus');
+  panel.querySelectorAll('[data-gel]').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.gel === gelModus)));
+  const leg = panel.querySelector('.gelleg');
+  if (gelModus === 'neigung'){
+    leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter 10°</li>'
+      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},.7)"></i>${c.txt}</li>`).join('')
+      + '</ul>';
+  } else if (gelModus === 'ausrichtung'){
+    leg.innerHTML = '<div class="gelrosezeile">' + gelRose()
+      + '<span>Die Farbe zeigt, wohin der Hang schaut — also bergab. '
+      + 'Flache Stellen bleiben ohne Farbe.</span></div>';
+  } else leg.innerHTML = '';
+  const note = panel.querySelector('.gelnote');
+  if (gelModus === 'aus'){
+    note.textContent = 'Färbt die Hänge nach Steilheit oder nach Himmelsrichtung.';
+  } else {
+    note.innerHTML = (map.getZoom() < GEL_MINZOOM
+        ? '<b>Bitte näher heranzoomen</b> — die Farben erscheinen erst in einer näheren Ansicht. '
+        : '')
+      + 'Berechnet aus freien Höhendaten mit etwa 30 m Raster. Kleine Kanten fehlen; '
+      + 'weit herausgezoomt wirkt alles etwas flacher.';
+  }
+}
+
+function zeigeGelPanel(an){
+  const panel = document.getElementById('gelpanel');
+  if (!panel || panel.hidden === !an) return;
+  panel.hidden = !an;
+  const knopf = document.getElementById('gelknopf');
+  knopf.setAttribute('aria-expanded', String(an));
+  if (an) zeichneGelPanel();
+}
+
+/* Knopf links unter der Kartennadel. Er öffnet ein kleines Feld mit
+   Aus / Neigung / Ausrichtung und der passenden Legende. */
+function addGelaendeKnopf(){
+  const Knopf = L.Control.extend({
+    options: {position:'topleft'},
+    onAdd(){
+      const box = L.DomUtil.create('div', 'gelbox');
+      const bar = L.DomUtil.create('div', 'leaflet-bar', box);
+      const a = L.DomUtil.create('a', 'mapfs', bar);
+      a.id = 'gelknopf'; a.href = '#';
+      a.setAttribute('role', 'button');
+      a.setAttribute('aria-expanded', 'false');
+      a.title = 'Hangneigung und Hangausrichtung';
+      a.setAttribute('aria-label', 'Hangneigung und Hangausrichtung');
+      a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+        + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<path d="M2.5 19.5 9 8l4 6.5 2.5-3.5 6 8.5Z"></path></svg>';
+      const panel = L.DomUtil.create('div', 'gelpanel', box);
+      panel.id = 'gelpanel'; panel.hidden = true;
+      panel.innerHTML = '<p class="gelkopf">Gelände</p>'
+        + '<div class="fsegs" role="group" aria-label="Gelände einfärben">'
+        + '<button type="button" data-gel="aus">Aus</button>'
+        + '<button type="button" data-gel="neigung">Neigung</button>'
+        + '<button type="button" data-gel="ausrichtung">Ausrichtung</button></div>'
+        + '<div class="gelleg"></div><p class="gelnote"></p>';
+      L.DomEvent.disableClickPropagation(box);
+      L.DomEvent.disableScrollPropagation(box);
+      L.DomEvent.on(a, 'click', L.DomEvent.stop).on(a, 'click', () => zeigeGelPanel(panel.hidden));
+      panel.querySelectorAll('[data-gel]').forEach(b =>
+        b.addEventListener('click', () => setzeGelaende(b.dataset.gel)));
+      return box;
+    }
+  });
+  map.addControl(new Knopf());
+  map.on('zoomend', () => { if (gelModus !== 'aus') zeichneGelPanel(); });
 }
 
 /* ---------- Vollbild ----------
