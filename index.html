@@ -1450,18 +1450,24 @@ function addOrtKnopf(){
 const GEL_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const GEL_DATENZOOM = 15;   /* feiner gibt es die Höhenkacheln nicht — darüber wird vergrössert */
 const GEL_MINZOOM = 11;     /* weiter draußen wären die Hänge zu stark geglättet */
-/* Steilheit in Grad: ab welcher Neigung welche Farbe. Eine Skala von hell nach
-   dunkel — Sand, Gelb, Orange, Rot, Violett —, je steiler, desto kräftiger. Die
-   flachen Stufen bedecken große Flächen und sind darum durchsichtiger
+/* Steilheit in Grad: in 5°-Schritten, in drei Farbfamilien.
+   bis 30°: Sand, von hell nach dunkel — ruhiges Gelände.
+   30–45°: Gelb, Orange und ab 40° Rot als Warnfarbe.
+   ab 45°: Violett, von hell nach dunkel — extrem steil.
+   Die Sandtöne bedecken große Flächen und sind darum durchsichtiger
    (deckung: 0 bis 255), damit Höhenlinien und Namen lesbar bleiben. */
 const NEIGUNG = [
-  {ab:10, rgb:[235,215,160], txt:'10–20°', deckung:110},
-  {ab:20, rgb:[225,190,115], txt:'20–30°', deckung:160},
-  {ab:30, rgb:[245,235,90],  txt:'30–35°'},
-  {ab:35, rgb:[245,175,60],  txt:'35–40°'},
-  {ab:40, rgb:[230,75,60],   txt:'40–50°'},
-  {ab:50, rgb:[190,30,110],  txt:'50–60°'},
-  {ab:60, rgb:[110,30,140],  txt:'über 60°'}
+  {ab:10, rgb:[240,228,190], txt:'10–15°', deckung:90},
+  {ab:15, rgb:[232,212,160], txt:'15–20°', deckung:115},
+  {ab:20, rgb:[222,194,128], txt:'20–25°', deckung:140},
+  {ab:25, rgb:[208,172,98],  txt:'25–30°', deckung:165},
+  {ab:30, rgb:[250,225,70],  txt:'30–35°'},
+  {ab:35, rgb:[245,160,40],  txt:'35–40°'},
+  {ab:40, rgb:[225,40,35],   txt:'40–45°'},
+  {ab:45, rgb:[200,70,170],  txt:'45–50°'},
+  {ab:50, rgb:[160,45,155],  txt:'50–55°'},
+  {ab:55, rgb:[120,30,135],  txt:'55–60°'},
+  {ab:60, rgb:[75,20,100],   txt:'über 60°'}
 ];
 /* Himmelsrichtung, in die der Hang abfällt — dieselben acht wie in der Windrose.
    Farben wie bei gängigen Touren-Apps: Norden blau, Osten weiß, Süden orange,
@@ -1603,7 +1609,7 @@ function zeichneGelPanel(){
   const leg = panel.querySelector('.gelleg');
   if (gelModus === 'neigung'){
     leg.innerHTML = '<ul class="gelliste"><li><i class="leer"></i>unter ' + NEIGUNG[0].ab + '°</li>'
-      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},${Math.max((c.deckung ?? 255)/255, .5)*.85})"></i>${c.txt}</li>`).join('')
+      + NEIGUNG.map(c => `<li><i style="background:rgba(${c.rgb},${(.35 + .65*(c.deckung ?? 255)/255) * .9})"></i>${c.txt}</li>`).join('')
       + '</ul>';
   } else if (gelModus === 'ausrichtung'){
     leg.innerHTML = '<div class="gelrosezeile">' + gelRose()

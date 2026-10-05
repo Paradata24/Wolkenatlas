@@ -454,20 +454,26 @@ Solange eine Farbschicht an ist, ist der Bergknopf rosa. Ein Klick auf den
 Bergknopf oder irgendwo in die Karte schließt das Feld; die Farben bleiben trotzdem liegen,
 bis *Aus* gewählt wird. Beim Öffnen der Seite ist das Gelände immer aus.
 
-**Neigung** färbt die Hänge nach Steilheit — eine Skala von hell nach dunkel: Sand, Gelb,
-Orange, Rot, Violett. Je steiler, desto kräftiger die Farbe. Die beiden Sandtöne bedecken
-große Flächen und sind darum durchsichtiger, damit Höhenlinien und Namen lesbar bleiben:
+**Neigung** färbt die Hänge nach Steilheit, in **5°-Schritten** und drei Farbfamilien. Bei
+30° und bei 45° wechselt die Familie; ab 40° steht Rot als Warnfarbe:
 
-| Neigung | Farbe |
-|---|---|
-| unter 10° | keine |
-| 10–20° | heller Sand |
-| 20–30° | Sand |
-| 30–35° | gelb |
-| 35–40° | hellorange |
-| 40–50° | rot |
-| 50–60° | himbeerrot |
-| über 60° | violett |
+| Neigung | Farbe | |
+|---|---|---|
+| unter 10° | keine | |
+| 10–15° | Sand, sehr hell | ruhig |
+| 15–20° | Sand, hell | ruhig |
+| 20–25° | Sand | ruhig |
+| 25–30° | Sand, dunkel | ruhig |
+| 30–35° | Gelb | steil |
+| 35–40° | Orange | steil |
+| 40–45° | **Rot** | Warnung |
+| 45–50° | Violett, hell | extrem |
+| 50–55° | Violett | extrem |
+| 55–60° | Violett, dunkel | extrem |
+| über 60° | Violett, sehr dunkel | extrem |
+
+Die Sandtöne bedecken große Flächen und sind darum durchsichtiger, damit Höhenlinien und
+Namen lesbar bleiben.
 
 **Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
 Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
