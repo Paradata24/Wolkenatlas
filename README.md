@@ -449,23 +449,27 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 ### Gelände: Hangneigung und Hangausrichtung
 
 Links unter der Kartennadel sitzt der **Knopf mit dem Berg**. Er öffnet ein kleines Feld mit
-drei Knöpfen: **Aus**, **Neigung** und **Ausrichtung**. Darunter steht die passende Legende.
-Solange eine der beiden Farbschichten an ist, ist der Bergknopf rosa. Ein Klick auf den
+vier Knöpfen: **Aus**, **Neigung**, **Ausrichtung** und **Beides**. Darunter steht die passende Legende.
+Solange eine Farbschicht an ist, ist der Bergknopf rosa. Ein Klick auf den
 Bergknopf oder irgendwo in die Karte schließt das Feld; die Farben bleiben trotzdem liegen,
 bis *Aus* gewählt wird. Beim Öffnen der Seite ist das Gelände immer aus.
 
-**Neigung** färbt die Hänge nach Steilheit. Ab 30° sind es die Farben gängiger
-Touren-Apps; das ruhige Grün darunter zeigt, wo meist gestartet wird. Es ist
-durchsichtiger als die anderen Farben, weil es große Flächen bedeckt — so bleiben
-Höhenlinien und Namen lesbar:
+**Neigung** färbt die Hänge nach Steilheit — von Grün über Gelb und Rot bis Violett, je
+steiler, desto „gefährlicher“ die Farbe. Die Skala enthält bewusst kein Blau, Braun, Weiß
+oder Schwarz, damit sie sich nicht mit den Farben der Ausrichtung verwechseln lässt. Die
+beiden Grüntöne bedecken große Flächen und sind darum durchsichtiger, damit Höhenlinien und
+Namen lesbar bleiben:
 
 | Neigung | Farbe |
 |---|---|
 | unter 10° | keine |
-| 10–30° | hellgrün |
-| 30–35° | hellgelb |
+| 10–20° | sehr hellgrün |
+| 20–30° | hellgrün |
+| 30–35° | gelb |
 | 35–40° | hellorange |
-| 40° und mehr | rot |
+| 40–50° | rot |
+| 50–60° | himbeerrot |
+| über 60° | violett |
 
 **Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
 Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
@@ -474,8 +478,15 @@ schwarz**, dazwischen die Übergänge (NO hellblau, SO lachsfarben, SW dunkelbra
 NW dunkelblau). Die Legende ist eine kleine Windrose in diesen Farben. Fast flache Stellen (unter 5°) bleiben ohne
 Farbe, weil sie in keine Richtung schauen.
 
+**Beides** zeigt Neigung und Ausrichtung zugleich: die Neigung als Farbe wie oben, die
+Ausrichtung als **kleine Pfeile, die bergab zeigen** (Pfeilspitze nach Süden heißt Südhang).
+Zwei Farbschichten übereinander gingen nicht — die Farben würden sich mischen und keine
+von beiden wäre mehr ablesbar. Die Pfeile stehen in einem gleichmäßigen Raster, fünf je
+Kachelreihe, und sind in jeder Zoomstufe gleich groß. Gemessen wird über eine etwas größere
+Strecke, damit sie ruhig liegen. Auf flachen Stellen unter 10° gibt es keine Pfeile.
+
 Die Farben sind **durchsichtig** und liegen über der grauen Karte; die Ortspunkte
-bleiben obendrauf. Die Neigung ist kräftiger (sie färbt nur die steilen Stellen), die
+bleiben obendrauf. Die Neigung (auch bei „Beides“) ist kräftiger, die
 Ausrichtung durchsichtiger (sie färbt fast alles). Sie erscheinen erst **ab Zoomstufe 11** — weiter draußen wären die Hänge
 so stark geglättet, dass fast alles flach aussähe. Ist man weiter weg, steht im Feld
 „Bitte näher heranzoomen“.
