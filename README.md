@@ -277,18 +277,20 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 
 | Farbe | heißt |
 | --- | --- |
-| **Orange, gestrichelt** | an diesem Ort steht **noch kein Flug** — egal, welche Art er hat |
+| **Orange, gestrichelt** | an diesem Start- oder Übungsplatz steht **noch kein Flug** |
+| **Hellgrün** | Landeplatz, an dem **noch kein Flug** eingetragen ist |
 | **Rot** | Startplatz, an dem schon geflogen wurde |
 | **Blau** | Landeplatz mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
 
-Ein orangener Punkt wird also von selbst rot (beziehungsweise blau oder grün), sobald der
-erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
+Ein orangener Punkt wird also von selbst rot (beziehungsweise grün), ein hellgrüner
+Landeplatz von selbst blau, sobald der erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
 der Schlüssel für die Farben; gefiltert wird in der Filterleiste über der Karte.
 
-Orte ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene durchgezogen. So
-hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah beieinander, und
-nicht jedes Auge trennt sie zuverlässig.
+Start- und Übungsplätze ohne Eintrag sind zusätzlich **gestrichelt** gezeichnet, geflogene
+durchgezogen. So hängt der Unterschied nicht allein an der Farbe — Rot und Orange liegen nah
+beieinander, und nicht jedes Auge trennt sie zuverlässig. **Landeplätze** sehen dagegen immer
+gleich aus (durchgezogener Kreis) — ohne Eintrag sind sie nur **hellgrün** statt blau.
 
 ### Das Symbol der Startplätze
 
@@ -304,7 +306,7 @@ werden gar nicht gezeichnet.
 **Unverändert bleiben:** Landeplätze, Übungsgelände und Startplätze, bei denen noch keine
 Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Auch Farbe und Strichart
 bleiben, wie sie waren: Die Farbe sagt die Art des Orts, gestrichelt heißt „noch kein Flug“
-(siehe „Die Farbe der Punkte“) — das gilt für das Symbol genauso wie für den Punkt.
+(beim Landeplatz stattdessen hellgrün, siehe „Die Farbe der Punkte“) — das gilt für das Symbol genauso wie für den Punkt.
 
 ### Auf einen Ort klicken
 
