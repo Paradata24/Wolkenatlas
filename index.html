@@ -1459,9 +1459,11 @@ const NEIGUNG = [
   {ab:40, rgb:[229,57,53],   txt:'40–45°'},
   {ab:45, rgb:[142,36,170],  txt:'über 45°'}
 ];
-/* Himmelsrichtung, in die der Hang abfällt — dieselben acht wie in der Windrose. */
-const AUSRICHTUNG = {N:[229,57,53], NO:[251,140,0], O:[253,216,53], SO:[124,179,66],
-                     S:[38,198,218], SW:[66,165,245], W:[57,73,171], NW:[171,71,188]};
+/* Himmelsrichtung, in die der Hang abfällt — dieselben acht wie in der Windrose.
+   Farben wie bei gängigen Touren-Apps: Norden blau, Osten weiß, Süden orange,
+   Westen schwarz — dazwischen die Übergänge. */
+const AUSRICHTUNG = {N:[30,120,255],  NO:[160,198,245], O:[255,255,255], SO:[248,176,130],
+                     S:[255,110,20],  SW:[110,45,15],   W:[15,15,15],    NW:[15,40,90]};
 let gelModus = 'aus', gelLayer = null;
 
 /* Höhenkacheln merken, damit Umschalten und Verschieben nicht alles neu laden.
@@ -1565,7 +1567,9 @@ function setzeGelaende(modus){
   zeichneGelPanel();
 }
 
-/* Kleine Windrose in den Farben der Ausrichtung, als Legende. */
+/* Kleine Windrose in den Farben der Ausrichtung, als Legende.
+   Auf dunklen Feldern ist die Beschriftung weiß. */
+const dunkel = ([r,g,b]) => .299*r + .587*g + .114*b < 110;
 function gelRose(){
   const M = 50, A = 46, I = 17;
   const pt = (gr, r) => {
@@ -1577,8 +1581,8 @@ function gelRose(){
     const [x3,y3] = pt(i*45+22.5, A), [x4,y4] = pt(i*45+22.5, I);
     const [tx,ty] = pt(i*45, (A+I)/2);
     return `<path d="M${x1} ${y1}L${x2} ${y2}A${A} ${A} 0 0 1 ${x3} ${y3}L${x4} ${y4}A${I} ${I} 0 0 0 ${x1} ${y1}Z"
-      fill="rgb(${AUSRICHTUNG[d]})" fill-opacity=".6" stroke="#fff" stroke-width="1"></path>
-      <text x="${tx}" y="${ty}" dy=".35em">${d}</text>`;
+      fill="rgb(${AUSRICHTUNG[d]})" fill-opacity=".85" stroke="#C9D2DB" stroke-width="1"></path>
+      <text x="${tx}" y="${ty}" dy=".35em"${dunkel(AUSRICHTUNG[d]) ? ' fill="#fff"' : ''}>${d}</text>`;
   }).join('') + '</svg>';
 }
 

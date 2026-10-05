@@ -469,7 +469,9 @@ Lawinenkarten:
 
 **Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
 Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
-Legende ist eine kleine Windrose in diesen Farben. Fast flache Stellen (unter 5°) bleiben ohne
+Farben sind wie bei gängigen Touren-Apps: **Norden blau, Osten weiß, Süden orange, Westen
+schwarz**, dazwischen die Übergänge (NO hellblau, SO lachsfarben, SW dunkelbraun,
+NW dunkelblau). Die Legende ist eine kleine Windrose in diesen Farben. Fast flache Stellen (unter 5°) bleiben ohne
 Farbe, weil sie in keine Richtung schauen.
 
 Die Farben sind **halb durchsichtig** und liegen über der grauen Karte; die Ortspunkte
