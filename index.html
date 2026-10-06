@@ -981,17 +981,27 @@ async function startApp(session){
 }
 
 /* ══════════ DATEN LADEN ══════════ */
+/* War die Seite länger zu, erneuert sie beim Öffnen zuerst die Anmeldung. In der
+   Sekunde danach lehnt die Datenbank einzelne Anfragen ab (PGRST303), weil ihre
+   Uhr einen Hauch nachgeht. Dann kurz warten und noch einmal fragen. */
+async function frag(anfrage){
+  const res = await anfrage();
+  if (res.error?.code !== 'PGRST303') return res;
+  await new Promise(ok => setTimeout(ok, 1500));
+  return anfrage();
+}
+
 async function checkCols(){
   const [d, a, g, r, h, i] = await Promise.all([
-    sb.from('flights').select('dist_km').limit(1),
-    sb.from('flights').select('ascent').limit(1),
-    sb.from('gear').select('gclass').limit(1),
-    sb.from('places').select('dirs').limit(1),
-    sb.from('places').select('elev').limit(1),
-    sb.from('places').select('info').limit(1)
+    frag(() => sb.from('flights').select('dist_km').limit(1)),
+    frag(() => sb.from('flights').select('ascent').limit(1)),
+    frag(() => sb.from('gear').select('gclass').limit(1)),
+    frag(() => sb.from('places').select('dirs').limit(1)),
+    frag(() => sb.from('places').select('elev').limit(1)),
+    frag(() => sb.from('places').select('info').limit(1))
   ]);
   /* Als fehlend gilt eine Spalte nur, wenn die Datenbank genau das meldet.
-     Ein anderer Fehler (Funkloch am Handy, abgelaufene Anmeldung) heißt nicht,
+     Ein anderer Fehler (Funkloch, Anmeldung gerade erneuert) heißt nicht,
      dass die Spalte fehlt — sonst verschwänden Felder, die es längst gibt. */
   const da = res => !['42703', 'PGRST204'].includes(res.error?.code);
   HAS.dist   = da(d);
@@ -1006,9 +1016,9 @@ async function checkCols(){
 
 async function loadAll(){
   const [pl, ge, fl] = await Promise.all([
-    sb.from('places').select('*').order('name'),
-    sb.from('gear').select('*').order('name'),
-    sb.from('flights').select('*').order('flight_date', {ascending:false})
+    frag(() => sb.from('places').select('*').order('name')),
+    frag(() => sb.from('gear').select('*').order('name')),
+    frag(() => sb.from('flights').select('*').order('flight_date', {ascending:false}))
   ]);
   for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
   /* Stehen noch Orte der alten Art „Start und Landung“ in der Datenbank, werden sie
