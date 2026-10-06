@@ -990,12 +990,18 @@ async function checkCols(){
     sb.from('places').select('elev').limit(1),
     sb.from('places').select('info').limit(1)
   ]);
-  HAS.dist   = !d.error;
-  HAS.asc    = !a.error;
-  HAS.gclass = !g.error;
-  HAS.dirs   = !r.error;
-  HAS.elev   = !h.error;
-  HAS.info   = !i.error;
+  /* Als fehlend gilt eine Spalte nur, wenn die Datenbank genau das meldet.
+     Ein anderer Fehler (Funkloch am Handy, abgelaufene Anmeldung) heißt nicht,
+     dass die Spalte fehlt — sonst verschwänden Felder, die es längst gibt. */
+  const da = res => !['42703', 'PGRST204'].includes(res.error?.code);
+  HAS.dist   = da(d);
+  HAS.asc    = da(a);
+  HAS.gclass = da(g);
+  HAS.dirs   = da(r);
+  HAS.elev   = da(h);
+  HAS.info   = da(i);
+  /* Wer schneller war und das Ortsformular schon offen hat, sieht es jetzt richtig. */
+  syncForm();
 }
 
 async function loadAll(){
