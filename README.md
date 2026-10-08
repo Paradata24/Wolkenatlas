@@ -29,13 +29,13 @@ sodass jedes Konto nur eigene Zeilen sieht.
 
 **`places`** — Start- und Landeplätze
 `id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
-`type`: `start` | `land` | `ground` (Übungsgelände)
+`type`: `start` | `land` | `ground` (Übungsgelände) | `alpin` (Touren, Kletterei, Klettersteige)
 Frühere Versionen kannten zusätzlich `both` („Start und Landung“) und `exp` („Startplatz
 (experimentell)“). Beide Arten gibt es nicht mehr — siehe „Von ‚Start und Landung‘ zu zwei
 Punkten“ und „Experimentelle Startplätze“.
 `dirs`: mögliche Startrichtungen als Text, durch Komma getrennt — zum Beispiel `N,NO,SO`.
 Erlaubt sind die acht Richtungen `N`, `NO`, `O`, `SO`, `S`, `SW`, `W`, `NW`. Gibt es bei
-`start`; bei `land` und `ground` wird das Feld geleert.
+`start`; bei `land`, `ground` und `alpin` wird das Feld geleert.
 `elev`: Höhe über dem Meer in ganzen Metern. Wird nicht von Hand eingetragen, sondern
 aus `lat` und `lng` berechnet und beim Speichern mitgeschrieben (siehe „Höhe über dem Meer“).
 `info`: freier Text zum Ort — Zufahrt, Gebühren, Besonderheiten und so viele Links, wie du
@@ -122,6 +122,16 @@ alter table flights add constraint flights_kind_check
 ```
 
 Ohne diese Meldung ist nichts zu tun.
+
+**Art „Alpin“ bei Orten:** Die Datenbank lässt für `places.type` nur eine feste Liste von
+Werten zu. Damit Alpin-Orte gespeichert werden können, muss `alpin` darin stehen —
+einmalig im **SQL Editor**:
+
+```sql
+alter table places drop constraint if exists places_type_check;
+alter table places add constraint places_type_check
+  check (type in ('start','land','both','ground','alpin'));
+```
 
 ## Die Startseite
 
@@ -234,8 +244,14 @@ holt sie der Knopf mit der Kartennadel herbei.
 
 ### Die Art des Orts
 
-Ein Ort ist **Startplatz**, **Landeplatz** oder **Übungsgelände** (fürs Groundhandling).
-Mehr Arten gibt es nicht.
+Ein Ort ist **Startplatz**, **Landeplatz**, **Übungsgelände** (fürs Groundhandling) oder
+**Alpin**. Mehr Arten gibt es nicht.
+
+**Alpin** ist für Orte ohne Fliegen — Hochtouren, Kletterei, Klettersteige. Ein Alpin-Ort
+steht in der Karte als blitzblauer HMS-Karabiner statt als Punkt, ist immer blitzblau (nie
+orange oder gestrichelt für „noch kein Flug“), hat keine Startrichtungen und erscheint bei
+keinem Flug in der Auswahl von Start- oder Landeplatz — auch nicht beim Groundhandling.
+Im Filter über der Karte lässt er sich mit „Alpin“ ein- und ausblenden.
 
 Wer an einem Platz startet *und* landet, legt dafür **zwei Punkte** an — einen Startplatz
 oben und einen Landeplatz unten. Das ist genauer als ein gemeinsamer Punkt: In der Karte
