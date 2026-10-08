@@ -9,7 +9,7 @@
   :root{
     --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
     --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
-    --noflight:#E07A1F; --landneu:#8BC34A; --r:3px;
+    --noflight:#E07A1F; --landneu:#8BC34A; --alpin:#0096FF; --r:3px;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -357,6 +357,9 @@
   /* Noch kein Flug: gestrichelt statt durchgezogen — damit nicht allein die
      Farbe den Unterschied macht (Rot und Orange liegen nah beieinander). */
   .dot.offen{border-style:dashed}
+  /* Alpin-Orte haben statt des Punkts einen Karabiner — in der Legende ebenso. */
+  .legitem .kara{line-height:0;flex:none}
+  .legitem .kara svg{display:block}
   /* Trennt in der Legende die Art des Orts von den beiden Flugbuch-Knöpfen. */
   .legsep{width:1px;height:17px;background:var(--line);margin:0 3px;flex:none}
 
@@ -574,6 +577,7 @@
                   <button type="button" data-typ="start">Start</button>
                   <button type="button" data-typ="land">Landung</button>
                   <button type="button" data-typ="ground">Übung</button>
+                  <button type="button" data-typ="alpin">Alpin</button>
                 </div>
               </div>
               <div class="fgr fsuche">
@@ -617,6 +621,7 @@
           <span class="legitem"><i class="dot" style="color:var(--start)"></i> Startplatz</span>
           <span class="legitem"><i class="dot" style="color:var(--chart)"></i> Landeplatz</span>
           <span class="legitem"><i class="dot" style="color:var(--ground)"></i> Übungsgelände</span>
+          <span class="legitem"><span class="kara" id="leg-alpin"></span> Alpin</span>
           <span class="legsep" aria-hidden="true"></span>
           <span class="legitem"><i class="dot offen" style="color:var(--noflight)"></i> noch kein Flug</span>
           <span class="legitem"><i class="dot" style="color:var(--landneu)"></i> Landeplatz, noch kein Flug</span>
@@ -637,6 +642,7 @@
               <option value="start">Startplatz</option>
               <option value="land">Landeplatz</option>
               <option value="ground">Übungsgelände</option>
+              <option value="alpin">Alpin</option>
             </select></div>
           <div class="field" id="p-dirfield" style="display:none">
             <label>Mögliche Startrichtungen</label>
@@ -829,8 +835,8 @@ let infoId = null;
    Danach ändert ihn nur noch, wer es selbst verlangt: mit dem Knopf
    „Alle Orte ins Bild holen“. */
 let kartePasst = false;
-/* Die drei Arten, die im Filter an- und abgewählt werden können. */
-const ALLETYPEN = ['start','land','ground'];
+/* Die Arten, die im Filter an- und abgewählt werden können. */
+const ALLETYPEN = ['start','land','ground','alpin'];
 /* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
    Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
 const F = { typen:[...ALLETYPEN], min:'', max:'', log:'alle', dirs:[] };
@@ -858,10 +864,13 @@ const KINDS = {hikefly:'Hike & Fly', thermik:'Thermik/Soaring', schule:'Ausbildu
    Datenbank stehen, werden beim Laden umgestellt — siehe „Umstellung“ weiter unten.
    Farbe und Name dafür bleiben nur stehen, damit so ein Ort in den Sekunden bis zur
    Umstellung nicht ohne Beschriftung dasteht. Auswählen lässt er sich nicht mehr. */
-const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62'};
-const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände'};
+const COLOR = {start:'#C0326B', land:'#2E5A88', both:'#A8813F', ground:'#3F7D62', alpin:'#0096FF'};
+const TYPEN = {start:'Start', land:'Landung', both:'Start + Landung', ground:'Übungsgelände', alpin:'Alpin'};
 /* Wie die Arten in der Legende unter der Karte heißen. */
-const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände'};
+const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände', alpin:'Alpin'};
+/* Alpin-Orte (Touren, Kletterei, Klettersteige) haben mit Flügen nichts zu tun:
+   Sie sind immer blitzblau, nie „noch kein Flug“, und stehen bei keinem Flug zur Wahl. */
+const alpin = p => p.type === 'alpin';
 /* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
@@ -880,10 +889,11 @@ const fluegeAn = id => {
   }
   return flugZahl.get(id) || 0;
 };
-const farbeVon = p => fluegeAn(p.id) ? (COLOR[p.type] || '#15202B')
+const farbeVon = p => (fluegeAn(p.id) || alpin(p)) ? (COLOR[p.type] || '#15202B')
                    : p.type === 'land' ? LANDNEU : KEINFLUG;
-/* Gestrichelt heißt „noch kein Flug“ — außer beim Landeplatz, der dafür hellgrün ist. */
-const gestrichelt = p => !fluegeAn(p.id) && p.type !== 'land';
+/* Gestrichelt heißt „noch kein Flug“ — außer beim Landeplatz, der dafür hellgrün ist,
+   und bei Alpin-Orten, an denen ohnehin nicht geflogen wird. */
+const gestrichelt = p => !fluegeAn(p.id) && p.type !== 'land' && !alpin(p);
 /* Ein Link darf auch ohne „https://“ eingetippt werden. */
 const linkNorm = v => {
   const t = String(v ?? '').trim();
@@ -1848,7 +1858,7 @@ const filterAn = () => F.typen.length < ALLETYPEN.length
 function passtFilter(p){
   const n = fluegeAn(p.id);
   /* Art des Orts — nur die angewählten Arten bleiben stehen. Eine alte Art, die
-     es im Filter nicht gibt, ist nur zu sehen, solange alle drei angewählt sind. */
+     es im Filter nicht gibt, ist nur zu sehen, solange alle Arten angewählt sind. */
   if (F.typen.length < ALLETYPEN.length && !F.typen.includes(p.type)) return false;
   if (F.log === 'mit'  && !n) return false;
   if (F.log === 'ohne' &&  n) return false;
@@ -1872,13 +1882,14 @@ function passtFilter(p){
 const sichtbareOrte = () => S.places.filter(passtFilter);
 
 function initFilter(){
+  document.getElementById('leg-alpin').innerHTML = karabinerSVG(COLOR.alpin, {h:15, rand:false});
   /* Alle / Neue / Schon geflogen — genau einer ist gewählt. */
   document.getElementById('f-log').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     F.log = b.dataset.log;
     applyFilter();
   });
-  /* Start / Landung / Übung — jede Art lässt sich einzeln an- und abwählen. */
+  /* Start / Landung / Übung / Alpin — jede Art lässt sich einzeln an- und abwählen. */
   document.getElementById('f-typen').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const t = b.dataset.typ;
@@ -2168,6 +2179,28 @@ function symbolSVG(dirs, farbe, opt = {}){
 const ortSVG = p => symbolSVG(startet(p.type) ? dirsIn(p.dirs) : [], farbeVon(p),
                               {offen: gestrichelt(p), voll: infoId === p.id});
 
+/* Alpin-Orte bekommen einen HMS-Karabiner: birnenförmig, oben breit, unten schmal,
+   rechts der Schnapper mit der Schraubhülse. Ein weißer Rand drumherum hält ihn
+   auf jedem Kartenbild lesbar. `voll` füllt ihn leicht, solange sein Infofeld offen ist. */
+const KARAW = 20, KARAH = 26;
+function karabinerSVG(farbe, opt = {}){
+  const h = opt.h || KARAH, w = h * 24 / 32;
+  const buegel = 'M19.8 6.2C18.4 3.2 15.6 1.8 12 1.8C6.6 1.8 2.6 4.6 3.1 9.6L4.9 22.4'
+               + 'C5.5 27.2 8.2 30 12 30C15.8 30 18.5 27.2 19.1 22.4L19.4 20.6';
+  const schnapper = 'M21.2 9.4L19.6 20.2';
+  const huelse = 'rotate(8.5 19.8 17.5)';
+  const linien = (c, sw) =>
+      `<path d="${buegel}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`
+    + `<path d="${schnapper}" fill="none" stroke="${c}" stroke-width="${sw * .8}" stroke-linecap="round"/>`;
+  return `<svg width="${nz(w)}" height="${h}" viewBox="0 0 24 32" aria-hidden="true">`
+    + (opt.rand === false ? '' : linien('#fff', 6.2)
+       + `<rect x="17.3" y="13.2" width="5" height="8.6" rx="1.6" transform="${huelse}" fill="#fff" stroke="#fff" stroke-width="3"/>`)
+    + (opt.voll ? `<path d="${buegel}L21.2 9.4Z" fill="${farbe}" fill-opacity=".35"/>` : '')
+    + linien(farbe, 3)
+    + `<rect x="17.8" y="13.6" width="4" height="7.8" rx="1.3" transform="${huelse}" fill="${farbe}"/>`
+    + '</svg>';
+}
+
 function drawPlaces(){
   if (!layer) return;
   layer.clearLayers();
@@ -2180,7 +2213,11 @@ function drawPlaces(){
        gestrichelt — der Unterschied hängt so nicht allein an der Farbe, die sich
        von Rot nur wenig abhebt. */
     const mitRichtung = startet(p.type) && dirsIn(p.dirs).length;
-    const punkt = (mitRichtung
+    const punkt = (alpin(p)
+      ? L.marker([p.lat,p.lng], {keyboard:false, icon: L.divIcon({className:'',
+          iconSize:[KARAW,KARAH], iconAnchor:[KARAW/2,KARAH/2],
+          html: karabinerSVG(farbeVon(p), {voll: infoId === p.id})})})
+      : mitRichtung
       ? L.marker([p.lat,p.lng], {keyboard:false, icon: L.divIcon({className:'',
           iconSize:[SYMBOX,SYMBOX], iconAnchor:[SYMM,SYMM], html: ortSVG(p)})})
       : L.circleMarker([p.lat,p.lng],
@@ -2193,8 +2230,8 @@ function drawPlaces(){
       .bindTooltip(p.name+' · '+TYPEN[p.type]
         + (hoeheTxtOrt(p) ? ' · '+hoeheTxtOrt(p) : '')
         + (dirTxt(p.dirs) ? ' · Start bei '+dirTxt(p.dirs) : '')
-        + (fluegeAn(p.id) ? '' : ' · noch kein Flug'),
-        {direction:'top', offset: mitRichtung ? [0,-9] : [0,0]});
+        + (fluegeAn(p.id) || alpin(p) ? '' : ' · noch kein Flug'),
+        {direction:'top', offset: mitRichtung ? [0,-9] : alpin(p) ? [0,-11] : [0,0]});
     punkt.on('click', ev => {
       /* Beim Anlegen und Verschieben gilt der Klick der Karte, nicht dem Punkt —
          so lässt sich ein Ort auch genau auf einen anderen schieben. */
@@ -2351,7 +2388,7 @@ window.savePlace = async () => {
     /* Warnen, wenn die neue Art nicht mehr zu den Flügen passt, die den Ort benutzen. */
     const alsStart = S.flights.filter(f=>f.start===editId && !isGH(f)).length;
     const alsLand  = S.flights.filter(f=>f.land===editId).length;
-    const passt = { start:['start'], land:['land'], ground:[] }[type] || [];
+    const passt = { start:['start'], land:['land'], ground:[], alpin:[] }[type] || [];
     const flg = n => n === 1 ? '1 Flug' : n + ' Flügen';
     const kaputt = [ (alsStart && !passt.includes('start')) ? 'bei '+flg(alsStart)+' als Startplatz' : '',
                      (alsLand  && !passt.includes('land'))  ? 'bei '+flg(alsLand) +' als Landeplatz'  : '' ]
@@ -2403,7 +2440,7 @@ window.cancelPlace = () => {
 function placeInfoHTML(p){
   const n = fluegeAn(p.id);
   const kopf = [TYPEN[p.type], hoeheTxtOrt(p),
-                n ? (n === 1 ? '1 Flug' : n + ' Flüge') : 'noch kein Flug'].filter(Boolean);
+                n ? (n === 1 ? '1 Flug' : n + ' Flüge') : alpin(p) ? '' : 'noch kein Flug'].filter(Boolean);
   const dirs = dirTxt(p.dirs);
   const koord = p.lat.toFixed(5) + ', ' + p.lng.toFixed(5);
   return `<h3>${esc(p.name)}</h3>
@@ -2555,7 +2592,7 @@ function kindOpts(cur){
     `<option value="${k}"${k===cur?' selected':''}>${esc(t)}</option>`).join('');
 }
 function placeOpts(which, kind, cur){
-  let list = kind === 'gh' ? S.places : S.places.filter(p => p.type === which);
+  let list = kind === 'gh' ? S.places.filter(p => !alpin(p)) : S.places.filter(p => p.type === which);
   if (cur && !list.some(p=>p.id===cur)){
     const p = S.places.find(x=>x.id===cur); if (p) list = [p, ...list];
   }
