@@ -1496,6 +1496,12 @@ const NEIGUNG = [
    Westen schwarz — dazwischen die Übergänge. */
 const AUSRICHTUNG = {N:[30,120,255],  NO:[160,198,245], O:[255,255,255], SO:[248,176,130],
                      S:[255,110,20],  SW:[110,45,15],   W:[15,15,15],    NW:[15,40,90]};
+/* Zwischen je zwei benachbarten Richtungen liegt noch eine Zwischenstufe (NNO, ONO …)
+   genau in der Mitte ihrer beiden Farben — zusammen 16 Farben, ab Norden im Uhrzeigersinn. */
+const AUSRICHTUNG16 = RICHTUNGEN.flatMap((d, i) => {
+  const a = AUSRICHTUNG[d], b = AUSRICHTUNG[RICHTUNGEN[(i+1) % 8]];
+  return [a, a.map((v, k) => Math.round((v + b[k]) / 2))];
+});
 /* Beide Schichten lassen sich einzeln ein- und ausschalten, auch gleichzeitig. */
 const gelAn = {ausrichtung:false, neigung:false}, gelLayer = {};
 
@@ -1557,7 +1563,7 @@ function gelFaerben(h, z, x, y, modus){
       } else if (grad >= 5){
         /* Flache Stellen schauen nirgendwohin und bleiben ohne Farbe. */
         const az = (Math.atan2(-ost, -nord) * 180/Math.PI + 360) % 360;
-        rgb = AUSRICHTUNG[RICHTUNGEN[Math.round(az/45) % 8]];
+        rgb = AUSRICHTUNG16[Math.round(az/22.5) % 16];
       }
       if (!rgb) continue;
       const i = (r*256 + s) * 4;
@@ -1602,7 +1608,7 @@ function schalteGelaende(modus){
   zeichneGelLegende();
 }
 
-/* Kleine Windrose in den Farben der Ausrichtung, als Legende. Nur N, O, S und W
+/* Kleine Windrose in den 16 Farben der Ausrichtung, als Legende. Nur N, O, S und W
    sind beschriftet, damit die Schrift trotz der kleinen Rose lesbar bleibt.
    Auf dunklen Feldern ist die Beschriftung weiß. */
 const dunkel = ([r,g,b]) => .299*r + .587*g + .114*b < 110;
@@ -1612,13 +1618,13 @@ function gelRose(){
     const b = gr * Math.PI / 180;
     return [(M + r*Math.sin(b)).toFixed(1), (M - r*Math.cos(b)).toFixed(1)];
   };
-  return '<svg class="gelrose" viewBox="0 0 100 100" aria-hidden="true">' + RICHTUNGEN.map((d,i) => {
-    const [x1,y1] = pt(i*45-22.5, I), [x2,y2] = pt(i*45-22.5, A);
-    const [x3,y3] = pt(i*45+22.5, A), [x4,y4] = pt(i*45+22.5, I);
-    const [tx,ty] = pt(i*45, (A+I)/2);
+  return '<svg class="gelrose" viewBox="0 0 100 100" aria-hidden="true">' + AUSRICHTUNG16.map((rgb,i) => {
+    const [x1,y1] = pt(i*22.5-11.25, I), [x2,y2] = pt(i*22.5-11.25, A);
+    const [x3,y3] = pt(i*22.5+11.25, A), [x4,y4] = pt(i*22.5+11.25, I);
+    const [tx,ty] = pt(i*22.5, (A+I)/2);
     return `<path d="M${x1} ${y1}L${x2} ${y2}A${A} ${A} 0 0 1 ${x3} ${y3}L${x4} ${y4}A${I} ${I} 0 0 0 ${x1} ${y1}Z"
-      fill="rgb(${AUSRICHTUNG[d]})" fill-opacity=".85" stroke="#C9D2DB" stroke-width="1"></path>
-      ${i % 2 ? '' : `<text x="${tx}" y="${ty}" dy=".35em"${dunkel(AUSRICHTUNG[d]) ? ' class="hell"' : ''}>${d}</text>`}`;
+      fill="rgb(${rgb})" fill-opacity=".85" stroke="#C9D2DB" stroke-width=".6"></path>
+      ${i % 4 ? '' : `<text x="${tx}" y="${ty}" dy=".35em"${dunkel(rgb) ? ' class="hell"' : ''}>${RICHTUNGEN[i/2]}</text>`}`;
   }).join('') + `<circle cx="${M}" cy="${M}" r="${I}" fill="#fff" stroke="#C9D2DB" stroke-width="1"></circle></svg>`;
 }
 

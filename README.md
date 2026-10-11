@@ -496,10 +496,12 @@ Die Sandtöne bedecken große Flächen und sind darum durchsichtiger, damit Höh
 Namen lesbar bleiben.
 
 **Ausrichtung** färbt jeden Hang nach der Himmelsrichtung, in die er schaut — also bergab.
-Es sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
+Grundlage sind dieselben acht Richtungen wie in der Windrose (N, NO, O, SO, S, SW, W, NW). Die
 Farben sind wie bei gängigen Touren-Apps: **Norden blau, Osten weiß, Süden orange, Westen
 schwarz**, dazwischen die Übergänge (NO hellblau, SO lachsfarben, SW dunkelbraun,
-NW dunkelblau). Die Legende ist eine kleine Windrose in diesen Farben. Fast flache Stellen (unter 5°) bleiben ohne
+NW dunkelblau). Zwischen je zwei Richtungen liegt noch eine **Zwischenstufe** (NNO, ONO, OSO …)
+genau in der Mitte ihrer beiden Farben — zusammen **16 Farben**, jede für einen Bereich von
+22,5°. Die Legende ist eine kleine Windrose mit diesen 16 Feldern. Fast flache Stellen (unter 5°) bleiben ohne
 Farbe, weil sie in keine Richtung schauen.
 
 Die Farben sind **durchsichtig** und liegen über der grauen Karte; die Ortspunkte
