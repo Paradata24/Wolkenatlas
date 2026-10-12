@@ -1,9 +1,38 @@
 # Flugbuch
 
 Persönliches digitales Flugbuch für Gleitschirmflüge. Läuft auf PC und Handy.
+Repository: `paradata24/wolkenatlas` · Stand dieser Beschreibung: Oktober 2026.
 
 **Der Besitzer dieses Projekts programmiert nicht.** Erkläre Änderungen in Alltagssprache,
 nicht in Fachbegriffen, und mach nie eine Änderung, ohne kurz zu sagen, was sie bewirkt.
+
+## Für Claude im Chat
+
+Diese Datei ist die vollständige Beschreibung des Flugbuchs, so wie es gerade ist. Wer sie
+im Chat bekommt, sieht den Programmcode (`index.html`) nicht — nur diese Beschreibung.
+Darum gilt im Chat:
+
+- **Antworten auf Deutsch und in Alltagssprache.** Keine Fachbegriffe ohne Erklärung.
+- **Was hier steht, ist der aktuelle Stand.** Fragen zum Verhalten der App lassen sich
+  daraus beantworten; was hier nicht steht, gibt es (noch) nicht.
+- **Ideen und Änderungswünsche** am besten als klare Beschreibung formulieren — was soll
+  sich für mich sichtbar ändern? Diese Beschreibung gebe ich dann an Claude Code weiter,
+  das die Änderung im Repository macht.
+- **SQL für Supabase** immer als vollständigen Block zum Kopieren, mit dem Hinweis, wo er
+  hingehört (Supabase → **SQL Editor**). Niemals etwas vorschlagen, das Daten löscht, ohne
+  ausdrücklich darauf hinzuweisen.
+- Die **festgelegten Regeln** weiter unten sind bewusste Entscheidungen und gelten auch hier.
+
+### Die Reiter auf einen Blick
+
+| Reiter | wofür |
+| --- | --- |
+| **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
+| **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
+| **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
+| **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
+| **Statistik** | Säulenbild pro Monat und Auswertung nach Art, Ort und Ausrüstung |
+| **Sicherung** | komplettes Flugbuch als JSON herunterladen und wieder einlesen; CSV für Excel |
 
 ## Aufbau
 
@@ -132,6 +161,24 @@ alter table places drop constraint if exists places_type_check;
 alter table places add constraint places_type_check
   check (type in ('start','land','both','ground','alpin'));
 ```
+
+Falls das mit einer Fehlermeldung abbricht, steht vermutlich noch ein alter
+„experimenteller“ Startplatz (`exp`) in der Datenbank. Dann die App einmal öffnen — sie
+stellt solche Orte von selbst um (siehe „Experimentelle Startplätze“) — und den Block danach
+noch einmal ausführen.
+
+### Verbindung zur Datenbank
+
+Beim Öffnen prüft das Flugbuch, welche der später dazugekommenen Spalten es in Supabase
+schon gibt. **Als fehlend gilt eine Spalte nur, wenn die Datenbank genau das meldet.** Ein
+anderer Fehler — Funkloch am Handy, Anmeldung gerade erneuert — lässt die Felder stehen.
+Früher verschwanden dann zum Beispiel Startrichtungen oder Aufstiegsart, obwohl die
+Spalten längst da waren.
+
+War die Seite länger zu, erneuert sie beim Öffnen zuerst die Anmeldung. In der Sekunde
+danach lehnt Supabase manchmal einzelne Anfragen ab (Fehler `PGRST303`). Das Flugbuch
+wartet dann kurz (1,5 Sekunden) und fragt **einmal** neu — beim Prüfen der Spalten und
+beim Laden von Orten, Ausrüstung und Flügen.
 
 ## Die Startseite
 
@@ -301,6 +348,7 @@ Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
 | **Rot** | Startplatz, an dem schon geflogen wurde |
 | **Blau** | Landeplatz mit Eintrag |
 | **Grün** | Übungsgelände mit Eintrag |
+| **Blitzblau, Karabiner** | Alpin-Ort — immer gleich, weil dort nicht geflogen wird |
 
 Ein orangener Punkt wird also von selbst rot (beziehungsweise grün), ein hellgrüner
 Landeplatz von selbst blau, sobald der erste Flug an diesem Ort eingetragen ist. Unter der Karte steht die Legende dazu — sie ist
@@ -323,7 +371,8 @@ ein Viertelkranz von oben nach rechts. Richtungen, bei denen nicht gestartet wer
 werden gar nicht gezeichnet.
 
 **Unverändert bleiben:** Landeplätze, Übungsgelände und Startplätze, bei denen noch keine
-Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Auch Farbe und Strichart
+Richtung eingetragen ist. Sie sind weiter der schlichte Punkt. Alpin-Orte haben ihren
+Karabiner. Auch Farbe und Strichart
 bleiben, wie sie waren: Die Farbe sagt die Art des Orts, gestrichelt heißt „noch kein Flug“
 (beim Landeplatz stattdessen hellgrün, siehe „Die Farbe der Punkte“) — das gilt für das Symbol genauso wie für den Punkt.
 
@@ -405,13 +454,13 @@ Von links nach rechts:
 - **Wind kommt aus** — acht Knöpfe, N bis NW. Tipp an, woher der Wind kommt, zum Beispiel
   **W**: Dann bleiben nur die **Startplätze** stehen, an denen bei West gestartet werden
   kann. Mehrere Richtungen heißen „oder“: **SW und W** zeigt jeden Platz, der bei mindestens
-  einer der beiden geht. Nochmal antippen nimmt eine Richtung wieder weg. Landeplätze und
-  Übungsgelände haben keine Startrichtung und fallen heraus, sobald hier etwas gewählt ist.
+  einer der beiden geht. Nochmal antippen nimmt eine Richtung wieder weg. Landeplätze,
+  Übungsgelände und Alpin-Orte haben keine Startrichtung und fallen heraus, sobald hier etwas gewählt ist.
 - **Neu oder geflogen** — *Alle* · *Neue* (noch kein Flug im Flugbuch) · *Geflogen* (schon
   mindestens ein Flug dort). *W* + *Neue* heißt also: „neue Startplätze, die bei Westwind
   gehen“.
-- **Zeigen** — *Start*, *Landung*, *Übung*: welche Arten von Orten zu sehen sind. Anfangs
-  sind alle drei an; ein Klick blendet eine Art aus, ein zweiter wieder ein.
+- **Zeigen** — *Start*, *Landung*, *Übung*, *Alpin*: welche Arten von Orten zu sehen sind.
+  Anfangs sind alle vier an; ein Klick blendet eine Art aus, ein zweiter wieder ein.
 - **Ort suchen** — schon beim ersten Buchstaben klappt unter dem Feld eine **Liste mit
   passenden Orten** auf, wie man es von vielen Webseiten kennt. Bei „S“ stehen oben die Orte,
   deren Name mit S beginnt, danach die, bei denen ein späteres Wort mit S beginnt („Monte
@@ -534,8 +583,8 @@ dem Ort über *Ort speichern* beziehungsweise *Änderungen speichern*.
 
 Die gewählten Richtungen stehen danach im Kartensymbol, im Kästchen, das
 beim Zeigen auf den Punkt in der Karte aufgeht, und im Infofeld des Orts. Über dieselbe
-Windrose lässt sich im Filter suchen, wo bei einer bestimmten Richtung gestartet werden kann. Wird ein Ort auf **Landeplatz** oder
-**Übungsgelände** umgestellt, verschwindet die Windrose und die Richtungen werden beim
+Windrose lässt sich im Filter suchen, wo bei einer bestimmten Richtung gestartet werden kann. Wird ein Ort auf **Landeplatz**,
+**Übungsgelände** oder **Alpin** umgestellt, verschwindet die Windrose und die Richtungen werden beim
 Speichern geleert — dort gibt es keine Startrichtung.
 
 Fehlt die Spalte `dirs` in der Datenbank noch, steht an der Stelle der Windrose ein Hinweis,
