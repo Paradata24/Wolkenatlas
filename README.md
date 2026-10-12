@@ -28,7 +28,7 @@ Darum gilt im Chat:
 | Reiter | wofür |
 | --- | --- |
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
-| **Check** | Ampel-Check vor dem Start beim Hike & Fly: eigene Grenzwerte, fünf Punkte zuhause und am Gipfel, funktioniert auch ohne Netz |
+| **Check** | Ampel-Check vor dem Start beim Hike & Fly nach der eigenen Ampel-Tabelle: Prognosewerte eintippen, Ampel färbt sich selbst; zuhause und am Gipfel, auch ohne Netz |
 | **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
 | **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
 | **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
@@ -115,21 +115,29 @@ Ein Ort, an dem noch Flüge hängen, lässt sich nicht löschen.
 
 **`checks`** — Ampel-Checks vor dem Start
 `id, user_id, check_date, start_place, points, lift_ok, outcome, flight_id, created_at, updated_at`
-`points`: die fünf Punkte als JSON, zum Beispiel
-`{"1": {"home": "green", "abort": "Föhn über 4 hPa", "summit": "yellow", "why": ""}, …}` —
-Schlüssel `1` bis `5`, Farben `green` | `yellow` | `red`, leer heißt: nicht bewertet.
-`lift_ok`: Antwort auf die Bahn-Frage, `yes` | `no` | leer.
-`outcome`: `started` (gestartet) | `descended` (abgestiegen) | `cancelled` (abgesagt) | leer (offen).
+`points`: die Punkte als JSON, zum Beispiel
+`{"wind3000": {"homeVal": 14, "home": null, "summitVal": 22, "summit": "red", "abort": "…", "why": ""}, …}`.
+Schlüssel: `foehn`, `wind3000`, `windstart`, `boeen`, `boden`, `thermik`, `gelaende`.
+`homeVal` / `summitVal` sind die eingetippten Zahlen (zuhause / am Gipfel), `home` / `summit`
+eine **von Hand** getippte Farbe (`green` | `yellow` | `red`) — leer heißt: Es gilt die Farbe
+aus der Zahl. Checks aus der allerersten Fassung hatten die Schlüssel `1` bis `5`; diese
+Einträge bleiben in der Datenbank, werden aber nicht mehr angezeigt.
+`lift_ok`, `outcome`, `flight_id` stammen aus der ersten Fassung (Bahn-Frage, Ergebnis,
+verknüpfter Flug) und werden nicht mehr eingetragen. Ein schon vorhandenes Ergebnis steht noch
+in der Liste. `flight_id` verweist auf `flights` mit `on delete set null`.
 `start_place` verweist auf `places` mit `on delete restrict` — ein Ort mit Checks lässt sich
-nicht löschen. `flight_id` verweist auf `flights` mit `on delete set null`: Wird der Flug
-gelöscht, bleibt der Check stehen und zeigt nur nicht mehr auf ihn.
+nicht löschen.
 Die `id` entsteht schon im Handy, damit ein ohne Netz angelegter Check beim Senden genau
 einmal ankommt.
 
 **`check_limits`** — „Meine Grenzwerte“, eine Zeile pro Konto
-`user_id, wind_max, gust_max, foehn_hpa, valley_max, base_min, latest_start, updated_at`
-(Startwind max km/h, Böenspanne max km/h, Föhn-Druckdifferenz N–S ab hPa, Talwind am
-Landeplatz max km/h, Wolkenbasis mind. über Start in m, späteste Startzeit).
+`user_id, ampel, base_min, latest_start, wind_max, gust_max, foehn_hpa, valley_max, updated_at`
+`ampel`: die Ampelgrenzen als JSON, je Wert „grün bis“ und „gelb bis“, zum Beispiel
+`{"foehn": [1.5, 3], "wind": [15, 25], "boeen": [20, 30]}`. Fehlt ein Wert, gilt der aus der
+Ampel-Tabelle (genau diese Zahlen).
+`base_min` (Wolkenbasis mind. über Start, m) und `latest_start` (späteste Startzeit) stehen als
+Erinnerung bei „Thermik & Wolken“. `wind_max`, `gust_max`, `foehn_hpa`, `valley_max` stammen aus
+der ersten Fassung und werden nicht mehr benutzt.
 
 ### Leere Felder
 
@@ -222,6 +230,7 @@ create policy "eigene Checks" on checks for all
 
 create table if not exists check_limits (
   user_id      uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  ampel        jsonb,
   wind_max     numeric,
   gust_max     numeric,
   foehn_hpa    numeric,
@@ -237,6 +246,15 @@ create policy "eigene Grenzwerte" on check_limits for all
 ```
 
 Danach die Seite neu laden.
+
+**Eigene Ampelgrenzen:** Damit sich „grün bis“ und „gelb bis“ ändern lassen, braucht
+`check_limits` noch eine Spalte. Solange sie fehlt, gelten die Grenzen aus der Ampel-Tabelle
+und die Felder sind gesperrt, mit einem Hinweis darunter. Einmalig im **SQL Editor** (legt
+nur die Spalte an, löscht nichts):
+
+```sql
+alter table check_limits add column if not exists ampel jsonb;
+```
 
 ### Verbindung zur Datenbank
 
@@ -322,75 +340,68 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 
 ## Der Reiter „Check“
 
-Ein **Ampel-Check vor dem Start beim Hike & Fly**. Er steht gleich hinter „Flüge“. Die
-Kennzahlenleiste ist hier ausgeblendet, damit am Handy mehr Platz bleibt.
-
-**Die App entscheidet nicht.** Sie rechnet nur die Regel aus (siehe unten) und zeigt das
-Ergebnis. Ob gestartet wird, entscheidest du — „Gestartet“ lässt sich auch bei „Kein Start“
-antippen.
+Ein **Ampel-Check vor dem Start beim Hike & Fly**, gebaut nach der eigenen Ampel-Tabelle
+(`Ampel.xlsx`). Er steht gleich hinter „Flüge“. Die Kennzahlenleiste ist hier ausgeblendet,
+damit am Handy mehr Platz bleibt. Ein Gesamtergebnis gibt es bewusst nicht — die Ampeln
+stehen für sich, entscheiden tust du.
 
 ### Meine Grenzwerte
 
-Ganz oben, einmal eintragen und jederzeit änderbar: Startwind max (km/h), Böenspanne max
-(km/h), Föhn-Druckdifferenz N–S ab (hPa), Talwind am Landeplatz max (km/h), Wolkenbasis mind.
-über Start (m) und späteste Startzeit. Gespeichert wird, sobald man ein Feld verlässt;
-Komma oder Punkt als Dezimalzeichen geht beides. Die Werte stehen in der Datenbank
-(`check_limits`) und sind darum auf PC und Handy gleich. In einem offenen Check steht unter
-jedem Punkt klein, welche Grenzwerte dazugehören (bei „Gelände & Lee“ gibt es keine).
+Ganz oben, wie Blatt 2 der Ampel-Tabelle: für jeden Wert **„grün bis“** und **„gelb bis“**,
+darüber ist es rot. Vorbelegt mit den Zahlen aus der Tabelle:
+
+| Wert | grün bis | gelb bis | gilt für |
+| --- | --- | --- | --- |
+| Föhn | 1,5 hPa | 3 hPa | Föhn (BZ–IBK) |
+| Mittelwind | 15 km/h | 25 km/h | Höhenwind 3000 m, Höhenwind Startplatzhöhe, Bodenwind |
+| Böen | 20 km/h | 30 km/h | Windböen im Flugbereich |
+
+Jede Zahl lässt sich ändern; ein geleertes Feld springt auf den Wert aus der Tabelle zurück.
+„grün bis“ muss kleiner sein als „gelb bis“, sonst kommt ein Hinweis und die alte Zahl bleibt.
+Darunter **Wolkenbasis mind. über Start** und **späteste Startzeit** — sie stehen als
+Erinnerung beim Punkt „Thermik & Wolken“. Gespeichert wird, sobald man ein Feld verlässt;
+Komma oder Punkt geht beides. Die Werte stehen in der Datenbank (`check_limits`) und sind
+darum auf PC und Handy gleich. Ändert man eine Grenze, färben sich offene Checks sofort neu.
 
 ### Die Liste
 
-Darunter **Neuer Check** und alle Checks, neueste zuerst: Datum, Startplatz und Ergebnis
-(*gestartet*, *abgestiegen*, *abgesagt* oder gestrichelt *offen*). Ein Tipp auf eine Zeile
-öffnet den Check; er ersetzt dann die Liste, *← Alle Checks* führt zurück.
+Darunter **Neuer Check** und alle Checks, neueste zuerst: Datum, Startplatz und je Punkt ein
+kleiner Farbpunkt (es zählt die Gipfelfarbe, sonst die Zuhause-Farbe; gestrichelt heißt: noch
+nicht bewertet). Ein Tipp auf eine Zeile öffnet den Check; er ersetzt dann die Liste,
+*← Alle Checks* führt zurück. Checks lassen sich derzeit nicht löschen.
 
 ### Ein Check
 
 Oben **Datum** (vorbelegt mit heute) und **Startplatz** — die Auswahl wie beim Flug, nur
-Startplätze. Darunter fünf Punkte:
+Startplätze. Darunter sieben Punkte. Die ersten fünf sind die Zeilen aus der Ampel-Tabelle,
+mit der Quelle dazu:
 
-1. Höhenwind & Föhn · 2. Startwind · 3. Thermik & Wolken · 4. Gelände & Lee · 5. Landung & Talwind
+1. **Föhn (BZ–IBK)** in hPa — Südtirol Wetter
+2. **Höhenwind 3000 m** in km/h — Icon-D2
+3. **Höhenwind Startplatzhöhe oder darüber** in km/h — Icon-D2
+4. **Windböen im Flugbereich (10 m AGL)** in km/h — Icon-D2
+5. **Max. Bodenwind Flugbereich (10 m AGL)** in km/h — Icon-D2
+6. **Thermik & Wolken** — ohne Zahl, von Hand
+7. **Gelände & Lee** — ohne Zahl, von Hand
 
-Jeder Punkt hat zwei Spalten mit je drei großen Ampelknöpfen (grün ✓, gelb !, rot ✕ — das
-Zeichen sagt dasselbe wie die Farbe):
+Jeder Punkt hat zwei Spalten, **Zuhause** und **Gipfel**, mit je drei großen Ampelknöpfen
+(grün ✓, gelb !, rot ✕ — das Zeichen sagt dasselbe wie die Farbe). Bei den Punkten 1–5 steht
+über den Knöpfen ein Zahlenfeld: zuhause die **Prognose**, am Gipfel der Wert **jetzt**.
 
-- **Zuhause** — Farbe antippen, darunter das Feld **„Abbruch bei …“**.
-- **Gipfel** — Farbe antippen.
+- **Zahl eintippen → die Ampel färbt sich von selbst** nach den Grenzwerten (darunter steht
+  „automatisch aus der Zahl“). Beim Föhn zählt der Betrag: ein Nordföhn (Zahl unter null)
+  wird genauso eingefärbt.
+- **Eine Farbe antippen überstimmt die Zahl** („von Hand · aus der Zahl wäre gelb“).
+  Nochmal antippen nimmt sie wieder weg, dann gilt wieder die Farbe aus der Zahl.
+- Unter Zuhause das Feld **„Abbruch bei …“**.
+- Über der Spalte, deren Farbe gerade zählt, steht „zählt“ — die Gipfelfarbe, sonst die
+  Zuhause-Farbe.
+- Ist die **Gipfelfarbe besser als die Zuhause-Farbe**, erscheint bei diesem Punkt das
+  Feld **„Warum?“**.
 
-Nochmal antippen nimmt eine Farbe wieder weg. Über der Spalte, deren Farbe gerade zählt,
-steht „zählt“.
-
-### Die Auswertung
-
-Sie steht **unten am Bildschirm fest**, solange der Check offen ist, und ändert sich mit
-jedem Tipp:
-
-- Es zählt die **Gipfelfarbe**; solange sie fehlt, die **Zuhause-Farbe**.
-- **Mindestens 1× rot oder mindestens 2× gelb → groß „Kein Start“**, sonst „Start möglich“.
-  Sind noch nicht alle fünf Punkte bewertet und hat die Regel noch nicht angeschlagen,
-  steht dort „Noch offen“ mit der Zahl der bewerteten Punkte.
-- **Schon zuhause 2× gelb** → Hinweis „Plan ändern: anderer Berg, früher starten oder
-  Abstieg einplanen“.
-- Ist eine **Gipfelfarbe besser als die Zuhause-Farbe**, erscheint bei diesem Punkt das
-  Pflichtfeld **„Warum?“**. Solange es leer ist, lässt sich der Check nicht abschließen.
-- Zum Schluss die Frage **„Würde ich auch starten, wenn ich mit der Bahn raufgefahren
-  wäre?“** (Ja/Nein). Bei *Nein* → „Kein Start“.
-
-### Abschluss
-
-Drei Knöpfe: **Gestartet**, **Abgestiegen**, **Abgesagt**.
-
-- **Gestartet** legt in „Flüge“ eine neue Zeile an — Datum und Startplatz aus dem Check,
-  Art Hike & Fly, Aufstieg zu Fuß — und verknüpft sie mit dem Check. Den Rest (Dauer,
-  Landeplatz, Ausrüstung) trägst du wie gewohnt in der Flugtabelle nach. Im
-  **Detailfenster des Flugs** steht dann der Check: Ergebnis der Regel, Bahn-Frage und
-  für jeden Punkt Zuhause → Gipfel mit „Abbruch bei“ und „Warum“; *Check öffnen* springt hin.
-- Wer danach doch ein anderes Ergebnis wählt, bekommt eine Rückfrage: Der Flug bleibt in
-  „Flüge“ stehen und wird nur vom Check gelöst.
-- **Wird der verknüpfte Flug gelöscht, bleibt der Check stehen** (Ergebnis weiter
-  „gestartet“). Nochmal „Gestartet“ tippen legt dann bei Bedarf einen neuen Flug an.
-- **Check löschen** steht ganz unten im Check, immer mit Rückfrage. Der verknüpfte Flug
-  bleibt dabei stehen.
+Die Abweichungen zur Tabelle: Für den Föhn gelten die Grenzen aus Blatt 2 (0–1,5 grün,
+bis 3 gelb, darüber rot), nicht die Formel aus Blatt 1. Punktzahl 0–20 und Mittelwert gibt
+es nicht.
 
 ### Ohne Netz
 
@@ -403,8 +414,6 @@ Ein Check, der zuhause geöffnet wurde, lässt sich **am Gipfel ohne Netz weiter
 - Solange etwas nur im Handy steht, zeigt ein kleiner gelber Hinweis **„noch nicht
   gespeichert“** — im Check, in der Liste und bei den Grenzwerten; am Reiter „Check“ steht
   ein gelber Punkt.
-- Auch **„Gestartet“** geht ohne Netz: Der Flug steht sofort in der Flugtabelle und wird
-  mit dem Check zusammen gesendet.
 - **Lädt das Handy die Seite am Gipfel neu**, kommt sie aus der Offline-Kopie (`sw.js`) und
   zeigt den zuletzt mit Netz geladenen Stand, mit einem gelben Balken „Ohne Netz“ oben.
   Das geht auch, wenn die Anmeldung inzwischen abgelaufen ist — sie wird erneuert, sobald
@@ -412,7 +421,6 @@ Ein Check, der zuhause geöffnet wurde, lässt sich **am Gipfel ohne Netz weiter
   Netz geöffnet und danach noch einmal neu geladen (beim allerersten Öffnen legt der
   Browser die Kopie erst an).
 - Ohne Netz bitte nur Checks bearbeiten. Flüge, Orte und Ausrüstung brauchen weiter Netz.
-- **Löschen** eines Checks braucht Netz — außer der Check war noch nie gesendet.
 - Der gespeicherte Stand gehört zum Konto und wird beim Abmelden gelöscht; noch nicht
   gesendete Checks bleiben und gehen beim nächsten Anmelden raus.
 
@@ -885,9 +893,7 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
   was der Satz darunter dann dazusagt.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
-- **Der Check entscheidet nicht.** Er zeigt nur das Ergebnis der Regel (1× rot oder 2× gelb
-  oder „Nein“ bei der Bahn-Frage → „Kein Start“). Gestartet werden kann immer.
-- Ein gelöschter Flug lässt seinen Check stehen; ein gelöschter Check lässt seinen Flug stehen.
+- **Der Check rechnet kein Gesamtergebnis aus.** Jede Ampel steht für sich; entscheiden tust du.
 - Kommentare und Reminder sind tagebuchlang. In der Flugtabelle steht dafür nur ein
   kleiner Knopf, der ganze Text steht im Reiter „Reminder“ und im Detailfenster.
 

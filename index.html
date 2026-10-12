@@ -500,7 +500,6 @@
   .erg{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
     padding:3px 7px;border-radius:2px;border:1px solid currentColor;white-space:nowrap;flex:none}
   .erg.started{color:#23884F} .erg.descended{color:var(--chart)} .erg.cancelled{color:var(--muted)}
-  .erg.offen{color:var(--muted);border-style:dashed}
 
   .ckedit h2{flex-wrap:wrap}
   .ckedit h2 .zurueck{font-family:var(--sans);font-size:13px;letter-spacing:0;text-transform:none}
@@ -530,42 +529,31 @@
   .ampel.hat .amp[aria-pressed="true"]{opacity:1;background:var(--c);color:#fff;
     box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--c)}
   .ampel.hat .amp.yellow[aria-pressed="true"]{background:#F2C200;color:#3A2C00}
+  /* Ampelgrenzen wie in Blatt 2 der Ampel-Tabelle. */
+  .ampgrenzen{width:auto;border-collapse:separate;border-spacing:0 4px}
+  .ampgrenzen th{padding:0 8px 2px;border:0;text-align:left}
+  .ampgrenzen td{padding:0 8px 0 0;border:0;vertical-align:middle;white-space:nowrap}
+  .ampgrenzen td:first-child{font-weight:600;padding-right:14px}
+  .ampgrenzen .einh{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
+  .ampgrenzen input{width:70px;font-family:var(--mono);font-size:16px;padding:7px 9px}
+  .ampgrenzen tr td:nth-child(2) input{border-color:#9BCFB0;background:#F4FBF6}
+  .ampgrenzen tr td:nth-child(3) input{border-color:#E6CC72;background:#FFFBEA}
+  .ampgrenzen input:disabled{opacity:.7}
+  .ampgrenzen .rot{font-size:13px;color:#B02A28;font-weight:600}
+  /* Zahlenfeld über der Ampel: Prognose zuhause, Wert am Gipfel. */
+  .ckzahl{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+  .ckzahl input{flex:1;min-width:0;font-family:var(--mono);font-size:16px;padding:8px 10px}
+  .ckzahl span{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:34px}
+  .ampinfo{font-size:11.5px;color:var(--muted);margin:5px 0 0;min-height:1em}
+  /* Farbpunkte je Punkt in der Liste der Checks. */
+  .ckdots{display:inline-flex;gap:3px;flex:none}
+  .ckdots i{width:9px;height:9px;border-radius:50%;border:1.5px dashed var(--line)}
+  .ckdots i.green{background:#23884F;border:0} .ckdots i.yellow{background:#F2C200;border:0}
+  .ckdots i.red{background:#C8312F;border:0}
   @media(max-width:560px){
     .ckspalten{gap:10px;grid-template-areas:"zu gi" "ab ab" "wa wa"}
     .amp{height:52px}
   }
-
-  /* Das Ergebnis der Regel bleibt unten am Bildschirm stehen, solange der Check offen ist. */
-  .ckurteil{position:sticky;bottom:0;z-index:5;background:var(--panel);border-top:2px solid var(--ink);
-    padding:10px 15px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 18px rgba(21,32,43,.1)}
-  .ckurteil .gross{font-size:26px;font-weight:750;line-height:1.15}
-  .ckurteil .grund{font-size:12.5px;color:var(--muted);margin-top:2px}
-  .ckurteil.kein{background:#FCEBEA;border-top-color:#C8312F} .ckurteil.kein .gross{color:#B02A28}
-  .ckurteil.start{background:#E9F6EE;border-top-color:#23884F} .ckurteil.start .gross{color:#1E7444}
-  .ckurteil.offen .gross{color:var(--muted)}
-  .ckplan{margin-top:7px;background:#FFF4D6;border-left:3px solid #C99700;padding:6px 10px;
-    font-size:13.5px;line-height:1.4}
-  .ckschluss{padding:16px 15px;border-top:1px solid var(--line)}
-  .ckfrage{font-size:15.5px;font-weight:600;margin:0 0 10px;line-height:1.4}
-  .ckwahl{display:flex;gap:8px}
-  .ckwahl button{flex:1 1 0;min-width:0;min-height:54px;font:inherit;font-size:15.5px;font-weight:600;
-    color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:12px;cursor:pointer;
-    padding:6px 4px;touch-action:manipulation;line-height:1.2}
-  .ckwahl button:hover{border-color:var(--ink)}
-  .ckwahl button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-  .ckwahl.ende button[data-o="started"][aria-pressed="true"]{background:#23884F;border-color:#23884F}
-  .ckwahl.ende button[data-o="descended"][aria-pressed="true"]{background:var(--chart);border-color:var(--chart)}
-  .ckwahl.ende button[data-o="cancelled"][aria-pressed="true"]{background:var(--muted);border-color:var(--muted)}
-  .ckflug{margin:10px 0 0;font-size:13.5px;color:var(--muted)}
-  /* Kurzfassung des Checks im Detailfenster eines Flugs. */
-  .ckmini{list-style:none;margin:8px 0 10px;padding:0;font-size:14px}
-  .ckmini li{padding:5px 0;border-bottom:1px solid var(--line)}
-  .ckmini li:last-child{border-bottom:0}
-  .ckmini .txt{display:block;font-size:12.5px;color:var(--muted);margin:2px 0 0 52px;white-space:pre-wrap}
-  .fp{display:inline-block;width:12px;height:12px;border-radius:50%;border:1.5px dashed var(--line);
-    vertical-align:-1px}
-  .fp.green{background:#23884F;border:0} .fp.yellow{background:#F2C200;border:0} .fp.red{background:#C8312F;border:0}
-  .ckmini .fps{display:inline-block;width:46px;white-space:nowrap;color:var(--muted);font-size:11px}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -939,6 +927,8 @@ let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:fa
 /* Der Reiter „Check“ braucht zwei eigene Tabellen (`checks` und `check_limits`).
    Fehlen sie, zeigt er nur einen Hinweis. */
 HAS.check = false;
+/* Die eigenen Ampelgrenzen (Spalte `check_limits.ampel`) kamen danach dazu. */
+HAS.ampel = false;
 /* Wer angemeldet ist. `ANGEMELDET` ist falsch, wenn die Seite ohne Netz geöffnet
    wurde und die Anmeldung gerade nicht erneuert werden kann — dann gilt der
    zuletzt gespeicherte Stand, bis das Netz zurück ist. */
@@ -1184,12 +1174,13 @@ async function checkCols(){
     frag(() => sb.from('places').select('elev').limit(1)),
     frag(() => sb.from('places').select('info').limit(1)),
     frag(() => sb.from('checks').select('id').limit(1)),
-    frag(() => sb.from('check_limits').select('user_id').limit(1))
+    frag(() => sb.from('check_limits').select('user_id').limit(1)),
+    frag(() => sb.from('check_limits').select('ampel').limit(1))
   ]);
   /* Ganz ohne Netz weiß die Datenbank gar nichts zu sagen — dann gilt, was beim
      letzten Mal mit Netz festgestellt wurde. */
   if (alle.every(res => netzFehler(res.error))) return spaltenAusStand();
-  const [d, a, g, r, h, i, c, l] = alle;
+  const [d, a, g, r, h, i, c, l, m] = alle;
 
   /* Als fehlend gilt eine Spalte nur, wenn die Datenbank genau das meldet.
      Ein anderer Fehler (Funkloch, Anmeldung gerade erneuert) heißt nicht,
@@ -1204,6 +1195,7 @@ async function checkCols(){
   /* Eine fehlende Tabelle meldet die Datenbank als 42P01 oder PGRST205. */
   const tabelle = res => !['42P01', 'PGRST205'].includes(res.error?.code);
   HAS.check  = tabelle(c) && tabelle(l);
+  HAS.ampel  = HAS.check && da(m);
   /* Wer schneller war und das Ortsformular schon offen hat, sieht es jetzt richtig. */
   syncForm();
 }
@@ -1222,8 +1214,7 @@ const flugAus = f => ({
 function uebernimm(d){
   S.places  = d.places || [];
   S.gear    = d.gear || [];
-  const fl  = [...(d.flights || [])];
-  Object.values(OFFEN.flights).forEach(f => { if (!fl.some(x => x.id === f.id)) fl.push(f); });
+  const fl  = d.flights || [];
   S.flights = fl.map(flugAus);
   const ck  = (d.checks || []).map(c => ({...c, start_place: c.start_place || null}));
   Object.values(OFFEN.checks).forEach(c => {
@@ -3247,10 +3238,9 @@ window.saveText = async () => {
 };
 
 /* ══════════ CHECK: AMPEL VOR DEM START ══════════
-   Ein Check gehört zu einem Hike & Fly: zuhause fünf Punkte grün/gelb/rot
+   Ein Check gehört zu einem Hike & Fly: zuhause vier Punkte grün/gelb/rot
    einschätzen und für jeden notieren, wann abgebrochen wird — am Gipfel dieselben
-   fünf Punkte noch einmal. Die App rechnet nur die Regel aus und zeigt das
-   Ergebnis; entscheiden tust du.
+   Punkte noch einmal.
 
    Ohne Netz: Jede Eingabe landet zuerst im Handy (localStorage) und wird von dort
    gesendet. Klappt das nicht, bleibt sie liegen und geht raus, sobald wieder Netz
@@ -3265,7 +3255,7 @@ function ablegen(key, wert){ try { localStorage.setItem(key, JSON.stringify(wert
    selbst schickt immer eine Fehlernummer mit. */
 const netzFehler = e => !!e && (!navigator.onLine
   || (!e.code && /fetch|network|load failed|timed? ?out|abort/i.test(String(e.message ?? e))));
-/* Eine neue id schon im Handy — damit ein ohne Netz angelegter Check (oder Flug)
+/* Eine neue id schon im Handy — damit ein ohne Netz angelegter Check
    beim späteren Senden genau einmal in der Datenbank landet. */
 const neueId = () => (crypto.randomUUID ? crypto.randomUUID()
   : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, ch =>
@@ -3274,10 +3264,6 @@ const neueId = () => (crypto.randomUUID ? crypto.randomUUID()
 /* ---------- Der zuletzt geladene Stand, für unterwegs ---------- */
 function merkeStand(d){
   ablegen(STAND_KEY, { uid:UID, email:EMAIL, at:Date.now(), HAS:{...HAS}, ...d });
-}
-function standAnpassen(fn){
-  const st = lies(STAND_KEY);
-  if (st && st.uid === UID){ fn(st); ablegen(STAND_KEY, st); }
 }
 /* Springt ein, wenn die Datenbank nicht erreichbar ist. Steht der Stand schon da,
    wird nicht alles noch einmal neu gezeichnet — sonst würde ein offener Check bei
@@ -3305,14 +3291,14 @@ function zeigeNetz(){
 }
 
 /* ---------- Was noch gesendet werden muss ---------- */
-let OFFEN = { checks:{}, flights:{}, limits:null };
+let OFFEN = { checks:{}, limits:null };
 const offenKey = () => 'flugbuch-offen:' + UID;
 function ladeOffen(){
   const o = lies(offenKey()) || {};
-  OFFEN = { checks:o.checks || {}, flights:o.flights || {}, limits:o.limits || null };
+  OFFEN = { checks:o.checks || {}, limits:o.limits || null };
 }
 function merkeOffen(){ ablegen(offenKey(), OFFEN); zeigeOffen(); }
-const hatOffenes = () => !!(Object.keys(OFFEN.checks).length || Object.keys(OFFEN.flights).length || OFFEN.limits);
+const hatOffenes = () => !!(Object.keys(OFFEN.checks).length || OFFEN.limits);
 
 /* Der kleine Hinweis „noch nicht gespeichert“ — am Reiter als Punkt, beim Check,
    in der Liste und bei den Grenzwerten. */
@@ -3336,11 +3322,11 @@ const GRENZFELDER = ['wind_max','gust_max','foehn_hpa','valley_max','base_min','
 const grenzZeile = L => {
   const r = { user_id:UID, updated_at:L.updated_at || new Date().toISOString() };
   GRENZFELDER.forEach(k => { r[k] = L[k] ?? null; });
+  if (HAS.ampel) r.ampel = L.ampel || null;
   return r;
 };
 
-/* Schickt alles, was noch im Handy liegt. Zuerst die Flüge, weil ein Check auf
-   seinen Flug zeigt. Was sich während des Sendens schon wieder geändert hat, bleibt
+/* Schickt alles, was noch im Handy liegt. Was sich während des Sendens schon wieder geändert hat, bleibt
    liegen und geht gleich danach raus. */
 async function sendeOffenes(){
   if (sendet || !hatOffenes() || !HAS.check) return;
@@ -3351,12 +3337,6 @@ async function sendeOffenes(){
     const { data:{ session } } = await sb.auth.getSession();
     if (!session) return;
     ANGEMELDET = true;
-    for (const [id, f] of Object.entries(OFFEN.flights)){
-      const { error } = await sb.from('flights').insert(f);
-      /* 23505: Den Flug gibt es schon — er kam beim letzten Mal an, nur die Antwort nicht. */
-      if (error && error.code !== '23505') throw error;
-      delete OFFEN.flights[id]; merkeOffen();
-    }
     for (const [id, c] of Object.entries(OFFEN.checks)){
       const stand = JSON.stringify(c);
       const { error } = await sb.from('checks').upsert(checkZeile(c));
@@ -3423,11 +3403,21 @@ function initCheck(){
 }
 
 /* ---------- Meine Grenzwerte ---------- */
+/* Die Ampelgrenzen wie in Blatt 2 der eigenen Ampel-Tabelle: bis zur ersten Zahl
+   grün, bis zur zweiten gelb, darüber rot. Sie stehen als JSON in der Spalte
+   `check_limits.ampel`; fehlt die Spalte, gelten die Werte aus der Tabelle. */
+const AMPELGRENZEN = [
+  {k:'foehn', t:'Föhn',       e:'hPa',  std:[1.5, 3]},
+  {k:'wind',  t:'Mittelwind', e:'km/h', std:[15, 25]},
+  {k:'boeen', t:'Böen',       e:'km/h', std:[20, 30]}
+];
+const ampelGrenze = k => {
+  const a = (S.limits && S.limits.ampel && S.limits.ampel[k]) || [];
+  const std = AMPELGRENZEN.find(g => g.k === k).std;
+  return [a[0] != null ? +a[0] : std[0], a[1] != null ? +a[1] : std[1]];
+};
+/* Dazu zwei Werte, die beim Punkt „Thermik & Wolken“ als Erinnerung stehen. */
 const GRENZEN = [
-  {k:'wind_max',     t:'Startwind max',                e:'km/h'},
-  {k:'gust_max',     t:'Böenspanne max',               e:'km/h'},
-  {k:'foehn_hpa',    t:'Föhn-Druckdifferenz N–S ab',   e:'hPa'},
-  {k:'valley_max',   t:'Talwind am Landeplatz max',    e:'km/h'},
   {k:'base_min',     t:'Wolkenbasis mind. über Start', e:'m'},
   {k:'latest_start', t:'Späteste Startzeit',           e:'Uhr', zeit:true}
 ];
@@ -3436,84 +3426,132 @@ const grenzWert = (L, g) => {
   if (v == null || v === '') return '';
   return g.zeit ? String(v).slice(0,5) : nk(v);
 };
+/* Zahlen dürfen mit Komma oder Punkt getippt werden. */
+const zahl = v => {
+  if (v == null || String(v).trim() === '') return null;
+  const x = parseFloat(String(v).trim().replace(',', '.'));
+  return isFinite(x) ? x : null;
+};
+
 function baueGrenzen(){
-  document.getElementById('ck-grenzen').innerHTML = GRENZEN.map(g => `
-    <div class="field"><label for="gw-${g.k}">${esc(g.t)}</label>
-      <div class="einheit">${g.zeit ? `<input type="time" id="gw-${g.k}">`
-        : `<input type="text" inputmode="decimal" id="gw-${g.k}" autocomplete="off">`}<span>${g.e}</span></div></div>`).join('');
+  document.getElementById('ck-grenzen').innerHTML = `
+    <table class="ampgrenzen">
+      <tr><th></th><th>grün bis</th><th>gelb bis</th><th>rot</th></tr>
+      ${AMPELGRENZEN.map(g => `<tr><td>${esc(g.t)} <span class="einh">${g.e}</span></td>
+        ${[0, 1].map(i => `<td><input type="text" inputmode="decimal" id="ag-${g.k}-${i}" autocomplete="off"
+          aria-label="${esc(g.t)} ${i ? 'gelb' : 'grün'} bis (${g.e})"></td>`).join('')}
+        <td class="rot">darüber</td></tr>`).join('')}
+    </table>
+    <p class="note" id="ck-ampmiss" hidden style="margin:6px 0 0"></p>
+    <div class="ckgrenzen" style="margin-top:14px">${GRENZEN.map(g => `
+      <div class="field"><label for="gw-${g.k}">${esc(g.t)}</label>
+        <div class="einheit">${g.zeit ? `<input type="time" id="gw-${g.k}">`
+          : `<input type="text" inputmode="decimal" id="gw-${g.k}" autocomplete="off">`}<span>${g.e}</span></div></div>`).join('')}
+    </div>`;
+  AMPELGRENZEN.forEach(g => [0, 1].forEach(i => document.getElementById(`ag-${g.k}-${i}`)
+    .addEventListener('change', e => setzeAmpelGrenze(g, i, e.target))));
   GRENZEN.forEach(g => document.getElementById('gw-' + g.k)
     .addEventListener('change', e => setzeGrenze(g, e.target)));
 }
 function zeigeGrenzen(){
+  AMPELGRENZEN.forEach(g => {
+    const w = ampelGrenze(g.k);
+    [0, 1].forEach(i => {
+      const el = document.getElementById(`ag-${g.k}-${i}`);
+      el.disabled = !HAS.ampel;
+      if (el !== document.activeElement) el.value = nk(w[i]);
+    });
+  });
+  const miss = document.getElementById('ck-ampmiss');
+  miss.hidden = HAS.ampel;
+  miss.textContent = HAS.ampel ? '' : 'Die Ampelgrenzen lassen sich erst ändern, wenn in Supabase die Spalte '
+    + '„ampel“ angelegt ist (README, „Check: die zwei Tabellen anlegen“). Bis dahin gelten die Werte '
+    + 'aus deiner Ampel-Tabelle.';
   GRENZEN.forEach(g => {
     const el = document.getElementById('gw-' + g.k);
     if (el !== document.activeElement) el.value = grenzWert(S.limits, g);
   });
 }
+/* Speichert die Grenzwerte im Handy und schickt sie los. */
+function grenzenGeaendert(){
+  S.limits = {...S.limits, updated_at: new Date().toISOString()};
+  OFFEN.limits = JSON.parse(JSON.stringify(S.limits));
+  merkeOffen(); planeSenden(200);
+  /* Die Grenzwerte stehen auch bei den Punkten eines offenen Checks und färben ihn. */
+  if (ckId) zeichneEditor();
+}
+function setzeAmpelGrenze(g, i, el){
+  const roh = el.value.trim();
+  const v = zahl(roh);
+  if (roh && v == null){ toast('Bitte eine Zahl eintragen.', true); el.value = nk(ampelGrenze(g.k)[i]); return; }
+  const neu = [...ampelGrenze(g.k)];
+  neu[i] = v == null ? g.std[i] : v;          /* leer heißt: zurück auf den Wert aus der Tabelle */
+  if (neu[0] > neu[1]){
+    toast('„grün bis“ muss kleiner sein als „gelb bis“.', true);
+    el.value = nk(ampelGrenze(g.k)[i]); return;
+  }
+  S.limits = {...(S.limits || {})};
+  S.limits.ampel = {...(S.limits.ampel || {}), [g.k]: neu};
+  el.value = nk(neu[i]);
+  grenzenGeaendert();
+}
 function setzeGrenze(g, el){
   let v = null;
   if (g.zeit) v = el.value || null;
   else {
-    const t = el.value.trim().replace(',', '.');
-    if (t){
-      v = parseFloat(t);
-      if (!isFinite(v)){ toast('Bitte eine Zahl eintragen.', true); el.value = grenzWert(S.limits, g); return; }
-    }
+    v = zahl(el.value);
+    if (el.value.trim() && v == null){ toast('Bitte eine Zahl eintragen.', true); el.value = grenzWert(S.limits, g); return; }
   }
-  S.limits = {...(S.limits || {}), [g.k]: v, updated_at: new Date().toISOString()};
+  S.limits = {...(S.limits || {}), [g.k]: v};
   el.value = grenzWert(S.limits, g);
-  OFFEN.limits = {...S.limits};
-  merkeOffen(); planeSenden(200);
-  /* Die Grenzwerte stehen auch bei den Punkten eines offenen Checks. */
-  if (ckId) zeichneEditor();
+  grenzenGeaendert();
 }
 
-/* ---------- Die fünf Punkte und die Regel ---------- */
+/* ---------- Die Punkte ----------
+   Die ersten fünf kommen aus der Ampel-Tabelle: Zahl eintippen, die Ampel färbt sich
+   nach den Grenzen von selbst. Antippen einer Farbe überstimmt das. Thermik und
+   Gelände haben keine Zahl und werden wie bisher von Hand eingeschätzt. */
 const PUNKTE = [
-  {t:'Höhenwind & Föhn', bsp:'z. B. Föhnfische, Druckdifferenz steigt',
-   g:L => [L.foehn_hpa != null ? `Föhn ab ${nk(L.foehn_hpa)} hPa Druckdifferenz N–S` : '']},
-  {t:'Startwind', bsp:'z. B. Böen über 25 km/h',
-   g:L => [L.wind_max != null ? `Startwind max ${nk(L.wind_max)} km/h` : '',
-           L.gust_max != null ? `Böenspanne max ${nk(L.gust_max)} km/h` : '']},
-  {t:'Thermik & Wolken', bsp:'z. B. Basis sinkt, Quellwolken schießen hoch',
+  {k:'foehn', t:'Föhn (BZ–IBK)', zahl:'foehn', e:'hPa', quelle:'Südtirol Wetter', betrag:true,
+   bsp:'z. B. Druckdifferenz steigt über 3 hPa'},
+  {k:'wind3000', t:'Höhenwind 3000 m', zahl:'wind', e:'km/h', quelle:'Icon-D2',
+   bsp:'z. B. Wolkenzug wird schneller'},
+  {k:'windstart', t:'Höhenwind Startplatzhöhe oder darüber', zahl:'wind', e:'km/h', quelle:'Icon-D2',
+   bsp:'z. B. mehr als 25 km/h am Grat'},
+  {k:'boeen', t:'Windböen im Flugbereich (10 m AGL)', zahl:'boeen', e:'km/h', quelle:'Icon-D2',
+   bsp:'z. B. Böen über 30 km/h'},
+  {k:'boden', t:'Max. Bodenwind Flugbereich (10 m AGL)', zahl:'wind', e:'km/h', quelle:'Icon-D2',
+   bsp:'z. B. Talwind am Landeplatz über 20 km/h'},
+  {k:'thermik', t:'Thermik & Wolken', bsp:'z. B. Basis sinkt, Quellwolken schießen hoch',
    g:L => [L.base_min != null ? `Basis mind. ${nk(L.base_min)} m über Start` : '',
            L.latest_start ? `Start spätestens ${String(L.latest_start).slice(0,5)} Uhr` : '']},
-  {t:'Gelände & Lee', bsp:'z. B. Wind dreht auf Lee, Rotoren am Grat', g:() => []},
-  {t:'Landung & Talwind', bsp:'z. B. Talwind über 20 km/h',
-   g:L => [L.valley_max != null ? `Talwind am Landeplatz max ${nk(L.valley_max)} km/h` : '']}
+  {k:'gelaende', t:'Gelände & Lee', bsp:'z. B. Wind dreht auf Lee, Rotoren am Grat'}
 ];
 /* Das Zeichen im Knopf sagt dasselbe wie die Farbe — nicht jedes Auge trennt Rot und Grün. */
 const FARBEN = [['green','✓','grün'], ['yellow','!','gelb'], ['red','✕','rot']];
 const FARBNAME = {green:'grün', yellow:'gelb', red:'rot'};
 const RANG = {green:0, yellow:1, red:2};
+/* Ergebnis eines Checks. Eintragen lässt es sich nicht mehr — angezeigt wird es nur
+   noch bei Checks, die schon eines haben. */
 const ERGEBNIS = {started:'gestartet', descended:'abgestiegen', cancelled:'abgesagt'};
-const ERGEBNIS_KNOPF = {started:'Gestartet', descended:'Abgestiegen', cancelled:'Abgesagt'};
-const URTEIL = {kein:'Kein Start', start:'Start möglich', offen:'Noch offen'};
 
-const punkt = (c, n) => (c.points && c.points[n]) || {};
-const punktFuer = (c, n) => { c.points = c.points || {}; return c.points[n] = c.points[n] || {}; };
-/* Am Gipfel besser eingeschätzt als zuhause — dann will die App wissen, warum. */
-const besser = p => !!(p.home && p.summit && RANG[p.summit] < RANG[p.home]);
-
-/* Die Regel. Es zählt die Gipfelfarbe, solange sie fehlt die Zuhause-Farbe.
-   Mindestens einmal rot oder mindestens zweimal gelb heißt „Kein Start“, ein
-   „Nein“ bei der Bahn-Frage auch. Sind noch nicht alle fünf Punkte bewertet und
-   hat die Regel noch nicht angeschlagen, ist der Check „noch offen“. */
-function auswertung(c){
-  let rot = 0, gelb = 0, bewertet = 0, gipfel = 0, heimGelb = 0;
-  const warumFehlt = [];
-  for (let n = 1; n <= 5; n++){
-    const p = punkt(c, n), f = p.summit || p.home;
-    if (f){ bewertet++; if (f === 'red') rot++; if (f === 'yellow') gelb++; }
-    if (p.summit) gipfel++;
-    if (p.home === 'yellow') heimGelb++;
-    if (besser(p) && !String(p.why || '').trim()) warumFehlt.push(n);
-  }
-  const bahnNein = c.lift_ok === 'no';
-  const kein = rot >= 1 || gelb >= 2 || bahnNein;
-  return { rot, gelb, bewertet, gipfel, heimGelb, warumFehlt, bahnNein, kein,
-           stand: kein ? 'kein' : bewertet < 5 ? 'offen' : 'start' };
+const punkt = (c, k) => (c.points && c.points[k]) || {};
+const punktFuer = (c, k) => { c.points = c.points || {}; return c.points[k] = c.points[k] || {}; };
+/* Die Farbe, die sich aus der Zahl ergibt. Beim Föhn zählt der Betrag — ein
+   Nordföhn (Zahl unter null) ist genauso ein Föhn. */
+function autoFarbe(P, v){
+  if (!P.zahl || v == null) return null;
+  const [gruen, gelb] = ampelGrenze(P.zahl);
+  const x = P.betrag ? Math.abs(v) : v;
+  return x <= gruen ? 'green' : x <= gelb ? 'yellow' : 'red';
 }
+/* Von Hand getippt gewinnt, sonst die Farbe aus der Zahl. */
+const farbe = (P, p, wo) => p[wo] || autoFarbe(P, p[wo + 'Val']);
+/* Am Gipfel besser eingeschätzt als zuhause — dann will die App wissen, warum. */
+const besser = (P, p) => {
+  const h = farbe(P, p, 'home'), s = farbe(P, p, 'summit');
+  return !!(h && s && RANG[s] < RANG[h]);
+};
 
 /* ---------- Liste ---------- */
 let ckId = null;     /* der Check, der gerade offen ist */
@@ -3534,8 +3572,11 @@ function renderChecks(){
     <button type="button" class="ckzeile" data-id="${c.id}" onclick="zeigeCheck('${c.id}')">
       <span class="d">${c.check_date ? deDate(c.check_date) : 'ohne Datum'}</span>
       <span class="o">${c.start_place ? esc(pname(c.start_place)) : '<span style="color:var(--muted)">kein Startplatz</span>'}</span>
+      <span class="ckdots" aria-hidden="true">${PUNKTE.map(P => {
+        const p = punkt(c, P.k), f = farbe(P, p, 'summit') || farbe(P, p, 'home');
+        return `<i class="${f || ''}"></i>`; }).join('')}</span>
       <span class="pill" hidden>noch nicht gespeichert</span>
-      <span class="erg ${c.outcome || 'offen'}">${c.outcome ? ERGEBNIS[c.outcome] : 'offen'}</span>
+      ${c.outcome ? `<span class="erg ${c.outcome}">${ERGEBNIS[c.outcome]}</span>` : ''}
     </button>`).join('')
     : '<div class="empty"><b>Noch keine Checks.</b><br>Tipp auf „Neuer Check“ — am besten schon zuhause beim Planen.</div>';
   if (ckId){
@@ -3578,31 +3619,79 @@ function aendere(c, ms){
 }
 
 /* ---------- Ein Check ---------- */
-function ampelHTML(n, wo, wert, titel){
-  return `<div class="ampel${wert ? ' hat' : ''}" role="group" aria-label="${wo === 'home' ? 'Zuhause' : 'Gipfel'}: ${esc(titel)}">`
-    + FARBEN.map(([f, z, name]) => `<button type="button" class="amp ${f}" data-n="${n}" data-wo="${wo}"
+const zahlTxt = v => v == null ? '' : String(v).replace('.', ',');
+
+function ampelHTML(i, wo, P, p){
+  const wert = farbe(P, p, wo), auto = autoFarbe(P, p[wo + 'Val']), hand = p[wo];
+  /* Nur bei Punkten mit Zahl gibt es „automatisch“ — sonst ist jede Farbe von Hand. */
+  const info = !P.zahl ? ''
+             : hand ? 'von Hand' + (auto && auto !== hand ? ' · aus der Zahl wäre ' + FARBNAME[auto] : '')
+             : auto ? 'automatisch aus der Zahl' : '';
+  return `<div class="ampel${wert ? ' hat' : ''}" role="group" aria-label="${wo === 'home' ? 'Zuhause' : 'Gipfel'}: ${esc(P.t)}">`
+    + FARBEN.map(([f, z, name]) => `<button type="button" class="amp ${f}" data-i="${i}" data-wo="${wo}"
         data-f="${f}" aria-pressed="${wert === f}" aria-label="${name}" title="${name}">${z}</button>`).join('')
-    + '</div>';
+    + `</div><p class="ampinfo">${info}</p>`;
 }
 
-function punktHTML(c, n){
-  const P = PUNKTE[n-1], p = punkt(c, n);
-  const grenze = P.g(S.limits || {}).filter(Boolean).join(' · ');
-  const zaehlt = p.summit ? 'summit' : p.home ? 'home' : '';
-  return `<h3><span class="nr">${n}</span>${esc(P.t)}</h3>
+function zahlHTML(i, wo, P, p){
+  if (!P.zahl) return '';
+  const v = p[wo + 'Val'];
+  /* Beim Föhn braucht es das Minus (Nordföhn) — das hat die Zahlentastatur am iPhone
+     nur bei type="number". */
+  const feld = P.betrag
+    ? `<input type="number" step="any" value="${v == null ? '' : v}"`
+    : `<input type="text" inputmode="decimal" value="${zahlTxt(v)}"`;
+  return `<div class="ckzahl">${feld} id="ck-z${i}-${wo}" data-i="${i}" data-wo="${wo}" data-feld="val"
+      autocomplete="off" placeholder="${wo === 'home' ? 'Prognose' : 'jetzt'}"
+      aria-label="${esc(P.t)} ${wo === 'home' ? 'Prognose zuhause' : 'am Gipfel'} in ${P.e}"><span>${P.e}</span></div>`;
+}
+
+function warumHTML(i, P, p){
+  if (!besser(P, p)) return '';
+  return `<label for="ck-wa${i}">Warum? · Pflicht</label>
+    <textarea id="ck-wa${i}" data-i="${i}" data-feld="why" class="${String(p.why || '').trim() ? 'voll' : ''}"
+      placeholder="Am Gipfel besser als zuhause — was ist hier oben anders?">${esc(p.why || '')}</textarea>`;
+}
+
+function kopfHTML(i, P, p){
+  const zaehlt = farbe(P, p, 'summit') ? 'summit' : farbe(P, p, 'home') ? 'home' : '';
+  let grenze = '';
+  if (P.zahl){
+    const [g, y] = ampelGrenze(P.zahl);
+    grenze = `grün bis ${nk(g)} · gelb bis ${nk(y)} ${P.e} · darüber rot`
+      + (P.betrag ? ' (auch bei Nordföhn, Zahl unter null)' : '') + ' · Quelle: ' + P.quelle;
+  } else if (P.g) grenze = P.g(S.limits || {}).filter(Boolean).join(' · ');
+  return { zaehlt, grenze };
+}
+
+function punktHTML(c, i){
+  const P = PUNKTE[i], p = punkt(c, P.k), {zaehlt, grenze} = kopfHTML(i, P, p);
+  return `<h3><span class="nr">${i + 1}</span>${esc(P.t)}</h3>
     ${grenze ? `<p class="ckgrenze">${esc(grenze)}</p>` : ''}
     <div class="ckspalten">
-      <div class="ckzu"><p class="cklbl">${zaehlt === 'home' ? '<b>Zuhause · zählt</b>' : 'Zuhause'}</p>
-        ${ampelHTML(n, 'home', p.home, P.t)}</div>
-      <div class="ckgi"><p class="cklbl">${zaehlt === 'summit' ? '<b>Gipfel · zählt</b>' : 'Gipfel'}</p>
-        ${ampelHTML(n, 'summit', p.summit, P.t)}</div>
-      <div class="ckab"><label for="ck-ab${n}">Abbruch bei …</label>
-        <input type="text" id="ck-ab${n}" data-n="${n}" data-feld="abort" value="${esc(p.abort || '')}"
+      <div class="ckzu"><p class="cklbl" id="ck-l${i}-home">${zaehlt === 'home' ? '<b>Zuhause · zählt</b>' : 'Zuhause'}</p>
+        ${zahlHTML(i, 'home', P, p)}<div id="ck-a${i}-home">${ampelHTML(i, 'home', P, p)}</div></div>
+      <div class="ckgi"><p class="cklbl" id="ck-l${i}-summit">${zaehlt === 'summit' ? '<b>Gipfel · zählt</b>' : 'Gipfel'}</p>
+        ${zahlHTML(i, 'summit', P, p)}<div id="ck-a${i}-summit">${ampelHTML(i, 'summit', P, p)}</div></div>
+      <div class="ckab"><label for="ck-ab${i}">Abbruch bei …</label>
+        <input type="text" id="ck-ab${i}" data-i="${i}" data-feld="abort" value="${esc(p.abort || '')}"
           placeholder="${esc(P.bsp)}" autocomplete="off"></div>
-      ${besser(p) ? `<div class="ckwa"><label for="ck-wa${n}">Warum? · Pflicht</label>
-        <textarea id="ck-wa${n}" data-n="${n}" data-feld="why" class="${String(p.why || '').trim() ? 'voll' : ''}"
-          placeholder="Am Gipfel besser als zuhause — was ist hier oben anders?">${esc(p.why || '')}</textarea></div>` : ''}
+      <div class="ckwa" id="ck-w${i}">${warumHTML(i, P, p)}</div>
     </div>`;
+}
+
+/* Nach einer neuen Zahl oder Farbe: Ampeln, „zählt“ und „Warum?“ neu, ohne die
+   Zahlenfelder anzufassen — sonst ginge beim Tippen der Cursor verloren. */
+function aktualisiere(i){
+  const c = ckRow(); if (!c) return;
+  const P = PUNKTE[i], p = punkt(c, P.k), {zaehlt} = kopfHTML(i, P, p);
+  ['home', 'summit'].forEach(wo => {
+    document.getElementById(`ck-a${i}-${wo}`).innerHTML = ampelHTML(i, wo, P, p);
+    document.getElementById(`ck-l${i}-${wo}`).innerHTML = zaehlt === wo
+      ? `<b>${wo === 'home' ? 'Zuhause' : 'Gipfel'} · zählt</b>` : (wo === 'home' ? 'Zuhause' : 'Gipfel');
+  });
+  const w = document.getElementById('ck-w' + i);
+  if (!!w.firstElementChild !== besser(P, p)) w.innerHTML = warumHTML(i, P, p);
 }
 
 function zeichneEditor(){
@@ -3619,20 +3708,21 @@ function zeichneEditor(){
           <select id="ck-place">${placeOpts('start', 'hikefly', c.start_place || '')}</select></div>
       </div>
     </div>
-    ${PUNKTE.map((_, i) => `<div class="ckpunkt" id="ck-p${i+1}">${punktHTML(c, i+1)}</div>`).join('')}
-    <div class="ckurteil" id="ck-urteil" aria-live="polite"></div>
-    <div class="ckschluss" id="ck-schluss"></div>
+    ${PUNKTE.map((_, i) => `<div class="ckpunkt" id="ck-p${i}">${punktHTML(c, i)}</div>`).join('')}
   </div>`;
   const karte = ed.firstElementChild;
   karte.addEventListener('click', e => {
-    const b = e.target.closest('.amp'); if (b) setzeFarbe(+b.dataset.n, b.dataset.wo, b.dataset.f);
+    const b = e.target.closest('.amp'); if (b) setzeFarbe(+b.dataset.i, b.dataset.wo, b.dataset.f);
   });
   karte.addEventListener('input', e => {
     const el = e.target, c = ckRow(); if (!el.dataset.feld || !c) return;
-    punktFuer(c, +el.dataset.n)[el.dataset.feld] = el.value;
-    if (el.dataset.feld === 'why'){
-      el.classList.toggle('voll', !!el.value.trim());
-      zeichneUrteil(); zeichneSchluss();
+    const i = +el.dataset.i, p = punktFuer(c, PUNKTE[i].k);
+    if (el.dataset.feld === 'val'){
+      p[el.dataset.wo + 'Val'] = zahl(el.value);
+      aktualisiere(i);
+    } else {
+      p[el.dataset.feld] = el.value;
+      if (el.dataset.feld === 'why') el.classList.toggle('voll', !!el.value.trim());
     }
     aendere(c, 900);
   });
@@ -3642,151 +3732,17 @@ function zeichneEditor(){
   document.getElementById('ck-place').addEventListener('change', e => {
     const c = ckRow(); if (!c) return; c.start_place = e.target.value || null; aendere(c, 300);
   });
-  zeichneUrteil(); zeichneSchluss(); zeigeOffen();
+  zeigeOffen();
 }
 
-/* Antippen setzt die Farbe, nochmal antippen nimmt sie wieder weg. */
-function setzeFarbe(n, wo, f){
+/* Antippen legt die Farbe von Hand fest; nochmal antippen nimmt sie wieder weg —
+   dann gilt wieder die Farbe aus der Zahl. */
+function setzeFarbe(i, wo, f){
   const c = ckRow(); if (!c) return;
-  const p = punktFuer(c, n);
+  const p = punktFuer(c, PUNKTE[i].k);
   p[wo] = p[wo] === f ? null : f;
   aendere(c, 300);
-  document.getElementById('ck-p' + n).innerHTML = punktHTML(c, n);
-  zeichneUrteil(); zeichneSchluss();
-}
-
-function zeichneUrteil(){
-  const c = ckRow(), el = document.getElementById('ck-urteil'); if (!c || !el) return;
-  const a = auswertung(c);
-  const teile = [];
-  if (a.rot)  teile.push(a.rot + '× rot');
-  if (a.gelb) teile.push(a.gelb + '× gelb');
-  if (a.bahnNein) teile.push('mit der Bahn würde ich nicht starten');
-  let grund = a.stand === 'offen' ? [a.bewertet + ' von 5 Punkten bewertet', ...teile].join(' · ')
-            : a.stand === 'kein'  ? teile.join(' · ')
-            : [teile.length ? teile.join(' · ') : 'alles grün',
-               c.lift_ok ? '' : 'letzte Frage noch offen'].filter(Boolean).join(' · ');
-  if (a.bewertet) grund += ' · zählt: ' + (!a.gipfel ? 'Zuhause'
-    : a.gipfel === a.bewertet ? 'Gipfel' : `Gipfel bei ${a.gipfel}, Zuhause bei ${a.bewertet - a.gipfel}`);
-  el.className = 'ckurteil ' + a.stand;
-  el.innerHTML = `<div class="gross">${URTEIL[a.stand]}</div><div class="grund">${esc(grund)}</div>`
-    + (a.heimGelb >= 2 ? '<div class="ckplan"><b>Plan ändern:</b> anderer Berg, früher starten oder Abstieg einplanen.</div>' : '');
-}
-
-function zeichneSchluss(){
-  const c = ckRow(), el = document.getElementById('ck-schluss'); if (!c || !el) return;
-  const a = auswertung(c);
-  const flug = c.flight_id && S.flights.find(f => f.id === c.flight_id);
-  el.innerHTML = `
-    <p class="ckfrage">Würde ich auch starten, wenn ich mit der Bahn raufgefahren wäre?</p>
-    <div class="ckwahl" role="group" aria-label="Bahn-Frage">
-      <button type="button" data-bahn="yes" aria-pressed="${c.lift_ok === 'yes'}">Ja</button>
-      <button type="button" data-bahn="no" aria-pressed="${c.lift_ok === 'no'}">Nein</button>
-    </div>
-    <p class="ckfrage" style="margin-top:22px">Wie ist es ausgegangen?</p>
-    <div class="ckwahl ende" role="group" aria-label="Ergebnis">
-      ${Object.entries(ERGEBNIS_KNOPF).map(([o, t]) =>
-        `<button type="button" data-o="${o}" aria-pressed="${c.outcome === o}">${t}</button>`).join('')}
-    </div>
-    ${a.warumFehlt.length ? `<p class="ckflug" style="color:#B02A28">Zum Abschließen fehlt noch „Warum?“ bei Punkt ${a.warumFehlt.join(', ')}.</p>` : ''}
-    ${flug ? `<p class="ckflug">Flug in „Flüge“ angelegt.
-        <button type="button" class="btn small ghost" onclick="openDetail('${flug.id}')">Flug ansehen</button></p>`
-      : c.outcome === 'started' ? '<p class="ckflug">Kein Flug mehr verknüpft — er wurde gelöscht. Nochmal „Gestartet“ tippen legt einen neuen an.</p>' : ''}
-    <div class="rowend" style="margin-top:24px">
-      <button type="button" class="btn small ghost" onclick="loescheCheck()">Check löschen</button></div>`;
-  el.querySelectorAll('[data-bahn]').forEach(b => b.onclick = () => {
-    const c = ckRow(); if (!c) return;
-    c.lift_ok = c.lift_ok === b.dataset.bahn ? null : b.dataset.bahn;
-    aendere(c, 300); zeichneUrteil(); zeichneSchluss();
-  });
-  el.querySelectorAll('[data-o]').forEach(b => b.onclick = () => setzeErgebnis(b.dataset.o));
-}
-
-/* Abschluss. „Gestartet“ legt in „Flüge“ eine Zeile an und verknüpft sie mit dem Check. */
-function setzeErgebnis(o){
-  const c = ckRow(); if (!c) return;
-  const a = auswertung(c);
-  if (a.warumFehlt.length){
-    toast(`Erst „Warum?“ bei Punkt ${a.warumFehlt.join(', ')} ausfüllen.`, true);
-    const el = document.getElementById('ck-wa' + a.warumFehlt[0]);
-    if (el){ el.scrollIntoView({block:'center', behavior:'smooth'}); el.focus({preventScroll:true}); }
-    return;
-  }
-  const flug = c.flight_id && S.flights.find(f => f.id === c.flight_id);
-  if (o === 'started'){
-    if (flug){ if (c.outcome !== 'started'){ c.outcome = 'started'; aendere(c, 200); zeichneSchluss(); } return; }
-    return legeFlugAn(c);
-  }
-  const setze = () => {
-    const c = ckRow(); if (!c) return;
-    c.outcome = c.outcome === o ? null : o;
-    if (o !== 'started') c.flight_id = null;
-    aendere(c, 200); zeichneSchluss();
-  };
-  if (flug){
-    ask(`<b>Ergebnis auf „${ERGEBNIS_KNOPF[o]}“ ändern?</b><br><br>Der Flug ${flug.date ? 'vom ' + deDate(flug.date) : 'ohne Datum'}
-      bleibt in „Flüge“ stehen, ist danach aber nicht mehr mit diesem Check verknüpft.`,
-      () => { closeConfirm(); setze(); }, 'Ergebnis ändern?', 'Ja, ändern');
-    return;
-  }
-  setze();
-}
-
-function legeFlugAn(c){
-  const id = neueId();
-  const row = { id, flight_date:c.check_date || null, start_time:null, kind:'hikefly',
-                start_place:c.start_place || null, land_place:null, mins:0, asc_m:0, asc_min:0,
-                glider:null, harness:null };
-  if (HAS.asc) row.ascent = 'foot';
-  OFFEN.flights[id] = row;
-  S.flights.push(flugAus(row));
-  c.flight_id = id; c.outcome = 'started';
-  aendere(c, 100);
-  /* Die Flugtabelle nicht neu zeichnen, solange darin gerade bearbeitet wird —
-     der neue Flug erscheint dort nach dem Speichern. */
-  if (!editMode){ renderAll(); renderStats(); }
-  zeichneSchluss();
-  toast('Flug in „Flüge“ angelegt: Hike & Fly' + (HAS.asc ? ', zu Fuß.' : '.'));
-}
-
-window.loescheCheck = () => {
-  const c = ckRow(); if (!c) return;
-  ask(`<b>Check ${c.check_date ? 'vom ' + deDate(c.check_date) : 'ohne Datum'} löschen?</b>`
-      + (c.start_place ? '<br>' + esc(pname(c.start_place)) : '')
-      + (c.flight_id ? '<br><br>Der verknüpfte Flug bleibt in „Flüge“ stehen.' : '')
-      + '<br><br>Das lässt sich nicht rückgängig machen.',
-    async () => {
-      const id = c.id;
-      const { error } = await sb.from('checks').delete().eq('id', id);
-      /* Ein Check, der noch nie in der Datenbank war, lässt sich auch ohne Netz löschen. */
-      if (error && !(netzFehler(error) && c._neu)){
-        closeConfirm();
-        if (netzFehler(error)) return toast('Löschen geht nur mit Netz. Versuch es später noch einmal.', true);
-        return oops(error);
-      }
-      delete OFFEN.checks[id]; merkeOffen();
-      S.checks = S.checks.filter(x => x.id !== id);
-      standAnpassen(st => { st.checks = (st.checks || []).filter(x => x.id !== id); });
-      closeConfirm(); schliesseCheck(); toast('Check gelöscht.');
-    });
-};
-
-/* Kurzfassung für das Detailfenster eines Flugs. */
-function checkKurzHTML(c){
-  const a = auswertung(c);
-  const fp = (f, wo) => `<span class="fp ${f || ''}" title="${wo}: ${f ? FARBNAME[f] : 'nicht bewertet'}"
-    aria-label="${wo}: ${f ? FARBNAME[f] : 'nicht bewertet'}"></span>`;
-  return `<div class="sec"><h3>Check vor dem Start</h3>
-    <p style="margin:0;font-size:14.5px"><b>${URTEIL[a.stand]}</b>
-      ${c.lift_ok ? ' · Bahn-Frage: ' + (c.lift_ok === 'yes' ? 'ja' : 'nein') : ''}</p>
-    <ul class="ckmini">${PUNKTE.map((P, i) => {
-      const p = punkt(c, i+1);
-      const txt = [p.abort ? 'Abbruch bei: ' + p.abort : '',
-                   besser(p) && p.why ? 'Warum: ' + p.why : ''].filter(Boolean).join('\n');
-      return `<li><span class="fps">${fp(p.home, 'Zuhause')} → ${fp(p.summit, 'Gipfel')}</span>${esc(P.t)}`
-        + (txt ? `<span class="txt">${esc(txt)}</span>` : '') + '</li>';
-    }).join('')}</ul>
-    <button type="button" class="btn small ghost" onclick="closeDetail();zeigeCheck('${c.id}')">Check öffnen</button></div>`;
+  aktualisiere(i);
 }
 
 /* ---------- Detailfenster ---------- */
@@ -3810,8 +3766,6 @@ window.openDetail = id => {
         + esc(klasseOf(f.glider)) + '</span>' : '') : '')}
       ${row('Gurtzeug', esc(f.harness))}
     </dl></div>
-    ${(() => { const ck = HAS.check && S.checks.find(c => c.flight_id === f.id);
-               return ck ? checkKurzHTML(ck) : ''; })()}
     ${f.note ? `<div class="sec"><h3>Notiz</h3><div class="diary">${esc(f.note)}</div></div>` : ''}
     ${f.reminder ? `<div class="sec remsec"><h3>Reminder</h3><div class="diary">${esc(f.reminder)}</div></div>` : ''}
     ${(!f.note && !f.reminder) ? `<div class="sec"><p class="note" style="margin:0">Zu diesem Flug ist noch nichts notiert. Über „Bearbeiten“ kannst du das nachtragen.</p></div>` : ''}`;
@@ -3840,17 +3794,10 @@ window.askDelete = id => {
   ask(`<b>${esc(KINDS[f.kind])} ${f.date ? 'am '+deDate(f.date) : '— ohne Datum'}</b>`
       + (wo ? `<br>${esc(wo)}` : '')
       + ((f.note||f.reminder) ? '<br><br>Notiz und Reminder werden mitgelöscht.' : '')
-      + (S.checks.some(c => c.flight_id === id) ? '<br><br>Der Check dazu bleibt im Reiter „Check“ stehen.' : '')
       + '<br><br>Das lässt sich nicht rückgängig machen.',
     async () => {
       const { error } = await sb.from('flights').delete().eq('id', id);
       if (error) return oops(error);
-      /* Der Check bleibt — er zeigt nur nicht mehr auf den Flug. In der Datenbank
-         erledigt das `on delete set null`, hier im Handy dieser Teil. */
-      delete OFFEN.flights[id];
-      Object.values(OFFEN.checks).forEach(c => { if (c.flight_id === id) c.flight_id = null; });
-      S.checks.forEach(c => { if (c.flight_id === id) c.flight_id = null; });
-      merkeOffen();
       closeConfirm(); closeDetail(); await loadAll(); toast('Flug gelöscht.');
     });
 };
@@ -4124,7 +4071,7 @@ async function doRestore(d){
       if (error) throw error;
     }
     /* Was noch im Handy auf das Senden wartete, gehört zum alten Stand. */
-    OFFEN = { checks:{}, flights:{}, limits:null }; merkeOffen();
+    OFFEN = { checks:{}, limits:null }; merkeOffen();
     ckId = null;
     /* Felder, die es in dieser Datenbank noch nicht gibt, werden beim Einlesen
        weggelassen — sonst würde die ganze Wiederherstellung daran scheitern. */
@@ -4132,7 +4079,7 @@ async function doRestore(d){
                   HAS.dirs ? '' : 'dirs', HAS.elev ? '' : 'elev',
                   HAS.info ? '' : 'info',
                   HAS.dist ? '' : 'dist_km', HAS.asc ? '' : 'ascent',
-                  HAS.gclass ? '' : 'gclass' ].filter(Boolean);
+                  HAS.gclass ? '' : 'gclass', HAS.ampel ? '' : 'ampel' ].filter(Boolean);
     const clean = rows => (rows||[]).map(({user_id, ...rest}) => {
       weg.forEach(k => delete rest[k]);
       return rest;
