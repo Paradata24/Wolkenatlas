@@ -469,6 +469,104 @@
     border:2.5px dashed currentColor;background:rgba(255,255,255,.55);cursor:grab}
   .leaflet-marker-draggable:active .pinmark{cursor:grabbing}
 
+  /* ---------- Ohne Netz ---------- */
+  .netzinfo{margin:10px 0 0;padding:8px 12px;font-size:13px;line-height:1.45;
+    background:#FFF4D6;border-left:3px solid #C99700;border-radius:var(--r)}
+  .netzinfo[hidden]{display:none}
+
+  /* ---------- Check: Ampel vor dem Start ---------- */
+  /* Die Kennzahlen oben fehlen hier — darum etwas Luft unter der Kopfzeile. */
+  #v-check{max-width:760px;margin-top:18px}
+  #v-check [hidden]{display:none}
+  /* „noch nicht gespeichert“ — klein und gelb, verschwindet, sobald es gesendet ist. */
+  .pill{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;
+    color:#7A5200;background:#FFF4D6;border:1px solid #EBCB75;border-radius:99px;padding:1px 8px;
+    white-space:nowrap}
+  .pill[hidden]{display:none}
+  /* Ein Punkt am Reiter, solange ein Check nur im Handy steht. */
+  nav button.offen::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:#E0A800;margin-left:6px;vertical-align:1px}
+  .ckgrenzen{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:0 16px}
+  .einheit{display:flex;align-items:center;gap:7px}
+  .einheit input{flex:1;min-width:0;font-family:var(--mono);font-size:16px;padding:9px 10px}
+  .einheit span{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:34px}
+  .ckzeile{display:flex;align-items:center;gap:12px;width:100%;padding:14px 15px;border:0;
+    border-bottom:1px solid var(--line);background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+  .ckzeile:last-child{border-bottom:0}
+  .ckzeile:hover{background:#F2F5F8}
+  .ckzeile .d{font-family:var(--mono);font-size:13px;white-space:nowrap}
+  .ckzeile .o{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ckzeile .pill{flex:none}
+  .erg{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 7px;border-radius:2px;border:1px solid currentColor;white-space:nowrap;flex:none}
+  .erg.started{color:#23884F} .erg.descended{color:var(--chart)} .erg.cancelled{color:var(--muted)}
+  .erg.offen{color:var(--muted);border-style:dashed}
+
+  .ckedit h2{flex-wrap:wrap}
+  .ckedit h2 .zurueck{font-family:var(--sans);font-size:13px;letter-spacing:0;text-transform:none}
+  .ckpunkt{padding:16px 15px;border-top:1px solid var(--line)}
+  .ckpunkt h3{margin:0;font-size:16px;font-weight:650;display:flex;gap:9px;align-items:center}
+  .ckpunkt h3 .nr{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;
+    font-family:var(--mono);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+  .ckgrenze{margin:3px 0 0 33px;font-size:12.5px;color:var(--muted)}
+  /* Zwei Spalten: links zuhause (mit „Abbruch bei …“), rechts am Gipfel (mit „Warum?“). */
+  .ckspalten{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:12px;
+    grid-template-areas:"zu gi" "ab wa"}
+  .ckzu{grid-area:zu} .ckgi{grid-area:gi} .ckab{grid-area:ab} .ckwa{grid-area:wa}
+  .cklbl{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 6px}
+  .cklbl b{color:var(--ink);font-weight:700}
+  .ckab input,.ckwa textarea{font-size:16px}
+  .ckwa label{color:#C8312F}
+  .ckwa textarea{min-height:58px;border-color:#E9A3A2}
+  .ckwa textarea.voll{border-color:var(--line)}
+  /* Große Ampelknöpfe für den Daumen. Das Zeichen darin sagt dasselbe wie die Farbe. */
+  .ampel{display:flex;gap:6px}
+  .amp{--c:#888;--t:#F2F2F2;flex:1 1 0;min-width:0;height:54px;border-radius:14px;
+    border:2px solid var(--c);background:var(--t);color:var(--c);font:inherit;font-size:22px;
+    font-weight:700;line-height:1;cursor:pointer;touch-action:manipulation;padding:0}
+  .amp.green{--c:#23884F;--t:#E9F6EE} .amp.yellow{--c:#B88A00;--t:#FFF6D6} .amp.red{--c:#C8312F;--t:#FCEBEA}
+  .ampel.hat .amp{opacity:.4}
+  .ampel.hat .amp[aria-pressed="true"]{opacity:1;background:var(--c);color:#fff;
+    box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--c)}
+  .ampel.hat .amp.yellow[aria-pressed="true"]{background:#F2C200;color:#3A2C00}
+  @media(max-width:560px){
+    .ckspalten{gap:10px;grid-template-areas:"zu gi" "ab ab" "wa wa"}
+    .amp{height:52px}
+  }
+
+  /* Das Ergebnis der Regel bleibt unten am Bildschirm stehen, solange der Check offen ist. */
+  .ckurteil{position:sticky;bottom:0;z-index:5;background:var(--panel);border-top:2px solid var(--ink);
+    padding:10px 15px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 18px rgba(21,32,43,.1)}
+  .ckurteil .gross{font-size:26px;font-weight:750;line-height:1.15}
+  .ckurteil .grund{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .ckurteil.kein{background:#FCEBEA;border-top-color:#C8312F} .ckurteil.kein .gross{color:#B02A28}
+  .ckurteil.start{background:#E9F6EE;border-top-color:#23884F} .ckurteil.start .gross{color:#1E7444}
+  .ckurteil.offen .gross{color:var(--muted)}
+  .ckplan{margin-top:7px;background:#FFF4D6;border-left:3px solid #C99700;padding:6px 10px;
+    font-size:13.5px;line-height:1.4}
+  .ckschluss{padding:16px 15px;border-top:1px solid var(--line)}
+  .ckfrage{font-size:15.5px;font-weight:600;margin:0 0 10px;line-height:1.4}
+  .ckwahl{display:flex;gap:8px}
+  .ckwahl button{flex:1 1 0;min-width:0;min-height:54px;font:inherit;font-size:15.5px;font-weight:600;
+    color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:12px;cursor:pointer;
+    padding:6px 4px;touch-action:manipulation;line-height:1.2}
+  .ckwahl button:hover{border-color:var(--ink)}
+  .ckwahl button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .ckwahl.ende button[data-o="started"][aria-pressed="true"]{background:#23884F;border-color:#23884F}
+  .ckwahl.ende button[data-o="descended"][aria-pressed="true"]{background:var(--chart);border-color:var(--chart)}
+  .ckwahl.ende button[data-o="cancelled"][aria-pressed="true"]{background:var(--muted);border-color:var(--muted)}
+  .ckflug{margin:10px 0 0;font-size:13.5px;color:var(--muted)}
+  /* Kurzfassung des Checks im Detailfenster eines Flugs. */
+  .ckmini{list-style:none;margin:8px 0 10px;padding:0;font-size:14px}
+  .ckmini li{padding:5px 0;border-bottom:1px solid var(--line)}
+  .ckmini li:last-child{border-bottom:0}
+  .ckmini .txt{display:block;font-size:12.5px;color:var(--muted);margin:2px 0 0 52px;white-space:pre-wrap}
+  .fp{display:inline-block;width:12px;height:12px;border-radius:50%;border:1.5px dashed var(--line);
+    vertical-align:-1px}
+  .fp.green{background:#23884F;border:0} .fp.yellow{background:#F2C200;border:0} .fp.red{background:#C8312F;border:0}
+  .ckmini .fps{display:inline-block;width:46px;white-space:nowrap;color:var(--muted);font-size:11px}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -497,6 +595,7 @@
     <span class="sub" id="whoami"></span>
     <nav role="tablist">
       <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
+      <button role="tab" id="t-check" aria-selected="false" onclick="show('check')">Check</button>
       <button role="tab" id="t-orte" aria-selected="false" onclick="show('orte')">Orte</button>
       <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-gear" aria-selected="false" onclick="show('gear')">Ausrüstung</button>
@@ -504,6 +603,9 @@
       <button role="tab" id="t-save" aria-selected="false" onclick="show('save')">Sicherung</button>
     </nav>
   </header>
+
+  <!-- Nur ohne Netz zu sehen: angezeigt wird dann der zuletzt geladene Stand. -->
+  <p class="netzinfo" id="netzinfo" hidden></p>
 
   <div class="readout" id="readout-flug">
     <div><div class="lbl">Flüge diesen Monat</div><div class="val" id="r-cnt-month">0</div></div>
@@ -532,6 +634,33 @@
       <p class="note" id="noplaces" style="padding:0 15px;margin:10px 0"></p>
       <p class="note" id="needcols" style="padding:0 15px;margin:10px 0"></p>
     </div>
+  </section>
+
+  <!-- ---------- CHECK ---------- -->
+  <!-- Ampel-Check vor dem Start beim Hike & Fly. Oben die eigenen Grenzwerte,
+       darunter die Liste aller Checks. Ein geöffneter Check ersetzt die Liste. -->
+  <section class="view" id="v-check">
+    <div class="card" id="ck-fehlt" hidden>
+      <div class="empty"><b>Der Check ist noch nicht freigeschaltet.</b><br>
+        Dafür braucht es zwei neue Tabellen in Supabase. Wie du sie einmalig anlegst, steht in
+        der README unter „Check: die zwei Tabellen anlegen“. Danach die Seite neu laden.</div>
+    </div>
+    <div id="ck-start">
+      <div class="card">
+        <h2>Meine Grenzwerte <span class="pill" id="ck-limpend" hidden>noch nicht gespeichert</span></h2>
+        <div class="body">
+          <div class="ckgrenzen" id="ck-grenzen"></div>
+          <p class="note" style="margin:2px 0 0">Einmal eintragen, gilt dann für jeden Check — auf PC
+            und Handy gleich. Gespeichert wird, sobald du ein Feld verlässt.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <h2>Checks
+          <span class="tools"><button class="btn small" onclick="neuerCheck()">Neuer Check</button></span></h2>
+        <div id="ck-liste"></div>
+      </div>
+    </div>
+    <div id="ck-edit" hidden></div>
   </section>
 
   <!-- ---------- REMINDER ---------- -->
@@ -802,11 +931,20 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------- Zustand ---------- */
-let S = { places: [], gear: [], flights: [] };
+let S = { places: [], gear: [], flights: [], checks: [], limits: null };
 /* Diese sechs Spalten sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die betroffenen Felder einfach weg —
    siehe README, Abschnitt „Später dazugekommene Felder“. */
 let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:false };
+/* Der Reiter „Check“ braucht zwei eigene Tabellen (`checks` und `check_limits`).
+   Fehlen sie, zeigt er nur einen Hinweis. */
+HAS.check = false;
+/* Wer angemeldet ist. `ANGEMELDET` ist falsch, wenn die Seite ohne Netz geöffnet
+   wurde und die Anmeldung gerade nicht erneuert werden kann — dann gilt der
+   zuletzt gespeicherte Stand, bis das Netz zurück ist. */
+let UID = null, EMAIL = '', ANGEMELDET = false;
+/* Zeitpunkt des Stands, der gerade ohne Netz angezeigt wird — sonst null. */
+let OHNENETZ = null;
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
@@ -958,10 +1096,27 @@ const oops = e => { console.error(e); toast(e?.message || 'Etwas ist schiefgegan
 
 /* ══════════  ══════════ */
 async function boot(){
-  const { data:{ session } } = await sb.auth.getSession();
+  /* Ohne Netz lässt sich eine abgelaufene Anmeldung nicht erneuern — Supabase
+     versucht es dann bis zu einer halben Minute lang. So lange soll niemand am
+     Gipfel warten: Gibt es einen gespeicherten Stand, geht es nach kurzer Zeit
+     mit diesem weiter, damit sich ein Check auch ohne Netz weiter ausfüllen lässt. */
+  const st = lies(STAND_KEY);
+  const offline = !!(st && hatAnmeldung());
+  const geduld = new Promise(ok => setTimeout(() => ok(null), navigator.onLine ? 8000 : 1500));
+  const res = await (offline ? Promise.race([sb.auth.getSession(), geduld]) : sb.auth.getSession());
   document.getElementById('boot').style.display = 'none';
-  session ? startApp(session) : document.getElementById('login').classList.add('on');
+  const session = res && res.data.session, error = res && res.error;
+  if (session) return startApp(session);
+  const netzweg = !res || !navigator.onLine || /retryable|fetch|network|load failed/i.test(
+    String(error?.name || '') + ' ' + String(error?.message || ''));
+  if (offline && netzweg) return startApp(null, st);
+  document.getElementById('login').classList.add('on');
 }
+/* Liegt im Browser noch eine Anmeldung von Supabase? */
+const hatAnmeldung = () => {
+  try { return Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k)); }
+  catch { return false; }
+};
 
 document.getElementById('l-btn').onclick = doLogin;
 document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -979,15 +1134,26 @@ async function doLogin(){
   startApp(data.session);
 }
 
-window.logout = async () => { await sb.auth.signOut(); location.reload(); };
+window.logout = async () => {
+  /* Der Stand für unterwegs gehört zu diesem Konto — beim Abmelden fliegt er raus.
+     Noch nicht gesendete Checks bleiben und gehen beim nächsten Anmelden raus. */
+  try { localStorage.removeItem(STAND_KEY); } catch {}
+  await sb.auth.signOut(); location.reload();
+};
 
-async function startApp(session){
-  document.getElementById('whoami').textContent = session.user.email;
+async function startApp(session, stand){
+  ANGEMELDET = !!session;
+  UID   = session ? session.user.id : stand.uid;
+  EMAIL = session ? session.user.email : (stand.email || '');
+  document.getElementById('whoami').textContent = EMAIL;
   document.getElementById('app').classList.add('on');
+  ladeOffen();
   initMap();
   initStats();
-  await checkCols();
+  initCheck();
+  if (ANGEMELDET) await checkCols(); else Object.assign(HAS, stand.HAS || {});
   await loadAll();
+  sendeOffenes();
 }
 
 /* ══════════ DATEN LADEN ══════════ */
@@ -1001,15 +1167,30 @@ async function frag(anfrage){
   return anfrage();
 }
 
+function spaltenAusStand(){
+  const st = lies(STAND_KEY);
+  if (st && st.HAS) Object.assign(HAS, st.HAS);
+  syncForm();
+}
 async function checkCols(){
-  const [d, a, g, r, h, i] = await Promise.all([
+  /* Meldet das Handy selbst „kein Netz“, gar nicht erst fragen — die Datenbank-
+     Bibliothek versucht es sonst mehrmals hintereinander, und das dauert. */
+  if (!navigator.onLine && lies(STAND_KEY)) return spaltenAusStand();
+  const alle = await Promise.all([
     frag(() => sb.from('flights').select('dist_km').limit(1)),
     frag(() => sb.from('flights').select('ascent').limit(1)),
     frag(() => sb.from('gear').select('gclass').limit(1)),
     frag(() => sb.from('places').select('dirs').limit(1)),
     frag(() => sb.from('places').select('elev').limit(1)),
-    frag(() => sb.from('places').select('info').limit(1))
+    frag(() => sb.from('places').select('info').limit(1)),
+    frag(() => sb.from('checks').select('id').limit(1)),
+    frag(() => sb.from('check_limits').select('user_id').limit(1))
   ]);
+  /* Ganz ohne Netz weiß die Datenbank gar nichts zu sagen — dann gilt, was beim
+     letzten Mal mit Netz festgestellt wurde. */
+  if (alle.every(res => netzFehler(res.error))) return spaltenAusStand();
+  const [d, a, g, r, h, i, c, l] = alle;
+
   /* Als fehlend gilt eine Spalte nur, wenn die Datenbank genau das meldet.
      Ein anderer Fehler (Funkloch, Anmeldung gerade erneuert) heißt nicht,
      dass die Spalte fehlt — sonst verschwänden Felder, die es längst gibt. */
@@ -1020,30 +1201,67 @@ async function checkCols(){
   HAS.dirs   = da(r);
   HAS.elev   = da(h);
   HAS.info   = da(i);
+  /* Eine fehlende Tabelle meldet die Datenbank als 42P01 oder PGRST205. */
+  const tabelle = res => !['42P01', 'PGRST205'].includes(res.error?.code);
+  HAS.check  = tabelle(c) && tabelle(l);
   /* Wer schneller war und das Ortsformular schon offen hat, sieht es jetzt richtig. */
   syncForm();
 }
 
+/* Ein Flug, wie er aus der Datenbank kommt, in der Form, mit der das Flugbuch rechnet. */
+const flugAus = f => ({
+  id:f.id, date:f.flight_date || '', time:f.start_time ? f.start_time.slice(0,5) : '',
+  kind:f.kind || 'thermik', start:f.start_place || '', land:f.land_place || '', mins:f.mins || 0,
+  ascM:f.asc_m||0, ascMin:f.asc_min||0,
+  dist:f.dist_km ?? '', asc:f.ascent||'',
+  glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
+});
+
+/* Übernimmt geladene Zeilen. Was im Handy noch auf das Senden wartet, ist neuer
+   als der Stand der Datenbank und gewinnt darum. */
+function uebernimm(d){
+  S.places  = d.places || [];
+  S.gear    = d.gear || [];
+  const fl  = [...(d.flights || [])];
+  Object.values(OFFEN.flights).forEach(f => { if (!fl.some(x => x.id === f.id)) fl.push(f); });
+  S.flights = fl.map(flugAus);
+  const ck  = (d.checks || []).map(c => ({...c, start_place: c.start_place || null}));
+  Object.values(OFFEN.checks).forEach(c => {
+    const i = ck.findIndex(x => x.id === c.id);
+    if (i >= 0) ck[i] = {...c}; else ck.push({...c});
+  });
+  S.checks = ck;
+  S.limits = OFFEN.limits ? {...OFFEN.limits} : (d.limits || null);
+}
+
 async function loadAll(){
-  const [pl, ge, fl] = await Promise.all([
+  /* Ohne gültige Anmeldung (Seite ohne Netz geöffnet) gibt es nur den gespeicherten Stand. */
+  if (!ANGEMELDET){ if (!ausStand()) toast('Ohne Netz und ohne gespeicherten Stand geht es leider nicht.', true); return; }
+  if (!navigator.onLine && ausStand()) return;
+  const anfragen = [
     frag(() => sb.from('places').select('*').order('name')),
     frag(() => sb.from('gear').select('*').order('name')),
     frag(() => sb.from('flights').select('*').order('flight_date', {ascending:false}))
-  ]);
-  for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
+  ];
+  if (HAS.check) anfragen.push(
+    frag(() => sb.from('checks').select('*')),
+    frag(() => sb.from('check_limits').select('*').limit(1)));
+  const [pl, ge, fl, ck, li] = await Promise.all(anfragen);
+  const fehler = [pl, ge, fl, ck, li].find(r => r && r.error)?.error;
+  if (fehler){
+    /* Funkloch: mit dem zuletzt geladenen Stand weitermachen statt mit einer Fehlermeldung. */
+    if (netzFehler(fehler) && ausStand()) return;
+    return oops(fehler);
+  }
   /* Stehen noch Orte der alten Art „Start und Landung“ in der Datenbank, werden sie
      jetzt umgestellt — danach wird einmal frisch geladen. */
   if (await migriereBeides(pl.data, fl.data)) return loadAll();
   if (await migriereExp(pl.data)) return loadAll();
-  S.places  = pl.data;
-  S.gear    = ge.data;
-  S.flights = fl.data.map(f => ({
-    id:f.id, date:f.flight_date || '', time:f.start_time ? f.start_time.slice(0,5) : '',
-    kind:f.kind || 'thermik', start:f.start_place || '', land:f.land_place || '', mins:f.mins || 0,
-    ascM:f.asc_m||0, ascMin:f.asc_min||0,
-    dist:f.dist_km ?? '', asc:f.ascent||'',
-    glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
-  }));
+  const daten = { places: pl.data, gear: ge.data, flights: fl.data,
+                  checks: ck ? ck.data : [], limits: li ? (li.data[0] || null) : null };
+  uebernimm(daten);
+  merkeStand(daten);
+  if (OHNENETZ){ OHNENETZ = null; zeigeNetz(); }
   renderAll(); renderStats();
   /* Die Höhen kommen nach: sie brauchen einen Moment und sollen das Laden nicht aufhalten.
      Orte, bei denen sie schon in der Datenbank steht, werden dabei übersprungen. */
@@ -1144,12 +1362,13 @@ async function migriereBeides(places, flights){
 
 /* ══════════ ANSICHTEN ══════════ */
 window.show = v => {
-  ['flug','rem','orte','gear','stat','save'].forEach(k=>{
+  ['flug','check','rem','orte','gear','stat','save'].forEach(k=>{
     document.getElementById('v-'+k).classList.toggle('on', k===v);
     document.getElementById('t-'+k).setAttribute('aria-selected', k===v);
   });
-  /* Im Reiter „Orte“ steht nur die Karte — die Zahlen zu den Flügen bleiben weg. */
-  document.getElementById('readout-flug').style.display = v==='orte' ? 'none' : '';
+  /* Im Reiter „Orte“ steht nur die Karte — die Zahlen zu den Flügen bleiben weg.
+     Beim Check auch: dort zählt am Handy jeder Zentimeter. */
+  document.getElementById('readout-flug').style.display = (v==='orte' || v==='check') ? 'none' : '';
   if (v==='orte' && map) setTimeout(() => {
     map.invalidateSize();
     /* Beim ersten Öffnen alle Orte ins Bild holen — jetzt kennt die Karte ihre Größe. */
@@ -1157,6 +1376,7 @@ window.show = v => {
   }, 60);
   if (v==='stat') renderStats();
   if (v==='flug') flugHoehe();
+  if (v==='check') renderChecks();
 };
 
 /* ══════════ HÖHE ÜBER DEM MEER ══════════
@@ -2520,6 +2740,8 @@ window.delPlace = id => {
   if (imVollbild()) verlasseVollbild();   /* die Rückfrage steht außerhalb der Karte */
   if (S.flights.some(f=>f.start===id || f.land===id)){
     toast('„'+p.name+'“ wird noch von Flügen verwendet.'); return; }
+  if (S.checks.some(c=>c.start_place===id)){
+    toast('„'+p.name+'“ wird noch von Checks verwendet.'); return; }
   ask(`<b>${esc(p.name)} löschen?</b><br>${TYPEN[p.type]}<br><br>Das lässt sich nicht rückgängig machen.`,
     async () => {
       const { error } = await sb.from('places').delete().eq('id', id);
@@ -3024,6 +3246,549 @@ window.saveText = async () => {
   await schreib();
 };
 
+/* ══════════ CHECK: AMPEL VOR DEM START ══════════
+   Ein Check gehört zu einem Hike & Fly: zuhause fünf Punkte grün/gelb/rot
+   einschätzen und für jeden notieren, wann abgebrochen wird — am Gipfel dieselben
+   fünf Punkte noch einmal. Die App rechnet nur die Regel aus und zeigt das
+   Ergebnis; entscheiden tust du.
+
+   Ohne Netz: Jede Eingabe landet zuerst im Handy (localStorage) und wird von dort
+   gesendet. Klappt das nicht, bleibt sie liegen und geht raus, sobald wieder Netz
+   da ist. Damit sich die Seite am Gipfel auch neu laden lässt, merkt sie sich
+   außerdem den zuletzt geladenen Stand (siehe `merkeStand`) und hält über
+   `sw.js` eine Kopie von sich selbst bereit. */
+
+const STAND_KEY = 'flugbuch-stand';
+function lies(key){ try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } }
+function ablegen(key, wert){ try { localStorage.setItem(key, JSON.stringify(wert)); } catch {} }
+/* Ein Funkloch erkennt man daran, dass gar keine Antwort kommt — die Datenbank
+   selbst schickt immer eine Fehlernummer mit. */
+const netzFehler = e => !!e && (!navigator.onLine
+  || (!e.code && /fetch|network|load failed|timed? ?out|abort/i.test(String(e.message ?? e))));
+/* Eine neue id schon im Handy — damit ein ohne Netz angelegter Check (oder Flug)
+   beim späteren Senden genau einmal in der Datenbank landet. */
+const neueId = () => (crypto.randomUUID ? crypto.randomUUID()
+  : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, ch =>
+      (ch ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> ch / 4).toString(16)));
+
+/* ---------- Der zuletzt geladene Stand, für unterwegs ---------- */
+function merkeStand(d){
+  ablegen(STAND_KEY, { uid:UID, email:EMAIL, at:Date.now(), HAS:{...HAS}, ...d });
+}
+function standAnpassen(fn){
+  const st = lies(STAND_KEY);
+  if (st && st.uid === UID){ fn(st); ablegen(STAND_KEY, st); }
+}
+/* Springt ein, wenn die Datenbank nicht erreichbar ist. Steht der Stand schon da,
+   wird nicht alles noch einmal neu gezeichnet — sonst würde ein offener Check bei
+   jedem neuen Versuch unter den Fingern neu aufgebaut. */
+function ausStand(){
+  if (OHNENETZ) return true;
+  const st = lies(STAND_KEY);
+  if (!st || st.uid !== UID) return false;
+  Object.assign(HAS, st.HAS || {});
+  uebernimm(st);
+  OHNENETZ = st.at || Date.now();
+  zeigeNetz();
+  renderAll(); renderStats();
+  return true;
+}
+function zeigeNetz(){
+  const el = document.getElementById('netzinfo');
+  if (!OHNENETZ){ el.hidden = true; return; }
+  const d = new Date(OHNENETZ);
+  const tag = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  el.innerHTML = `<b>Ohne Netz.</b> Du siehst den Stand vom ${deDate(tag)}, ${pad(d.getHours())}:${pad(d.getMinutes())} Uhr.
+    Checks lassen sich weiter ausfüllen und gehen raus, sobald wieder Netz da ist —
+    alles andere bitte erst danach ändern.`;
+  el.hidden = false;
+}
+
+/* ---------- Was noch gesendet werden muss ---------- */
+let OFFEN = { checks:{}, flights:{}, limits:null };
+const offenKey = () => 'flugbuch-offen:' + UID;
+function ladeOffen(){
+  const o = lies(offenKey()) || {};
+  OFFEN = { checks:o.checks || {}, flights:o.flights || {}, limits:o.limits || null };
+}
+function merkeOffen(){ ablegen(offenKey(), OFFEN); zeigeOffen(); }
+const hatOffenes = () => !!(Object.keys(OFFEN.checks).length || Object.keys(OFFEN.flights).length || OFFEN.limits);
+
+/* Der kleine Hinweis „noch nicht gespeichert“ — am Reiter als Punkt, beim Check,
+   in der Liste und bei den Grenzwerten. */
+function zeigeOffen(){
+  document.getElementById('t-check').classList.toggle('offen', hatOffenes());
+  document.getElementById('ck-limpend').hidden = !OFFEN.limits;
+  const ep = document.getElementById('ck-pend');
+  if (ep) ep.hidden = !(ckId && OFFEN.checks[ckId]);
+  document.querySelectorAll('#ck-liste .ckzeile').forEach(z => {
+    const p = z.querySelector('.pill'); if (p) p.hidden = !OFFEN.checks[z.dataset.id];
+  });
+}
+
+let sendet = false, sendeUhr = null, letzterFehler = '';
+function planeSenden(ms){ clearTimeout(sendeUhr); sendeUhr = setTimeout(sendeOffenes, ms ?? 800); }
+
+const checkZeile = c => ({ id:c.id, check_date:c.check_date || null, start_place:c.start_place || null,
+  points:c.points || {}, lift_ok:c.lift_ok || null, outcome:c.outcome || null,
+  flight_id:c.flight_id || null, updated_at:c.updated_at || new Date().toISOString() });
+const GRENZFELDER = ['wind_max','gust_max','foehn_hpa','valley_max','base_min','latest_start'];
+const grenzZeile = L => {
+  const r = { user_id:UID, updated_at:L.updated_at || new Date().toISOString() };
+  GRENZFELDER.forEach(k => { r[k] = L[k] ?? null; });
+  return r;
+};
+
+/* Schickt alles, was noch im Handy liegt. Zuerst die Flüge, weil ein Check auf
+   seinen Flug zeigt. Was sich während des Sendens schon wieder geändert hat, bleibt
+   liegen und geht gleich danach raus. */
+async function sendeOffenes(){
+  if (sendet || !hatOffenes() || !HAS.check) return;
+  sendet = true;
+  let geklappt = false;
+  try {
+    /* Erneuert die Anmeldung, falls sie unterwegs abgelaufen ist. */
+    const { data:{ session } } = await sb.auth.getSession();
+    if (!session) return;
+    ANGEMELDET = true;
+    for (const [id, f] of Object.entries(OFFEN.flights)){
+      const { error } = await sb.from('flights').insert(f);
+      /* 23505: Den Flug gibt es schon — er kam beim letzten Mal an, nur die Antwort nicht. */
+      if (error && error.code !== '23505') throw error;
+      delete OFFEN.flights[id]; merkeOffen();
+    }
+    for (const [id, c] of Object.entries(OFFEN.checks)){
+      const stand = JSON.stringify(c);
+      const { error } = await sb.from('checks').upsert(checkZeile(c));
+      if (error) throw error;
+      const s = S.checks.find(x => x.id === id); if (s) delete s._neu;
+      if (JSON.stringify(OFFEN.checks[id]) === stand) delete OFFEN.checks[id];
+      merkeOffen();
+    }
+    if (OFFEN.limits){
+      const stand = JSON.stringify(OFFEN.limits);
+      const { error } = await sb.from('check_limits').upsert(grenzZeile(OFFEN.limits), {onConflict:'user_id'});
+      if (error) throw error;
+      if (JSON.stringify(OFFEN.limits) === stand) OFFEN.limits = null;
+      merkeOffen();
+    }
+    geklappt = true; letzterFehler = '';
+  } catch(e){
+    /* Funkloch oder abgelaufene Anmeldung: einfach liegen lassen, es wird wieder versucht.
+       Alles andere sagt das Flugbuch — aber nur einmal, nicht bei jedem neuen Versuch. */
+    if (!netzFehler(e) && !/^PGRST30/.test(String(e.code || ''))){
+      const t = e.message || String(e);
+      if (t !== letzterFehler){ letzterFehler = t; toast('Noch nicht gespeichert: ' + t, true); }
+      console.error(e);
+    }
+  } finally {
+    sendet = false;
+    zeigeOffen();
+    if (geklappt && hatOffenes()) planeSenden(300);
+  }
+}
+
+/* Netz wieder da (oder Seite wieder im Vordergrund): senden, und wenn bisher der
+   alte Stand zu sehen war, frisch laden. */
+let pruefe = false;
+async function wiederDa(){
+  if (!navigator.onLine || pruefe) return;
+  pruefe = true;
+  try { await nachsehen(); } finally { pruefe = false; }
+}
+async function nachsehen(){
+  if (!ANGEMELDET){
+    const { data:{ session }, error } = await sb.auth.getSession();
+    if (!session){
+      /* Ist die Anmeldung endgültig abgelaufen, braucht es eine neue. Die Checks
+         bleiben im Handy und gehen danach raus. */
+      const netz = /retryable|fetch|network|load failed/i.test(String(error?.name || '') + ' ' + String(error?.message || ''));
+      if (!netz) location.reload();
+      return;
+    }
+    ANGEMELDET = true;
+    await checkCols();
+  }
+  await sendeOffenes();
+  if (OHNENETZ && !editMode && !formOffen()) await loadAll();
+}
+
+function initCheck(){
+  window.addEventListener('online', wiederDa);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') wiederDa();
+  });
+  setInterval(() => { if (hatOffenes() || OHNENETZ) wiederDa(); }, 20000);
+  baueGrenzen();
+}
+
+/* ---------- Meine Grenzwerte ---------- */
+const GRENZEN = [
+  {k:'wind_max',     t:'Startwind max',                e:'km/h'},
+  {k:'gust_max',     t:'Böenspanne max',               e:'km/h'},
+  {k:'foehn_hpa',    t:'Föhn-Druckdifferenz N–S ab',   e:'hPa'},
+  {k:'valley_max',   t:'Talwind am Landeplatz max',    e:'km/h'},
+  {k:'base_min',     t:'Wolkenbasis mind. über Start', e:'m'},
+  {k:'latest_start', t:'Späteste Startzeit',           e:'Uhr', zeit:true}
+];
+const grenzWert = (L, g) => {
+  const v = L ? L[g.k] : null;
+  if (v == null || v === '') return '';
+  return g.zeit ? String(v).slice(0,5) : nk(v);
+};
+function baueGrenzen(){
+  document.getElementById('ck-grenzen').innerHTML = GRENZEN.map(g => `
+    <div class="field"><label for="gw-${g.k}">${esc(g.t)}</label>
+      <div class="einheit">${g.zeit ? `<input type="time" id="gw-${g.k}">`
+        : `<input type="text" inputmode="decimal" id="gw-${g.k}" autocomplete="off">`}<span>${g.e}</span></div></div>`).join('');
+  GRENZEN.forEach(g => document.getElementById('gw-' + g.k)
+    .addEventListener('change', e => setzeGrenze(g, e.target)));
+}
+function zeigeGrenzen(){
+  GRENZEN.forEach(g => {
+    const el = document.getElementById('gw-' + g.k);
+    if (el !== document.activeElement) el.value = grenzWert(S.limits, g);
+  });
+}
+function setzeGrenze(g, el){
+  let v = null;
+  if (g.zeit) v = el.value || null;
+  else {
+    const t = el.value.trim().replace(',', '.');
+    if (t){
+      v = parseFloat(t);
+      if (!isFinite(v)){ toast('Bitte eine Zahl eintragen.', true); el.value = grenzWert(S.limits, g); return; }
+    }
+  }
+  S.limits = {...(S.limits || {}), [g.k]: v, updated_at: new Date().toISOString()};
+  el.value = grenzWert(S.limits, g);
+  OFFEN.limits = {...S.limits};
+  merkeOffen(); planeSenden(200);
+  /* Die Grenzwerte stehen auch bei den Punkten eines offenen Checks. */
+  if (ckId) zeichneEditor();
+}
+
+/* ---------- Die fünf Punkte und die Regel ---------- */
+const PUNKTE = [
+  {t:'Höhenwind & Föhn', bsp:'z. B. Föhnfische, Druckdifferenz steigt',
+   g:L => [L.foehn_hpa != null ? `Föhn ab ${nk(L.foehn_hpa)} hPa Druckdifferenz N–S` : '']},
+  {t:'Startwind', bsp:'z. B. Böen über 25 km/h',
+   g:L => [L.wind_max != null ? `Startwind max ${nk(L.wind_max)} km/h` : '',
+           L.gust_max != null ? `Böenspanne max ${nk(L.gust_max)} km/h` : '']},
+  {t:'Thermik & Wolken', bsp:'z. B. Basis sinkt, Quellwolken schießen hoch',
+   g:L => [L.base_min != null ? `Basis mind. ${nk(L.base_min)} m über Start` : '',
+           L.latest_start ? `Start spätestens ${String(L.latest_start).slice(0,5)} Uhr` : '']},
+  {t:'Gelände & Lee', bsp:'z. B. Wind dreht auf Lee, Rotoren am Grat', g:() => []},
+  {t:'Landung & Talwind', bsp:'z. B. Talwind über 20 km/h',
+   g:L => [L.valley_max != null ? `Talwind am Landeplatz max ${nk(L.valley_max)} km/h` : '']}
+];
+/* Das Zeichen im Knopf sagt dasselbe wie die Farbe — nicht jedes Auge trennt Rot und Grün. */
+const FARBEN = [['green','✓','grün'], ['yellow','!','gelb'], ['red','✕','rot']];
+const FARBNAME = {green:'grün', yellow:'gelb', red:'rot'};
+const RANG = {green:0, yellow:1, red:2};
+const ERGEBNIS = {started:'gestartet', descended:'abgestiegen', cancelled:'abgesagt'};
+const ERGEBNIS_KNOPF = {started:'Gestartet', descended:'Abgestiegen', cancelled:'Abgesagt'};
+const URTEIL = {kein:'Kein Start', start:'Start möglich', offen:'Noch offen'};
+
+const punkt = (c, n) => (c.points && c.points[n]) || {};
+const punktFuer = (c, n) => { c.points = c.points || {}; return c.points[n] = c.points[n] || {}; };
+/* Am Gipfel besser eingeschätzt als zuhause — dann will die App wissen, warum. */
+const besser = p => !!(p.home && p.summit && RANG[p.summit] < RANG[p.home]);
+
+/* Die Regel. Es zählt die Gipfelfarbe, solange sie fehlt die Zuhause-Farbe.
+   Mindestens einmal rot oder mindestens zweimal gelb heißt „Kein Start“, ein
+   „Nein“ bei der Bahn-Frage auch. Sind noch nicht alle fünf Punkte bewertet und
+   hat die Regel noch nicht angeschlagen, ist der Check „noch offen“. */
+function auswertung(c){
+  let rot = 0, gelb = 0, bewertet = 0, gipfel = 0, heimGelb = 0;
+  const warumFehlt = [];
+  for (let n = 1; n <= 5; n++){
+    const p = punkt(c, n), f = p.summit || p.home;
+    if (f){ bewertet++; if (f === 'red') rot++; if (f === 'yellow') gelb++; }
+    if (p.summit) gipfel++;
+    if (p.home === 'yellow') heimGelb++;
+    if (besser(p) && !String(p.why || '').trim()) warumFehlt.push(n);
+  }
+  const bahnNein = c.lift_ok === 'no';
+  const kein = rot >= 1 || gelb >= 2 || bahnNein;
+  return { rot, gelb, bewertet, gipfel, heimGelb, warumFehlt, bahnNein, kein,
+           stand: kein ? 'kein' : bewertet < 5 ? 'offen' : 'start' };
+}
+
+/* ---------- Liste ---------- */
+let ckId = null;     /* der Check, der gerade offen ist */
+const ckRow = () => S.checks.find(c => c.id === ckId);
+const ckSortKey = c => (c.check_date || '9999-99-99') + ' ' + (c.created_at || '');
+const sortedChecks = () => [...S.checks].sort((a, b) => ckSortKey(b).localeCompare(ckSortKey(a)));
+
+function renderChecks(){
+  const fehlt = !HAS.check;
+  document.getElementById('ck-fehlt').hidden = !fehlt;
+  document.getElementById('ck-start').hidden = fehlt || !!ckId;
+  const ed = document.getElementById('ck-edit');
+  ed.hidden = fehlt || !ckId;
+  if (fehlt) return;
+  zeigeGrenzen();
+  const liste = sortedChecks();
+  document.getElementById('ck-liste').innerHTML = liste.length ? liste.map(c => `
+    <button type="button" class="ckzeile" data-id="${c.id}" onclick="zeigeCheck('${c.id}')">
+      <span class="d">${c.check_date ? deDate(c.check_date) : 'ohne Datum'}</span>
+      <span class="o">${c.start_place ? esc(pname(c.start_place)) : '<span style="color:var(--muted)">kein Startplatz</span>'}</span>
+      <span class="pill" hidden>noch nicht gespeichert</span>
+      <span class="erg ${c.outcome || 'offen'}">${c.outcome ? ERGEBNIS[c.outcome] : 'offen'}</span>
+    </button>`).join('')
+    : '<div class="empty"><b>Noch keine Checks.</b><br>Tipp auf „Neuer Check“ — am besten schon zuhause beim Planen.</div>';
+  if (ckId){
+    if (!ckRow()){ ckId = null; return renderChecks(); }
+    /* Wer gerade tippt, dem wird das Feld nicht unter den Fingern neu gebaut. */
+    const a = document.activeElement;
+    const tippt = ed.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+    if (!tippt || !ed.firstElementChild) zeichneEditor();
+  }
+  zeigeOffen();
+}
+
+window.neuerCheck = () => {
+  const jetzt = new Date().toISOString();
+  const c = { id:neueId(), check_date:heute(), start_place:null, points:{}, lift_ok:null,
+              outcome:null, flight_id:null, created_at:jetzt, updated_at:jetzt, _neu:true };
+  S.checks.push(c);
+  aendere(c, 300);
+  zeigeCheck(c.id);
+};
+window.zeigeCheck = id => {
+  ckId = id;
+  document.getElementById('ck-edit').innerHTML = '';
+  show('check');
+  window.scrollTo(0, 0);
+};
+window.schliesseCheck = () => {
+  ckId = null;
+  document.getElementById('ck-edit').innerHTML = '';
+  renderChecks();
+  window.scrollTo(0, 0);
+};
+
+/* Jede Änderung landet sofort im Handy und wird kurz danach gesendet. */
+function aendere(c, ms){
+  c.updated_at = new Date().toISOString();
+  OFFEN.checks[c.id] = JSON.parse(JSON.stringify(c));
+  merkeOffen();
+  planeSenden(ms);
+}
+
+/* ---------- Ein Check ---------- */
+function ampelHTML(n, wo, wert, titel){
+  return `<div class="ampel${wert ? ' hat' : ''}" role="group" aria-label="${wo === 'home' ? 'Zuhause' : 'Gipfel'}: ${esc(titel)}">`
+    + FARBEN.map(([f, z, name]) => `<button type="button" class="amp ${f}" data-n="${n}" data-wo="${wo}"
+        data-f="${f}" aria-pressed="${wert === f}" aria-label="${name}" title="${name}">${z}</button>`).join('')
+    + '</div>';
+}
+
+function punktHTML(c, n){
+  const P = PUNKTE[n-1], p = punkt(c, n);
+  const grenze = P.g(S.limits || {}).filter(Boolean).join(' · ');
+  const zaehlt = p.summit ? 'summit' : p.home ? 'home' : '';
+  return `<h3><span class="nr">${n}</span>${esc(P.t)}</h3>
+    ${grenze ? `<p class="ckgrenze">${esc(grenze)}</p>` : ''}
+    <div class="ckspalten">
+      <div class="ckzu"><p class="cklbl">${zaehlt === 'home' ? '<b>Zuhause · zählt</b>' : 'Zuhause'}</p>
+        ${ampelHTML(n, 'home', p.home, P.t)}</div>
+      <div class="ckgi"><p class="cklbl">${zaehlt === 'summit' ? '<b>Gipfel · zählt</b>' : 'Gipfel'}</p>
+        ${ampelHTML(n, 'summit', p.summit, P.t)}</div>
+      <div class="ckab"><label for="ck-ab${n}">Abbruch bei …</label>
+        <input type="text" id="ck-ab${n}" data-n="${n}" data-feld="abort" value="${esc(p.abort || '')}"
+          placeholder="${esc(P.bsp)}" autocomplete="off"></div>
+      ${besser(p) ? `<div class="ckwa"><label for="ck-wa${n}">Warum? · Pflicht</label>
+        <textarea id="ck-wa${n}" data-n="${n}" data-feld="why" class="${String(p.why || '').trim() ? 'voll' : ''}"
+          placeholder="Am Gipfel besser als zuhause — was ist hier oben anders?">${esc(p.why || '')}</textarea></div>` : ''}
+    </div>`;
+}
+
+function zeichneEditor(){
+  const c = ckRow(); if (!c) return;
+  const ed = document.getElementById('ck-edit');
+  ed.innerHTML = `<div class="card ckedit">
+    <h2><button type="button" class="btn small ghost zurueck" onclick="schliesseCheck()">← Alle Checks</button>
+      <span>Check</span><span class="pill" id="ck-pend" hidden>noch nicht gespeichert</span></h2>
+    <div class="body" style="padding-bottom:4px">
+      <div class="pair">
+        <div class="field"><label for="ck-date">Datum</label>
+          <input type="date" id="ck-date" value="${c.check_date || ''}"></div>
+        <div class="field"><label for="ck-place">Startplatz</label>
+          <select id="ck-place">${placeOpts('start', 'hikefly', c.start_place || '')}</select></div>
+      </div>
+    </div>
+    ${PUNKTE.map((_, i) => `<div class="ckpunkt" id="ck-p${i+1}">${punktHTML(c, i+1)}</div>`).join('')}
+    <div class="ckurteil" id="ck-urteil" aria-live="polite"></div>
+    <div class="ckschluss" id="ck-schluss"></div>
+  </div>`;
+  const karte = ed.firstElementChild;
+  karte.addEventListener('click', e => {
+    const b = e.target.closest('.amp'); if (b) setzeFarbe(+b.dataset.n, b.dataset.wo, b.dataset.f);
+  });
+  karte.addEventListener('input', e => {
+    const el = e.target, c = ckRow(); if (!el.dataset.feld || !c) return;
+    punktFuer(c, +el.dataset.n)[el.dataset.feld] = el.value;
+    if (el.dataset.feld === 'why'){
+      el.classList.toggle('voll', !!el.value.trim());
+      zeichneUrteil(); zeichneSchluss();
+    }
+    aendere(c, 900);
+  });
+  document.getElementById('ck-date').addEventListener('change', e => {
+    const c = ckRow(); if (!c) return; c.check_date = e.target.value || null; aendere(c, 300);
+  });
+  document.getElementById('ck-place').addEventListener('change', e => {
+    const c = ckRow(); if (!c) return; c.start_place = e.target.value || null; aendere(c, 300);
+  });
+  zeichneUrteil(); zeichneSchluss(); zeigeOffen();
+}
+
+/* Antippen setzt die Farbe, nochmal antippen nimmt sie wieder weg. */
+function setzeFarbe(n, wo, f){
+  const c = ckRow(); if (!c) return;
+  const p = punktFuer(c, n);
+  p[wo] = p[wo] === f ? null : f;
+  aendere(c, 300);
+  document.getElementById('ck-p' + n).innerHTML = punktHTML(c, n);
+  zeichneUrteil(); zeichneSchluss();
+}
+
+function zeichneUrteil(){
+  const c = ckRow(), el = document.getElementById('ck-urteil'); if (!c || !el) return;
+  const a = auswertung(c);
+  const teile = [];
+  if (a.rot)  teile.push(a.rot + '× rot');
+  if (a.gelb) teile.push(a.gelb + '× gelb');
+  if (a.bahnNein) teile.push('mit der Bahn würde ich nicht starten');
+  let grund = a.stand === 'offen' ? [a.bewertet + ' von 5 Punkten bewertet', ...teile].join(' · ')
+            : a.stand === 'kein'  ? teile.join(' · ')
+            : [teile.length ? teile.join(' · ') : 'alles grün',
+               c.lift_ok ? '' : 'letzte Frage noch offen'].filter(Boolean).join(' · ');
+  if (a.bewertet) grund += ' · zählt: ' + (!a.gipfel ? 'Zuhause'
+    : a.gipfel === a.bewertet ? 'Gipfel' : `Gipfel bei ${a.gipfel}, Zuhause bei ${a.bewertet - a.gipfel}`);
+  el.className = 'ckurteil ' + a.stand;
+  el.innerHTML = `<div class="gross">${URTEIL[a.stand]}</div><div class="grund">${esc(grund)}</div>`
+    + (a.heimGelb >= 2 ? '<div class="ckplan"><b>Plan ändern:</b> anderer Berg, früher starten oder Abstieg einplanen.</div>' : '');
+}
+
+function zeichneSchluss(){
+  const c = ckRow(), el = document.getElementById('ck-schluss'); if (!c || !el) return;
+  const a = auswertung(c);
+  const flug = c.flight_id && S.flights.find(f => f.id === c.flight_id);
+  el.innerHTML = `
+    <p class="ckfrage">Würde ich auch starten, wenn ich mit der Bahn raufgefahren wäre?</p>
+    <div class="ckwahl" role="group" aria-label="Bahn-Frage">
+      <button type="button" data-bahn="yes" aria-pressed="${c.lift_ok === 'yes'}">Ja</button>
+      <button type="button" data-bahn="no" aria-pressed="${c.lift_ok === 'no'}">Nein</button>
+    </div>
+    <p class="ckfrage" style="margin-top:22px">Wie ist es ausgegangen?</p>
+    <div class="ckwahl ende" role="group" aria-label="Ergebnis">
+      ${Object.entries(ERGEBNIS_KNOPF).map(([o, t]) =>
+        `<button type="button" data-o="${o}" aria-pressed="${c.outcome === o}">${t}</button>`).join('')}
+    </div>
+    ${a.warumFehlt.length ? `<p class="ckflug" style="color:#B02A28">Zum Abschließen fehlt noch „Warum?“ bei Punkt ${a.warumFehlt.join(', ')}.</p>` : ''}
+    ${flug ? `<p class="ckflug">Flug in „Flüge“ angelegt.
+        <button type="button" class="btn small ghost" onclick="openDetail('${flug.id}')">Flug ansehen</button></p>`
+      : c.outcome === 'started' ? '<p class="ckflug">Kein Flug mehr verknüpft — er wurde gelöscht. Nochmal „Gestartet“ tippen legt einen neuen an.</p>' : ''}
+    <div class="rowend" style="margin-top:24px">
+      <button type="button" class="btn small ghost" onclick="loescheCheck()">Check löschen</button></div>`;
+  el.querySelectorAll('[data-bahn]').forEach(b => b.onclick = () => {
+    const c = ckRow(); if (!c) return;
+    c.lift_ok = c.lift_ok === b.dataset.bahn ? null : b.dataset.bahn;
+    aendere(c, 300); zeichneUrteil(); zeichneSchluss();
+  });
+  el.querySelectorAll('[data-o]').forEach(b => b.onclick = () => setzeErgebnis(b.dataset.o));
+}
+
+/* Abschluss. „Gestartet“ legt in „Flüge“ eine Zeile an und verknüpft sie mit dem Check. */
+function setzeErgebnis(o){
+  const c = ckRow(); if (!c) return;
+  const a = auswertung(c);
+  if (a.warumFehlt.length){
+    toast(`Erst „Warum?“ bei Punkt ${a.warumFehlt.join(', ')} ausfüllen.`, true);
+    const el = document.getElementById('ck-wa' + a.warumFehlt[0]);
+    if (el){ el.scrollIntoView({block:'center', behavior:'smooth'}); el.focus({preventScroll:true}); }
+    return;
+  }
+  const flug = c.flight_id && S.flights.find(f => f.id === c.flight_id);
+  if (o === 'started'){
+    if (flug){ if (c.outcome !== 'started'){ c.outcome = 'started'; aendere(c, 200); zeichneSchluss(); } return; }
+    return legeFlugAn(c);
+  }
+  const setze = () => {
+    const c = ckRow(); if (!c) return;
+    c.outcome = c.outcome === o ? null : o;
+    if (o !== 'started') c.flight_id = null;
+    aendere(c, 200); zeichneSchluss();
+  };
+  if (flug){
+    ask(`<b>Ergebnis auf „${ERGEBNIS_KNOPF[o]}“ ändern?</b><br><br>Der Flug ${flug.date ? 'vom ' + deDate(flug.date) : 'ohne Datum'}
+      bleibt in „Flüge“ stehen, ist danach aber nicht mehr mit diesem Check verknüpft.`,
+      () => { closeConfirm(); setze(); }, 'Ergebnis ändern?', 'Ja, ändern');
+    return;
+  }
+  setze();
+}
+
+function legeFlugAn(c){
+  const id = neueId();
+  const row = { id, flight_date:c.check_date || null, start_time:null, kind:'hikefly',
+                start_place:c.start_place || null, land_place:null, mins:0, asc_m:0, asc_min:0,
+                glider:null, harness:null };
+  if (HAS.asc) row.ascent = 'foot';
+  OFFEN.flights[id] = row;
+  S.flights.push(flugAus(row));
+  c.flight_id = id; c.outcome = 'started';
+  aendere(c, 100);
+  /* Die Flugtabelle nicht neu zeichnen, solange darin gerade bearbeitet wird —
+     der neue Flug erscheint dort nach dem Speichern. */
+  if (!editMode){ renderAll(); renderStats(); }
+  zeichneSchluss();
+  toast('Flug in „Flüge“ angelegt: Hike & Fly' + (HAS.asc ? ', zu Fuß.' : '.'));
+}
+
+window.loescheCheck = () => {
+  const c = ckRow(); if (!c) return;
+  ask(`<b>Check ${c.check_date ? 'vom ' + deDate(c.check_date) : 'ohne Datum'} löschen?</b>`
+      + (c.start_place ? '<br>' + esc(pname(c.start_place)) : '')
+      + (c.flight_id ? '<br><br>Der verknüpfte Flug bleibt in „Flüge“ stehen.' : '')
+      + '<br><br>Das lässt sich nicht rückgängig machen.',
+    async () => {
+      const id = c.id;
+      const { error } = await sb.from('checks').delete().eq('id', id);
+      /* Ein Check, der noch nie in der Datenbank war, lässt sich auch ohne Netz löschen. */
+      if (error && !(netzFehler(error) && c._neu)){
+        closeConfirm();
+        if (netzFehler(error)) return toast('Löschen geht nur mit Netz. Versuch es später noch einmal.', true);
+        return oops(error);
+      }
+      delete OFFEN.checks[id]; merkeOffen();
+      S.checks = S.checks.filter(x => x.id !== id);
+      standAnpassen(st => { st.checks = (st.checks || []).filter(x => x.id !== id); });
+      closeConfirm(); schliesseCheck(); toast('Check gelöscht.');
+    });
+};
+
+/* Kurzfassung für das Detailfenster eines Flugs. */
+function checkKurzHTML(c){
+  const a = auswertung(c);
+  const fp = (f, wo) => `<span class="fp ${f || ''}" title="${wo}: ${f ? FARBNAME[f] : 'nicht bewertet'}"
+    aria-label="${wo}: ${f ? FARBNAME[f] : 'nicht bewertet'}"></span>`;
+  return `<div class="sec"><h3>Check vor dem Start</h3>
+    <p style="margin:0;font-size:14.5px"><b>${URTEIL[a.stand]}</b>
+      ${c.lift_ok ? ' · Bahn-Frage: ' + (c.lift_ok === 'yes' ? 'ja' : 'nein') : ''}</p>
+    <ul class="ckmini">${PUNKTE.map((P, i) => {
+      const p = punkt(c, i+1);
+      const txt = [p.abort ? 'Abbruch bei: ' + p.abort : '',
+                   besser(p) && p.why ? 'Warum: ' + p.why : ''].filter(Boolean).join('\n');
+      return `<li><span class="fps">${fp(p.home, 'Zuhause')} → ${fp(p.summit, 'Gipfel')}</span>${esc(P.t)}`
+        + (txt ? `<span class="txt">${esc(txt)}</span>` : '') + '</li>';
+    }).join('')}</ul>
+    <button type="button" class="btn small ghost" onclick="closeDetail();zeigeCheck('${c.id}')">Check öffnen</button></div>`;
+}
+
 /* ---------- Detailfenster ---------- */
 window.openDetail = id => {
   const f = S.flights.find(x=>x.id===id); if (!f) return;
@@ -3045,6 +3810,8 @@ window.openDetail = id => {
         + esc(klasseOf(f.glider)) + '</span>' : '') : '')}
       ${row('Gurtzeug', esc(f.harness))}
     </dl></div>
+    ${(() => { const ck = HAS.check && S.checks.find(c => c.flight_id === f.id);
+               return ck ? checkKurzHTML(ck) : ''; })()}
     ${f.note ? `<div class="sec"><h3>Notiz</h3><div class="diary">${esc(f.note)}</div></div>` : ''}
     ${f.reminder ? `<div class="sec remsec"><h3>Reminder</h3><div class="diary">${esc(f.reminder)}</div></div>` : ''}
     ${(!f.note && !f.reminder) ? `<div class="sec"><p class="note" style="margin:0">Zu diesem Flug ist noch nichts notiert. Über „Bearbeiten“ kannst du das nachtragen.</p></div>` : ''}`;
@@ -3073,10 +3840,17 @@ window.askDelete = id => {
   ask(`<b>${esc(KINDS[f.kind])} ${f.date ? 'am '+deDate(f.date) : '— ohne Datum'}</b>`
       + (wo ? `<br>${esc(wo)}` : '')
       + ((f.note||f.reminder) ? '<br><br>Notiz und Reminder werden mitgelöscht.' : '')
+      + (S.checks.some(c => c.flight_id === id) ? '<br><br>Der Check dazu bleibt im Reiter „Check“ stehen.' : '')
       + '<br><br>Das lässt sich nicht rückgängig machen.',
     async () => {
       const { error } = await sb.from('flights').delete().eq('id', id);
       if (error) return oops(error);
+      /* Der Check bleibt — er zeigt nur nicht mehr auf den Flug. In der Datenbank
+         erledigt das `on delete set null`, hier im Handy dieser Teil. */
+      delete OFFEN.flights[id];
+      Object.values(OFFEN.checks).forEach(c => { if (c.flight_id === id) c.flight_id = null; });
+      S.checks.forEach(c => { if (c.flight_id === id) c.flight_id = null; });
+      merkeOffen();
       closeConfirm(); closeDetail(); await loadAll(); toast('Flug gelöscht.');
     });
 };
@@ -3135,6 +3909,8 @@ function renderAll(){
   renderPlaceList();
 
   renderDiary();
+
+  renderChecks();
 
   const gearTable = kind => {
     const list = S.gear.filter(g=>g.kind===kind);
@@ -3294,12 +4070,17 @@ function download(name, text, type){
 }
 
 window.backupJSON = async () => {
-  const [pl, ge, fl] = await Promise.all([
-    sb.from('places').select('*'), sb.from('gear').select('*'), sb.from('flights').select('*')]);
-  for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
+  /* Was noch im Handy liegt, zuerst senden — sonst fehlte es in der Sicherung. */
+  await sendeOffenes();
+  const anfragen = [sb.from('places').select('*'), sb.from('gear').select('*'), sb.from('flights').select('*')];
+  if (HAS.check) anfragen.push(sb.from('checks').select('*'), sb.from('check_limits').select('*'));
+  const [pl, ge, fl, ck, li] = await Promise.all(anfragen);
+  for (const r of [pl, ge, fl, ck, li]) if (r && r.error) return oops(r.error);
   const strip = rows => rows.map(({user_id, ...rest}) => rest);
   const data = { format:'flugbuch', version:1, exported_at:new Date().toISOString(),
                  places:strip(pl.data), gear:strip(ge.data), flights:strip(fl.data) };
+  if (HAS.check){ data.checks = strip(ck.data); data.check_limits = strip(li.data); }
+  if (hatOffenes()) toast('Achtung: Einiges ist noch nicht gesendet und fehlt in der Sicherung.', true);
   download('flugbuch-sicherung-'+heute()+'.json',
            JSON.stringify(data, null, 2), 'application/json');
   toast(`Sicherung mit ${fl.data.length} Flügen heruntergeladen.`);
@@ -3314,10 +4095,13 @@ window.askRestore = () => {
     try { d = JSON.parse(reader.result); }
     catch { return toast('Diese Datei ist keine gültige Sicherung.', true); }
     if (!d.flights || !d.places) return toast('In dieser Datei fehlen Flüge oder Orte.', true);
+    const offen = Object.keys(OFFEN.checks).length;
     ask(`<b>Gesamtes Flugbuch ersetzen?</b><br><br>
-      Aus der Sicherung kommen ${d.flights.length} Flüge, ${d.places.length} Orte
-      und ${(d.gear||[]).length} Ausrüstungsteile.<br><br>
-      Dein jetziger Stand mit ${S.flights.length} Flügen wird vorher <b>vollständig gelöscht</b>.`,
+      Aus der Sicherung kommen ${d.flights.length} Flüge, ${d.places.length} Orte,
+      ${(d.gear||[]).length} Ausrüstungsteile${HAS.check ? ` und ${(d.checks||[]).length} Checks` : ''}.<br><br>
+      Dein jetziger Stand mit ${S.flights.length} Flügen wird vorher <b>vollständig gelöscht</b>.`
+      + (offen ? `<br><br>${offen === 1 ? 'Ein Check, der' : offen + ' Checks, die'} noch nicht
+        gesendet ${offen === 1 ? 'ist' : 'sind'}, ${offen === 1 ? 'wird' : 'werden'} auf diesem Gerät verworfen.` : ''),
       () => doRestore(d));
   };
   reader.readAsText(file);
@@ -3327,11 +4111,21 @@ async function doRestore(d){
   const yes = document.getElementById('c-yes');
   yes.disabled = true; yes.textContent = 'Wird eingelesen …';
   try {
+    /* Checks zeigen auf Flüge und Orte — darum zuerst weg und zuletzt wieder rein. */
+    if (HAS.check){
+      for (const [t, k] of [['checks','id'], ['check_limits','user_id']]){
+        const { error } = await sb.from(t).delete().not(k,'is',null);
+        if (error) throw error;
+      }
+    }
     const all = ['flights','places','gear'];
     for (const t of all){
       const { error } = await sb.from(t).delete().not('id','is',null);
       if (error) throw error;
     }
+    /* Was noch im Handy auf das Senden wartete, gehört zum alten Stand. */
+    OFFEN = { checks:{}, flights:{}, limits:null }; merkeOffen();
+    ckId = null;
     /* Felder, die es in dieser Datenbank noch nicht gibt, werden beim Einlesen
        weggelassen — sonst würde die ganze Wiederherstellung daran scheitern. */
     const weg = [ 'link',                 /* alte Spalte, wird nicht mehr benutzt */
@@ -3343,7 +4137,7 @@ async function doRestore(d){
       weg.forEach(k => delete rest[k]);
       return rest;
     });
-    for (const t of ['places','gear','flights']){
+    for (const t of ['places','gear','flights', ...(HAS.check ? ['checks','check_limits'] : [])]){
       const rows = clean(d[t]);
       if (rows.length){
         const { error } = await sb.from(t).insert(rows);
@@ -3387,6 +4181,11 @@ document.addEventListener('keydown', e => {
   /* Das echte Vollbild beendet der Browser selbst; das Ersatz-Vollbild nicht. */
   else if (document.getElementById('mapwrap').classList.contains('fsfake')) verlasseVollbild();
 });
+
+/* Eine Kopie der Seite im Handy, damit sie sich am Gipfel auch ohne Netz öffnen
+   lässt (siehe sw.js). Mit Netz kommt immer die neueste Fassung. */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('Ohne Offline-Kopie:', e));
 
 boot().catch(e => {
   document.getElementById('boot').textContent =

@@ -28,16 +28,25 @@ Darum gilt im Chat:
 | Reiter | wofür |
 | --- | --- |
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
+| **Check** | Ampel-Check vor dem Start beim Hike & Fly: eigene Grenzwerte, fünf Punkte zuhause und am Gipfel, funktioniert auch ohne Netz |
 | **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
 | **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
 | **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
 | **Statistik** | Säulenbild pro Monat und Auswertung nach Art, Ort und Ausrüstung |
-| **Sicherung** | komplettes Flugbuch als JSON herunterladen und wieder einlesen; CSV für Excel |
+| **Sicherung** | komplettes Flugbuch (mit Checks) als JSON herunterladen und wieder einlesen; CSV für Excel |
 
 ## Aufbau
 
 Bewusst simpel gehalten: **eine einzige Datei**, `index.html`, mit HTML, CSS und JavaScript darin.
 Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert genau diese Datei.
+
+**Einzige Ausnahme: `sw.js`.** Diese kleine zweite Datei hält im Handy eine Kopie der Seite
+und der Bibliotheken bereit, damit sich der Reiter „Check“ am Gipfel auch dann öffnen lässt,
+wenn das Handy die Seite ohne Netz neu lädt. Eine eigene Datei muss es sein — Browser
+erlauben so eine Offline-Kopie nur über eine Datei auf derselben Adresse. Mit Netz kommt
+immer die neueste `index.html` vom Server; die Kopie springt nur ein, wenn nach 4 Sekunden
+keine Antwort da ist. Kartenkacheln und Datenbank werden nie zwischengespeichert. Wer
+`sw.js` ändert, zählt darin `CACHE` hoch (`flugbuch-v1` → `flugbuch-v2`).
 
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
@@ -53,8 +62,9 @@ Der `service_role`-Schlüssel darf **niemals** in diese Datei.
 
 ## Datenbank
 
-Drei Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security,
-sodass jedes Konto nur eigene Zeilen sieht.
+Fünf Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security,
+sodass jedes Konto nur eigene Zeilen sieht. `checks` und `check_limits` gehören zum Reiter
+„Check“ und kamen später dazu (siehe „Check: die zwei Tabellen anlegen“).
 
 **`places`** — Start- und Landeplätze
 `id, user_id, name, type, lat, lng, dirs, elev, info, created_at`
@@ -102,6 +112,24 @@ Flugbuch die beiden Felder von selbst weg (siehe „Später dazugekommene Felder
 
 `start_place` und `land_place` verweisen auf `places` mit `on delete restrict`:
 Ein Ort, an dem noch Flüge hängen, lässt sich nicht löschen.
+
+**`checks`** — Ampel-Checks vor dem Start
+`id, user_id, check_date, start_place, points, lift_ok, outcome, flight_id, created_at, updated_at`
+`points`: die fünf Punkte als JSON, zum Beispiel
+`{"1": {"home": "green", "abort": "Föhn über 4 hPa", "summit": "yellow", "why": ""}, …}` —
+Schlüssel `1` bis `5`, Farben `green` | `yellow` | `red`, leer heißt: nicht bewertet.
+`lift_ok`: Antwort auf die Bahn-Frage, `yes` | `no` | leer.
+`outcome`: `started` (gestartet) | `descended` (abgestiegen) | `cancelled` (abgesagt) | leer (offen).
+`start_place` verweist auf `places` mit `on delete restrict` — ein Ort mit Checks lässt sich
+nicht löschen. `flight_id` verweist auf `flights` mit `on delete set null`: Wird der Flug
+gelöscht, bleibt der Check stehen und zeigt nur nicht mehr auf ihn.
+Die `id` entsteht schon im Handy, damit ein ohne Netz angelegter Check beim Senden genau
+einmal ankommt.
+
+**`check_limits`** — „Meine Grenzwerte“, eine Zeile pro Konto
+`user_id, wind_max, gust_max, foehn_hpa, valley_max, base_min, latest_start, updated_at`
+(Startwind max km/h, Böenspanne max km/h, Föhn-Druckdifferenz N–S ab hPa, Talwind am
+Landeplatz max km/h, Wolkenbasis mind. über Start in m, späteste Startzeit).
 
 ### Leere Felder
 
@@ -166,6 +194,49 @@ Falls das mit einer Fehlermeldung abbricht, steht vermutlich noch ein alter
 „experimenteller“ Startplatz (`exp`) in der Datenbank. Dann die App einmal öffnen — sie
 stellt solche Orte von selbst um (siehe „Experimentelle Startplätze“) — und den Block danach
 noch einmal ausführen.
+
+### Check: die zwei Tabellen anlegen
+
+Der Reiter **Check** braucht zwei eigene Tabellen. Solange sie fehlen, zeigt der Reiter
+nur einen Hinweis — alles andere funktioniert normal weiter. Zum Anlegen in Supabase unter
+**SQL Editor** einmalig ausführen. Der Block legt nur Neues an und löscht nichts; er darf
+auch ein zweites Mal laufen:
+
+```sql
+create table if not exists checks (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  check_date  date,
+  start_place uuid references places(id) on delete restrict,
+  points      jsonb not null default '{}'::jsonb,
+  lift_ok     text check (lift_ok in ('yes','no')),
+  outcome     text check (outcome in ('started','descended','cancelled')),
+  flight_id   uuid references flights(id) on delete set null,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+alter table checks enable row level security;
+drop policy if exists "eigene Checks" on checks;
+create policy "eigene Checks" on checks for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists check_limits (
+  user_id      uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  wind_max     numeric,
+  gust_max     numeric,
+  foehn_hpa    numeric,
+  valley_max   numeric,
+  base_min     numeric,
+  latest_start time,
+  updated_at   timestamptz not null default now()
+);
+alter table check_limits enable row level security;
+drop policy if exists "eigene Grenzwerte" on check_limits;
+create policy "eigene Grenzwerte" on check_limits for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+```
+
+Danach die Seite neu laden.
 
 ### Verbindung zur Datenbank
 
@@ -248,6 +319,102 @@ der Zeile.
 
 Der Reiter **Reminder** ist das Tagebuch: dort stehen alle Kommentare und Reminder
 untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
+
+## Der Reiter „Check“
+
+Ein **Ampel-Check vor dem Start beim Hike & Fly**. Er steht gleich hinter „Flüge“. Die
+Kennzahlenleiste ist hier ausgeblendet, damit am Handy mehr Platz bleibt.
+
+**Die App entscheidet nicht.** Sie rechnet nur die Regel aus (siehe unten) und zeigt das
+Ergebnis. Ob gestartet wird, entscheidest du — „Gestartet“ lässt sich auch bei „Kein Start“
+antippen.
+
+### Meine Grenzwerte
+
+Ganz oben, einmal eintragen und jederzeit änderbar: Startwind max (km/h), Böenspanne max
+(km/h), Föhn-Druckdifferenz N–S ab (hPa), Talwind am Landeplatz max (km/h), Wolkenbasis mind.
+über Start (m) und späteste Startzeit. Gespeichert wird, sobald man ein Feld verlässt;
+Komma oder Punkt als Dezimalzeichen geht beides. Die Werte stehen in der Datenbank
+(`check_limits`) und sind darum auf PC und Handy gleich. In einem offenen Check steht unter
+jedem Punkt klein, welche Grenzwerte dazugehören (bei „Gelände & Lee“ gibt es keine).
+
+### Die Liste
+
+Darunter **Neuer Check** und alle Checks, neueste zuerst: Datum, Startplatz und Ergebnis
+(*gestartet*, *abgestiegen*, *abgesagt* oder gestrichelt *offen*). Ein Tipp auf eine Zeile
+öffnet den Check; er ersetzt dann die Liste, *← Alle Checks* führt zurück.
+
+### Ein Check
+
+Oben **Datum** (vorbelegt mit heute) und **Startplatz** — die Auswahl wie beim Flug, nur
+Startplätze. Darunter fünf Punkte:
+
+1. Höhenwind & Föhn · 2. Startwind · 3. Thermik & Wolken · 4. Gelände & Lee · 5. Landung & Talwind
+
+Jeder Punkt hat zwei Spalten mit je drei großen Ampelknöpfen (grün ✓, gelb !, rot ✕ — das
+Zeichen sagt dasselbe wie die Farbe):
+
+- **Zuhause** — Farbe antippen, darunter das Feld **„Abbruch bei …“**.
+- **Gipfel** — Farbe antippen.
+
+Nochmal antippen nimmt eine Farbe wieder weg. Über der Spalte, deren Farbe gerade zählt,
+steht „zählt“.
+
+### Die Auswertung
+
+Sie steht **unten am Bildschirm fest**, solange der Check offen ist, und ändert sich mit
+jedem Tipp:
+
+- Es zählt die **Gipfelfarbe**; solange sie fehlt, die **Zuhause-Farbe**.
+- **Mindestens 1× rot oder mindestens 2× gelb → groß „Kein Start“**, sonst „Start möglich“.
+  Sind noch nicht alle fünf Punkte bewertet und hat die Regel noch nicht angeschlagen,
+  steht dort „Noch offen“ mit der Zahl der bewerteten Punkte.
+- **Schon zuhause 2× gelb** → Hinweis „Plan ändern: anderer Berg, früher starten oder
+  Abstieg einplanen“.
+- Ist eine **Gipfelfarbe besser als die Zuhause-Farbe**, erscheint bei diesem Punkt das
+  Pflichtfeld **„Warum?“**. Solange es leer ist, lässt sich der Check nicht abschließen.
+- Zum Schluss die Frage **„Würde ich auch starten, wenn ich mit der Bahn raufgefahren
+  wäre?“** (Ja/Nein). Bei *Nein* → „Kein Start“.
+
+### Abschluss
+
+Drei Knöpfe: **Gestartet**, **Abgestiegen**, **Abgesagt**.
+
+- **Gestartet** legt in „Flüge“ eine neue Zeile an — Datum und Startplatz aus dem Check,
+  Art Hike & Fly, Aufstieg zu Fuß — und verknüpft sie mit dem Check. Den Rest (Dauer,
+  Landeplatz, Ausrüstung) trägst du wie gewohnt in der Flugtabelle nach. Im
+  **Detailfenster des Flugs** steht dann der Check: Ergebnis der Regel, Bahn-Frage und
+  für jeden Punkt Zuhause → Gipfel mit „Abbruch bei“ und „Warum“; *Check öffnen* springt hin.
+- Wer danach doch ein anderes Ergebnis wählt, bekommt eine Rückfrage: Der Flug bleibt in
+  „Flüge“ stehen und wird nur vom Check gelöst.
+- **Wird der verknüpfte Flug gelöscht, bleibt der Check stehen** (Ergebnis weiter
+  „gestartet“). Nochmal „Gestartet“ tippen legt dann bei Bedarf einen neuen Flug an.
+- **Check löschen** steht ganz unten im Check, immer mit Rückfrage. Der verknüpfte Flug
+  bleibt dabei stehen.
+
+### Ohne Netz
+
+Ein Check, der zuhause geöffnet wurde, lässt sich **am Gipfel ohne Netz weiter ausfüllen**:
+
+- Jede Eingabe landet zuerst **im Handy** und wird von dort gesendet. Klappt das nicht,
+  bleibt sie liegen und geht **von selbst raus, sobald wieder Netz da ist** (das Flugbuch
+  versucht es beim Zurückkommen des Netzes, beim Wiederöffnen der Seite und alle
+  20 Sekunden).
+- Solange etwas nur im Handy steht, zeigt ein kleiner gelber Hinweis **„noch nicht
+  gespeichert“** — im Check, in der Liste und bei den Grenzwerten; am Reiter „Check“ steht
+  ein gelber Punkt.
+- Auch **„Gestartet“** geht ohne Netz: Der Flug steht sofort in der Flugtabelle und wird
+  mit dem Check zusammen gesendet.
+- **Lädt das Handy die Seite am Gipfel neu**, kommt sie aus der Offline-Kopie (`sw.js`) und
+  zeigt den zuletzt mit Netz geladenen Stand, mit einem gelben Balken „Ohne Netz“ oben.
+  Das geht auch, wenn die Anmeldung inzwischen abgelaufen ist — sie wird erneuert, sobald
+  wieder Netz da ist. Voraussetzung: Die Seite wurde auf diesem Handy schon einmal mit
+  Netz geöffnet und danach noch einmal neu geladen (beim allerersten Öffnen legt der
+  Browser die Kopie erst an).
+- Ohne Netz bitte nur Checks bearbeiten. Flüge, Orte und Ausrüstung brauchen weiter Netz.
+- **Löschen** eines Checks braucht Netz — außer der Check war noch nie gesendet.
+- Der gespeicherte Stand gehört zum Konto und wird beim Abmelden gelöscht; noch nicht
+  gesendete Checks bleiben und gehen beim nächsten Anmelden raus.
 
 ## Der Reiter „Orte“
 
@@ -386,7 +553,7 @@ anklickbaren Links. Jeder Link öffnet sich in einem neuen Fenster. Darin sitzen
   Ort umbenennen, seine Art und den Text ändern, und ein **Klick in die Karte verschiebt
   ihn** an eine neue Stelle.
 - **Schließen** — das Feld geht zu. Das tut auch ein Klick irgendwo in die Karte oder Escape.
-- **Löschen** — rechts im Feld. Nur, wenn keine Flüge mehr an dem Ort hängen, und immer
+- **Löschen** — rechts im Feld. Nur, wenn keine Flüge und keine Checks mehr an dem Ort hängen, und immer
   mit Rückfrage.
 
 Unten im Infofeld stehen die **Koordinaten** mit einem kleinen **Kopier-Knopf** daneben. Ein
@@ -718,6 +885,9 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
   was der Satz darunter dann dazusagt.
 - **Vor jedem Löschen kommt eine Rückfrage.** Ausnahmslos.
 - Reminder hängen fest am Flug. Es gibt keine eigenständigen Reminder.
+- **Der Check entscheidet nicht.** Er zeigt nur das Ergebnis der Regel (1× rot oder 2× gelb
+  oder „Nein“ bei der Bahn-Frage → „Kein Start“). Gestartet werden kann immer.
+- Ein gelöschter Flug lässt seinen Check stehen; ein gelöschter Check lässt seinen Flug stehen.
 - Kommentare und Reminder sind tagebuchlang. In der Flugtabelle steht dafür nur ein
   kleiner Knopf, der ganze Text steht im Reiter „Reminder“ und im Detailfenster.
 
@@ -725,7 +895,11 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
 
 Der Gratis-Tarif von Supabase hat **keine automatischen Sicherungen**.
 Der Reiter „Sicherung" lädt das komplette Flugbuch als JSON herunter und kann es
-wieder einlesen. Das ist die einzige Absicherung gegen Datenverlust —
+wieder einlesen — mit Flügen, Orten, Ausrüstung, **Checks** (`checks`) und **Grenzwerten**
+(`check_limits`). Was noch nur im Handy liegt, wird vor dem Herunterladen gesendet; klappt
+das nicht, sagt eine Meldung, dass es in der Sicherung fehlt. Sicherungen von früher ohne
+Checks lassen sich weiter einlesen. Beim Einlesen werden Checks, die auf diesem Gerät noch
+nicht gesendet waren, verworfen (die Rückfrage sagt es dazu). Das ist die einzige Absicherung gegen Datenverlust —
 entsprechend vorsichtig damit umgehen.
 
 Der CSV-Export ist zum Auswerten in Excel gedacht, **nicht** zum Wiederherstellen.
