@@ -25,6 +25,8 @@ Darum gilt im Chat:
 
 ### Die Reiter auf einen Blick
 
+Jeder Reiter hat seine eigene Hauptfarbe (siehe „Aussehen“).
+
 | Reiter | wofür |
 | --- | --- |
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
@@ -50,6 +52,28 @@ Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert ge
 Ganz oben im `<script type="module">`-Block stehen `SUPABASE_URL` und `SUPABASE_KEY`.
 Der Schlüssel ist der öffentliche „anon key“ und gehört dort hin — das ist so vorgesehen.
 Der `service_role`-Schlüssel darf **niemals** in diese Datei.
+
+## Aussehen
+
+Der Stil ist an alte Erklärfilme angelehnt: eine tiefe, flache Hintergrundfarbe, darauf
+**cremefarbene Karten** mit dunklem Umriss und einem flachen Schatten, Überschriften in
+einer Schrift mit Serifen. Die Kennzahlen stehen in schmalen farbigen Rahmen direkt auf dem
+Hintergrund, wie die Messfenster eines Oszilloskops, und unter der Kopfzeile läuft eine Welle.
+
+**Jeder Reiter hat seine eigene Hauptfarbe.** Beim Umschalten wechseln der Hintergrund und
+die Farbe von Welle und Rahmen; der Farbpunkt vor jedem Reiter zeigt, welche Farbe er hat.
+
+| Reiter | Hintergrund | Welle und Rahmen |
+| --- | --- | --- |
+| Flüge | Blau | Orange |
+| Orte | Tannengrün | Bernstein |
+| Reminder | Pflaume | Koralle |
+| Ausrüstung | Rost | Himmelblau |
+| Statistik | Petrol | Gelb |
+| Sicherung | Schiefergrau | Salbeigrün |
+
+Die Anmeldung steht auf dem Blau der Flüge. Die Farben der Ortspunkte, der Säulen und der
+Geländeschichten sind davon unabhängig und bleiben auf jedem Reiter gleich.
 
 ## Datenbank
 

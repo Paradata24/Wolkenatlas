@@ -7,57 +7,96 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
-    --paper:#F6F8FA; --panel:#FFFFFF; --ink:#15202B; --muted:#67788A; --line:#DCE3EA;
+    /* Stil wie ein Erklärfilm: tiefe, flache Hintergrundfarbe, darauf cremefarbene
+       Karten mit dunklem Umriss. Die Hintergrundfarbe (--bg) und die Farbe der
+       Rahmen und der Welle (--akzent) wechseln mit dem Reiter, siehe unten. */
+    --paper:#F6F0DF; --panel:#F6F0DF; --ink:#142236; --muted:#6B6656; --line:#DDD2B6;
+    --line2:#E3D9BF; --hover:#ECE3CA; --hover2:#F0E8D3; --feld:#FFFBF1;
+    --creme:#F5EFDD; --cremematt:rgba(245,239,221,.72);
+    --bg:#12559B; --akzent:#F0782E;
+    --serif:Georgia,"Times New Roman",Times,serif;
     --chart:#2E5A88; --start:#C0326B; --contour:#A8813F; --ground:#3F7D62;
-    --noflight:#E07A1F; --landneu:#8BC34A; --alpin:#0096FF; --r:3px;
+    --noflight:#E07A1F; --landneu:#8BC34A; --alpin:#0096FF; --r:5px;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;
-    line-height:1.45;-webkit-font-smoothing:antialiased}
+  body{background-color:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;
+    line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;
+    /* Oben in der Mitte etwas heller, zu den Rändern hin dunkler — wie ein Bildschirm. */
+    background-image:radial-gradient(ellipse 90% 70% at 50% 0%,rgba(255,255,255,.13),rgba(255,255,255,0) 70%),
+      radial-gradient(ellipse 120% 90% at 50% 40%,rgba(0,0,0,0) 55%,rgba(0,0,0,.28));
+    background-attachment:fixed;transition:background-color .35s ease}
+  /* Jeder Reiter hat seine eigene Hauptfarbe. */
+  body[data-tab="flug"]{--bg:#12559B;--akzent:#F0782E}   /* Blau, Orange */
+  body[data-tab="orte"]{--bg:#2D6A3E;--akzent:#F7A440}   /* Tannengrün, Bernstein */
+  body[data-tab="rem"] {--bg:#5B3672;--akzent:#FF7A85}   /* Pflaume, Koralle */
+  body[data-tab="gear"]{--bg:#A1441E;--akzent:#7FCBF2}   /* Rost, Himmelblau */
+  body[data-tab="stat"]{--bg:#0C5F6E;--akzent:#F7CF4A}   /* Petrol, Gelb */
+  body[data-tab="save"]{--bg:#384656;--akzent:#9ED49A}   /* Schiefer, Salbei */
   .wrap{max-width:1280px;margin:0 auto;padding:20px 18px 60px}
 
   /* ---------- Anmeldung ---------- */
   #login{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
   #login.on{display:flex}
-  #login .box{width:100%;max-width:360px}
-  #login h1{font-size:19px;font-weight:650;letter-spacing:.14em;text-transform:uppercase;
-    margin:0 0 4px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+  #login .box{width:100%;max-width:380px;background:var(--panel);border:2px solid var(--ink);
+    border-radius:var(--r);padding:22px 24px 18px;box-shadow:6px 6px 0 rgba(0,0,0,.25)}
+  #login h1{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:.01em;
+    margin:0 0 4px;border-bottom:2px solid var(--akzent);padding-bottom:10px}
   #login .lead{font-size:14px;color:var(--muted);margin:12px 0 20px}
   #boot{display:flex;min-height:100vh;align-items:center;justify-content:center;
-    font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cremematt)}
   #app{display:none}
   #app.on{display:block}
 
-  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
-    border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:4px}
-  header h1{font-size:19px;font-weight:650;letter-spacing:.14em;text-transform:uppercase;margin:0}
-  header .sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
-  nav{margin-left:auto;display:flex;gap:2px;flex-wrap:wrap}
-  nav button{font:inherit;font-size:13px;background:none;border:none;cursor:pointer;
-    padding:6px 13px;color:var(--muted);border-radius:var(--r) var(--r) 0 0}
-  nav button:hover{color:var(--ink);background:#EAEFF4}
-  nav button[aria-selected="true"]{background:var(--ink);color:#fff}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:relative;
+    padding-bottom:18px;margin-bottom:14px}
+  /* Unter der Kopfzeile läuft eine Welle wie auf einem Oszilloskop, in der Farbe des Reiters. */
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:14px;
+    background:var(--akzent);transition:background-color .35s ease;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='14' viewBox='0 0 80 14'%3E%3Cpath d='M0 7 C10 0 30 0 40 7 S70 14 80 7' fill='none' stroke='black' stroke-width='2.6'/%3E%3C/svg%3E") repeat-x left center/80px 14px;
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='14' viewBox='0 0 80 14'%3E%3Cpath d='M0 7 C10 0 30 0 40 7 S70 14 80 7' fill='none' stroke='black' stroke-width='2.6'/%3E%3C/svg%3E") repeat-x left center/80px 14px}
+  header h1{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:.01em;
+    margin:0;color:var(--creme)}
+  header .sub{font-family:var(--mono);font-size:11px;color:var(--cremematt);letter-spacing:.06em}
+  nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+  nav button{font:inherit;font-size:13.5px;background:none;border:1.5px solid transparent;cursor:pointer;
+    padding:5px 13px 5px 11px;color:var(--cremematt);border-radius:99px;
+    display:inline-flex;align-items:center;gap:7px}
+  /* Der Farbpunkt vor jedem Reiter zeigt, welche Farbe die Seite hat. */
+  nav button::before{content:"";width:9px;height:9px;border-radius:50%;flex:none;
+    background:var(--tabfarbe);box-shadow:0 0 0 1.5px rgba(245,239,221,.55)}
+  #t-flug{--tabfarbe:#3F86D6} #t-orte{--tabfarbe:#4E9A60} #t-rem{--tabfarbe:#9A68B8}
+  #t-gear{--tabfarbe:#D2683A} #t-stat{--tabfarbe:#2A9AAD} #t-save{--tabfarbe:#7D8EA3}
+  nav button:hover{color:var(--creme);border-color:rgba(245,239,221,.35)}
+  nav button[aria-selected="true"]{background:var(--creme);color:var(--ink);border-color:var(--creme);font-weight:600}
+  nav button[aria-selected="true"]::before{box-shadow:0 0 0 1.5px var(--ink)}
   nav button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,
   textarea:focus-visible,tr.click:focus-visible{outline:2px solid var(--start);outline-offset:2px}
 
-  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    border-bottom:1px solid var(--line);margin-bottom:22px}
-  .readout div{padding:14px 16px 13px;border-right:1px solid var(--line)}
-  .readout div:last-child{border-right:none}
+  /* Die Kennzahlen stehen in schmalen Rahmen direkt auf dem Hintergrund — wie die
+     Messfenster eines Oszilloskops. */
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;
+    margin-bottom:22px}
+  .readout > div{padding:12px 14px 11px;border:2px solid var(--akzent);border-radius:2px;
+    background:rgba(0,0,0,.12);transition:border-color .35s ease}
   /* `border-right:none`: Der Strich zwischen den Feldern gehört an den Rand des
      Feldes. Ohne das hier bekommt ihn auch die Beschriftung und es steht ein
      kurzer Strich mitten im Feld. */
   .readout .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
-    text-transform:uppercase;color:var(--muted);margin-bottom:3px;border-right:none}
+    text-transform:uppercase;color:var(--cremematt);margin-bottom:5px}
   /* Die sechs Beschriftungen sind verschieden lang und brechen bei schmalen
      Fenstern um. Die Zahl sitzt darum immer unten im Feld — so stehen die Zahlen
      aller Felder auf einer Linie, auch wenn darüber ein- oder zweizeilig steht. */
   .readout > div{display:flex;flex-direction:column;justify-content:space-between}
-  .readout .val{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em}
-  .readout .val small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+  .readout .val{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;color:var(--creme)}
+  .readout .val small{font-size:12px;font-weight:400;color:var(--cremematt);margin-left:3px}
+  @media(max-width:560px){
+    .readout{gap:8px;margin-bottom:18px}
+    .readout > div{padding:9px 11px 8px}
+    .readout .val{font-size:22px}
+  }
 
   .view{display:none}
   .view.on{display:block}
@@ -66,10 +105,14 @@
   .cols.one{grid-template-columns:1fr;max-width:760px}
   @media(max-width:820px){.cols,.cols.even{grid-template-columns:1fr}}
 
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
-  .card h2{font-size:11px;font-family:var(--mono);letter-spacing:.13em;text-transform:uppercase;
-    color:var(--muted);margin:0;padding:12px 15px;border-bottom:1px solid var(--line);
-    display:flex;align-items:center;gap:10px}
+  /* Cremefarbene Karte mit dunklem Umriss und flachem Schatten, wie ausgeschnitten. */
+  .card{background:var(--panel);border:2px solid var(--ink);border-radius:var(--r);
+    box-shadow:6px 6px 0 rgba(0,0,0,.22)}
+  .card h2,.modal h2{font-size:18px;font-family:var(--serif);font-weight:400;letter-spacing:.01em;
+    color:var(--ink);margin:0;padding:11px 15px;border-bottom:1.5px solid var(--line);
+    display:flex;align-items:center;gap:10px;line-height:1.3}
+  /* Knöpfe und Auswahl in der Überschrift bleiben in der normalen Schrift. */
+  .card h2 .tools,.card h2 .segs,.card h2 select,#bd-jahr{font-family:var(--sans)}
   .card .body{padding:15px}
 
   #mapwrap{position:relative}
@@ -90,7 +133,7 @@
     text-transform:uppercase;color:var(--muted);margin:0 0 4px}
   label .opt{text-transform:none;letter-spacing:.02em;opacity:.7;font-style:italic}
   input,select,textarea{width:100%;font:inherit;font-size:14px;padding:7px 9px;color:var(--ink);
-    background:#fff;border:1px solid var(--line);border-radius:var(--r)}
+    background:var(--feld);border:1px solid var(--line);border-radius:var(--r)}
   input[type=number],input[type=date],input[type=time]{font-family:var(--mono)}
   textarea{resize:vertical;min-height:52px}
   .field{margin-bottom:12px}
@@ -101,11 +144,14 @@
   .btn:hover{background:#26374a}
   .btn:disabled{opacity:.5;cursor:wait}
   .btn.ghost{background:none;color:var(--ink)}
-  .btn.ghost:hover{background:#EAEFF4}
+  .btn.ghost:hover{background:var(--hover)}
   .btn.small{font-size:13px;padding:5px 11px}
   .btn.danger{border-color:var(--start);background:var(--start);color:#fff}
   .btn.danger:hover{background:#a02857}
   .btn.wide{width:100%}
+  /* „Abmelden“ steht ohne Karte direkt auf dem farbigen Hintergrund. */
+  .view > .rowend .btn.ghost{color:var(--creme);border-color:var(--cremematt)}
+  .view > .rowend .btn.ghost:hover{background:rgba(255,255,255,.1)}
 
   table{width:100%;border-collapse:collapse;font-size:14px}
   th{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
@@ -115,7 +161,7 @@
   tr:last-child td{border-bottom:none}
   td.num{font-family:var(--mono);white-space:nowrap}
   tr.click{cursor:pointer}
-  tr.click:hover td{background:#F2F5F8}
+  tr.click:hover td{background:var(--hover2)}
   .tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
     padding:2px 6px;border-radius:2px;border:1px solid currentColor}
   .tag.s{color:var(--start)} .tag.l{color:var(--chart)}
@@ -138,7 +184,7 @@
   .seg{font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
     color:var(--muted);background:var(--panel);border:0;padding:4px 11px;cursor:pointer}
   .seg + .seg{border-left:1px solid var(--line)}
-  .seg:hover{background:#EAEFF4;color:var(--ink)}
+  .seg:hover{background:var(--hover);color:var(--ink)}
   .seg[aria-pressed="true"]{background:#FCEEF3;color:var(--ink);font-weight:600}
   .months{display:flex;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center}
   .months span{flex:1}
@@ -153,12 +199,13 @@
   .overlay.on{display:flex}
   /* Die Rückfrage liegt immer ganz oben — auch über einem offenen Textfenster. */
   #confirm{z-index:600}
-  .modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  .modal{background:var(--panel);border:2px solid var(--ink);border-radius:var(--r);
+    box-shadow:8px 8px 0 rgba(0,0,0,.25);
     width:100%;max-width:560px;max-height:86vh;overflow:auto}
   .modal h2{position:sticky;top:0;background:var(--panel);z-index:1}
   .modal h2 .x{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);
     font-family:var(--mono);font-size:18px;line-height:1;padding:2px 6px;border-radius:2px}
-  .modal h2 .x:hover{color:var(--ink);background:#EAEFF4}
+  .modal h2 .x:hover{color:var(--ink);background:var(--hover)}
   .dl{display:grid;grid-template-columns:auto 1fr;gap:9px 18px;align-items:baseline;margin:0}
   .dl dt{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
     color:var(--muted);white-space:nowrap}
@@ -179,7 +226,7 @@
   .tools{margin-left:auto;display:flex;align-items:center;gap:6px}
   .iconbtn{background:none;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;
     color:var(--muted);padding:5px 7px;line-height:0;display:inline-flex;align-items:center}
-  .iconbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .iconbtn:hover{color:var(--ink);border-color:var(--ink);background:var(--hover)}
   .iconbtn svg{width:15px;height:15px;display:block}
   .tablewrap{overflow-x:auto}
   /* Die Flugliste rollt in sich selbst. So bleiben die Zahlen oben und die
@@ -197,7 +244,7 @@
   table.flights th{padding:11px 7px 7px;white-space:normal;line-height:1.35}
   table.flights td{padding:6px 7px;vertical-align:middle;white-space:nowrap}
   table.flights input,table.flights select{font-size:13px;padding:4px 4px;
-    background:#F7F9FB;border-color:#E4EBF1}
+    background:var(--feld);border-color:var(--line2)}
   table.flights input:focus,table.flights select:focus{background:#fff}
   table.flights .c-date{width:136px}
   table.flights .c-time,table.flights .c-dur{width:136px}
@@ -237,14 +284,14 @@
   td.mark{text-align:center;padding:6px 5px;width:1%}
   .markbtn{width:22px;height:22px;border-radius:50%;border:1px dashed var(--line);background:none;
     cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:13px;line-height:1;padding:0}
-  .markbtn:hover{border-style:solid;border-color:var(--ink);color:var(--ink);background:#EAEFF4}
+  .markbtn:hover{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--hover)}
   .markbtn.red{color:var(--start)}
   .markbtn.red:hover{border-color:var(--start);color:var(--start);background:#FCEEF3}
-  .markbtn.has{border-style:solid;border-color:currentColor;background:#EAEFF4;font-size:11px}
+  .markbtn.has{border-style:solid;border-color:currentColor;background:var(--hover);font-size:11px}
   .markbtn.red.has{background:#FCEEF3}
-  tr.editing td{background:#FFFCEF}
+  tr.editing td{background:#FFF3CF}
   .edithint{font-size:12.5px;color:var(--muted);padding:11px 15px;border-top:1px solid var(--line);
-    background:#FBFCFD}
+    background:var(--hover2)}
 
   /* ---------- Tagebuch ---------- */
   .entry{padding:16px 17px;border-bottom:1px solid var(--line)}
@@ -265,10 +312,10 @@
   /* ---------- Windrose: mögliche Startrichtungen ---------- */
   .rose{display:block;width:100%;max-width:236px;margin:2px auto 0;touch-action:manipulation}
   .rose .seg{cursor:pointer}
-  .rose .seg path{fill:#F2F5F8;stroke:var(--line);stroke-width:1;transition:fill .15s ease}
+  .rose .seg path{fill:var(--hover2);stroke:var(--line);stroke-width:1;transition:fill .15s ease}
   .rose .seg text{font-family:var(--mono);font-size:13px;letter-spacing:.04em;fill:var(--muted);
     text-anchor:middle;pointer-events:none;user-select:none}
-  .rose .seg:hover path{fill:#E4EBF1}
+  .rose .seg:hover path{fill:var(--line2)}
   .rose .seg.on path{fill:var(--start);stroke:var(--start)}
   .rose .seg.on text{fill:#fff;font-weight:600}
   /* Angeklickt bleibt kein Kasten stehen; mit der Tastatur wird das Stück umrandet. */
@@ -284,11 +331,11 @@
 
   /* ---------- Orte: Vollbild, Infofeld, Filter ---------- */
   /* Im Vollbild steht die Filterleiste oben, die Karte füllt den Rest. */
-  #mapwrap:fullscreen,#mapwrap:-webkit-full-screen{width:100%;height:100%;background:#fff;
+  #mapwrap:fullscreen,#mapwrap:-webkit-full-screen{width:100%;height:100%;background:var(--panel);
     display:flex;flex-direction:column}
   #mapwrap:fullscreen #map,#mapwrap:-webkit-full-screen #map{height:auto;flex:1 1 auto;min-height:0}
   /* Ersatz-Vollbild für Browser, die es für einzelne Felder nicht können (iPhone). */
-  #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:#fff;
+  #mapwrap.fsfake{position:fixed;inset:0;z-index:900;background:var(--panel);
     display:flex;flex-direction:column;height:100vh;height:100dvh}
   /* Solange die Karte das Ersatz-Vollbild füllt, rollt die Seite dahinter nicht mit. */
   html.kartevoll, html.kartevoll body{overflow:hidden;overscroll-behavior:none}
@@ -322,7 +369,7 @@
   .placepanel h3{margin:0 20px 3px 0;font-size:16px;font-weight:600;line-height:1.3}
   .placepanel .x{position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;
     color:var(--muted);font-family:var(--mono);font-size:17px;line-height:1;padding:2px 5px;border-radius:2px}
-  .placepanel .x:hover{color:var(--ink);background:#EAEFF4}
+  .placepanel .x:hover{color:var(--ink);background:var(--hover)}
   .placepanel .meta{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
     color:var(--muted);margin:0}
   .placepanel .infotxt{white-space:pre-wrap;font-size:14px;line-height:1.55;margin:10px 0 0}
@@ -332,7 +379,7 @@
   .koordzeile{display:flex;align-items:center;gap:7px;margin-top:11px}
   .kopierbtn{background:none;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;
     color:var(--muted);padding:3px 5px;line-height:0;display:inline-flex;align-items:center;flex:none}
-  .kopierbtn:hover{color:var(--ink);border-color:var(--ink);background:#EAEFF4}
+  .kopierbtn:hover{color:var(--ink);border-color:var(--ink);background:var(--hover)}
   .kopierbtn svg{width:14px;height:14px;display:block}
   .kopierbtn .ok{display:none}
   .kopierbtn.fertig{color:var(--ground);border-color:var(--ground);background:#EFF6F2}
@@ -380,7 +427,7 @@
     background:var(--panel);border:none;cursor:pointer;padding:7px 10px;
     display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
   .fsegs button + button{border-left:1px solid var(--line)}
-  .fsegs button:hover{background:#F2F5F8;color:var(--ink)}
+  .fsegs button:hover{background:var(--hover2);color:var(--ink)}
   .fsegs button[aria-pressed="true"]{background:#FCEEF3;color:var(--start);font-weight:600}
   .fsegs .dot{width:9px;height:9px;border-width:2px}
   /* Die acht Windrichtungen: angetippt kräftig rot wie in der Windrose. */
@@ -413,7 +460,7 @@
   .armknopf{font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--panel);
     border:2px solid rgba(0,0,0,.2);border-radius:4px;background-clip:padding-box;cursor:pointer;
     padding:5px 11px}
-  .armknopf:hover{background:#F2F5F8}
+  .armknopf:hover{background:var(--hover2)}
   .armknopf.an{background:var(--start);color:#fff}
   /* Genug Platz: alles in einer Zeile, nichts bricht um. */
   .fbarkopf{display:none}
@@ -472,7 +519,7 @@
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
-<body>
+<body data-tab="flug">
 
 <div id="boot">Flugbuch wird geladen …</div>
 
@@ -1144,6 +1191,8 @@ async function migriereBeides(places, flights){
 
 /* ══════════ ANSICHTEN ══════════ */
 window.show = v => {
+  /* Jeder Reiter hat seine eigene Hauptfarbe — sie hängt an diesem Merkmal. */
+  document.body.dataset.tab = v;
   ['flug','rem','orte','gear','stat','save'].forEach(k=>{
     document.getElementById('v-'+k).classList.toggle('on', k===v);
     document.getElementById('t-'+k).setAttribute('aria-selected', k===v);
