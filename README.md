@@ -30,7 +30,7 @@ Darum gilt im Chat:
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
 | **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
 | **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
-| **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
+| **Ausrüstung** | Schirme (mit Klasse und Stalls) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
 | **Statistik** | Säulenbild pro Monat und Auswertung nach Art, Ort und Ausrüstung |
 | **Sicherung** | komplettes Flugbuch als JSON herunterladen und wieder einlesen; CSV für Excel |
 
@@ -83,10 +83,13 @@ Ein Ort braucht **keinen Flug**. Orte, an denen du noch nie warst, gehören ausd
 hier hinein — sie sind auf der Karte orange statt farbig.
 
 **`gear`** — Ausrüstung
-`id, user_id, kind, name, gclass, created_at` · `kind`: `glider` | `harness`
+`id, user_id, kind, name, gclass, stalls, created_at` · `kind`: `glider` | `harness`
 `gclass`: Schirmklasse `A` | `B low` | `B high` | `C` | `D` | `CCC` — nur bei Schirmen,
 darf leer sein. Steht bei einem Schirm noch eine Klasse, die es in der Liste nicht mehr
 gibt, bleibt sie erhalten, bis du sie selbst umstellst.
+`stalls`: wie oft der Schirm erfolgreich gestallt wurde — ganze Zahl ab 0, nur bei
+Schirmen, leer heißt 0. Wird in der Schirmliste direkt in der Spalte **Stalls** eingetragen
+und gespeichert, sobald das Feld verlassen wird.
 Flüge speichern den Namen als Text, nicht die id. Die Klasse hängt am Schirm, nicht am
 Flug: einmal eingestellt, gilt sie für jeden Flug mit diesem Schirm.
 
@@ -120,8 +123,8 @@ Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
 ### Später dazugekommene Felder
 
-Sechs Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
-**Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse**, die **Startrichtungen**,
+Sieben Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
+**Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse**, die **Stalls** je Schirm, die **Startrichtungen**,
 die **Höhe** und die **Infos** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
 der Flugtabelle einen Hinweis und lässt die betroffenen Felder einfach weg — alles andere
 funktioniert normal weiter.
@@ -132,6 +135,7 @@ Zum Freischalten in Supabase unter **SQL Editor** einmalig ausführen:
 alter table flights add column if not exists dist_km numeric;
 alter table flights add column if not exists ascent text;
 alter table gear    add column if not exists gclass text;
+alter table gear    add column if not exists stalls integer;
 alter table places  add column if not exists dirs text;
 alter table places  add column if not exists elev numeric;
 alter table places  add column if not exists info text;
@@ -658,6 +662,11 @@ mit auswählen. Derselbe Name darf in einer Liste nur einmal vorkommen.
 Zu jedem Teil steht daneben, bei wie vielen Flügen es dabei war und wie viel Flugzeit
 zusammenkommt. Die Klasse eines Schirms lässt sich in der Liste jederzeit umstellen und
 wird sofort gespeichert.
+
+Bei Schirmen gibt es außerdem die Spalte **Stalls**: Dort trägst du ein, wie oft du den
+Schirm schon erfolgreich gestallt hast. Erlaubt ist eine ganze Zahl ab 0; gespeichert wird,
+sobald du das Feld verlässt oder Enter drückst. Ein leeres Feld zählt als 0. Die Spalte
+erscheint erst, wenn es `stalls` in Supabase gibt (siehe „Später dazugekommene Felder“).
 
 Löschen geht mit dem × — nur, wenn kein Flug mehr dieses Teil verwendet, und immer mit
 Rückfrage. Weil Flüge den **Namen** speichern (siehe „Datenbank“), gibt es kein Umbenennen:

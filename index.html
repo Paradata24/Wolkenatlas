@@ -217,6 +217,7 @@
     border:1px solid var(--line);border-radius:2px;padding:1px 4px;color:var(--chart);
     vertical-align:2px;white-space:nowrap}
   .klasspick{width:auto;min-width:88px;font-size:13px;padding:3px 6px}
+  .stallpick{width:64px;font-size:13px;padding:3px 6px;font-family:var(--mono)}
   .ascbox{display:inline-flex;align-items:center;gap:7px}
   .ascbox .ico{color:var(--contour);line-height:0;flex:none}
   .ascbox .ico svg{width:20px;height:20px;display:block}
@@ -806,7 +807,7 @@ let S = { places: [], gear: [], flights: [] };
 /* Diese sechs Spalten sind später dazugekommen. Fehlen die Spalten in
    der Datenbank noch, lässt das Flugbuch die betroffenen Felder einfach weg —
    siehe README, Abschnitt „Später dazugekommene Felder“. */
-let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:false };
+let HAS = { dist:false, asc:false, gclass:false, stalls:false, dirs:false, elev:false, info:false };
 
 /* Schirmklassen nach EN/LTF, CCC ist die Wettkampfklasse. */
 const KLASSEN = ['A','B low','B high','C','D','CCC'];
@@ -1002,10 +1003,11 @@ async function frag(anfrage){
 }
 
 async function checkCols(){
-  const [d, a, g, r, h, i] = await Promise.all([
+  const [d, a, g, st, r, h, i] = await Promise.all([
     frag(() => sb.from('flights').select('dist_km').limit(1)),
     frag(() => sb.from('flights').select('ascent').limit(1)),
     frag(() => sb.from('gear').select('gclass').limit(1)),
+    frag(() => sb.from('gear').select('stalls').limit(1)),
     frag(() => sb.from('places').select('dirs').limit(1)),
     frag(() => sb.from('places').select('elev').limit(1)),
     frag(() => sb.from('places').select('info').limit(1))
@@ -1017,6 +1019,7 @@ async function checkCols(){
   HAS.dist   = da(d);
   HAS.asc    = da(a);
   HAS.gclass = da(g);
+  HAS.stalls = da(st);
   HAS.dirs   = da(r);
   HAS.elev   = da(h);
   HAS.info   = da(i);
@@ -2561,6 +2564,20 @@ window.setKlasse = async (id, wert) => {
   toast(wert ? 'Klasse ' + wert + ' gespeichert.' : 'Klasse entfernt.');
 };
 
+/* Wie oft ein Schirm erfolgreich gestallt wurde — eine ganze Zahl, leer heißt 0.
+   Gespeichert wird, sobald das Feld verlassen oder Enter gedrückt wird. */
+window.setStalls = async (id, el) => {
+  const txt = el.value.trim(), n = txt === '' ? null : Number(txt);
+  if (n !== null && !(Number.isInteger(n) && n >= 0)){
+    toast('Stalls: bitte eine ganze Zahl ab 0.');
+    const g = S.gear.find(x=>x.id===id); el.value = g?.stalls ?? ''; return;
+  }
+  const { error } = await sb.from('gear').update({stalls: n}).eq('id', id);
+  if (error) return oops(error);
+  const g = S.gear.find(x=>x.id===id); if (g) g.stalls = n;
+  toast(n ? n + (n === 1 ? ' Stall' : ' Stalls') + ' gespeichert.' : 'Stalls zurückgesetzt.');
+};
+
 window.delGear = (id) => {
   const g = S.gear.find(x=>x.id===id);
   const field = g.kind === 'glider' ? 'glider' : 'harness';
@@ -3123,6 +3140,7 @@ function renderAll(){
   const fehlt = [HAS.dist ? '' : 'Flugstrecke',
                  HAS.asc ? '' : 'Aufstiegsart (Auto, Bahn, zu Fuß)',
                  HAS.gclass ? '' : 'Schirmklasse',
+                 HAS.stalls ? '' : 'Stalls bei den Schirmen',
                  HAS.dirs ? '' : 'Startrichtungen an den Orten',
                  HAS.elev ? '' : 'Höhe der Orte',
                  HAS.info ? '' : 'Infos an den Orten'].filter(Boolean);
@@ -3140,8 +3158,9 @@ function renderAll(){
     const list = S.gear.filter(g=>g.kind===kind);
     const field = kind==='glider' ? 'glider' : 'harness';
     const mitKlasse = kind === 'glider' && HAS.gclass;
+    const mitStalls = kind === 'glider' && HAS.stalls;
     return list.length ? `<table>
-      <tr><th>Name</th>${mitKlasse?'<th>Klasse</th>':''}<th>Flüge</th><th>Zeit</th><th></th></tr>
+      <tr><th>Name</th>${mitKlasse?'<th>Klasse</th>':''}<th>Flüge</th><th>Zeit</th>${mitStalls?'<th>Stalls</th>':''}<th></th></tr>
       ${list.map(g=>{
         const used = S.flights.filter(f=>f[field]===g.name);
         return `<tr><td>${esc(g.name)}</td>
@@ -3149,6 +3168,9 @@ function renderAll(){
             onchange="setKlasse('${g.id}', this.value)">${klasseOpts(g.gclass)}</select></td>` : ''}
           <td class="num">${used.length}</td>
           <td class="num"><b>${fmt(used.reduce((t,f)=>t+(f.mins||0),0))}</b></td>
+          ${mitStalls ? `<td><input type="number" class="stallpick" min="0" step="1" inputmode="numeric"
+            aria-label="Erfolgreiche Stalls mit ${esc(g.name)}" value="${g.stalls ?? ''}" placeholder="0"
+            onchange="setStalls('${g.id}', this)"></td>` : ''}
           <td style="text-align:right"><button class="del" title="Löschen" onclick="delGear('${g.id}')">×</button></td>
         </tr>`;}).join('')}</table>`
       : '<div class="empty">Noch nichts angelegt.</div>';
