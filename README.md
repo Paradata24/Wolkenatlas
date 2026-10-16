@@ -53,6 +53,13 @@ Der `service_role`-Schlüssel darf **niemals** in diese Datei.
 
 ## Datenbank
 
+**Wo sie liegt:** Supabase-Projekt `vlxkivzgmfrdifxqtlxu`
+(`https://vlxkivzgmfrdifxqtlxu.supabase.co`, steht auch als `SUPABASE_URL` in `index.html`).
+Nicht verwechseln mit dem Projekt **„sisosig“** (`jevjyfaazmoemczimzhe`, Organisation
+„Paradata24's Org“) — dort liegen nur Winddaten (`wind_measurements`, `wind_forecasts`),
+nicht das Flugbuch. Stand 16.10.2026 sieht der Supabase-Zugang von Claude nur „sisosig“,
+das Flugbuch-Projekt nicht (siehe `CLAUDE.md`).
+
 Drei Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security,
 sodass jedes Konto nur eigene Zeilen sieht.
 
