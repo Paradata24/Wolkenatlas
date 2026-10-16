@@ -53,12 +53,12 @@ Der `service_role`-Schlüssel darf **niemals** in diese Datei.
 
 ## Datenbank
 
-**Wo sie liegt:** Supabase-Projekt `vlxkivzgmfrdifxqtlxu`
-(`https://vlxkivzgmfrdifxqtlxu.supabase.co`, steht auch als `SUPABASE_URL` in `index.html`).
-Nicht verwechseln mit dem Projekt **„sisosig“** (`jevjyfaazmoemczimzhe`, Organisation
-„Paradata24's Org“) — dort liegen nur Winddaten (`wind_measurements`, `wind_forecasts`),
-nicht das Flugbuch. Stand 16.10.2026 sieht der Supabase-Zugang von Claude nur „sisosig“,
-das Flugbuch-Projekt nicht (siehe `CLAUDE.md`).
+**Wo sie liegt:** Supabase-Projekt **„Flugtagebuch“** (`vlxkivzgmfrdifxqtlxu`,
+`https://vlxkivzgmfrdifxqtlxu.supabase.co`) in der Supabase-Organisation **„Wolkenatlas“** —
+steht auch als `SUPABASE_URL` in `index.html`. Nicht verwechseln mit dem Projekt
+**„sisosig“** (Organisation „Paradata24's Org“) — dort liegen nur Winddaten, nicht das
+Flugbuch. Damit Claude direkt in die Datenbank schauen kann, muss beim Verbinden von
+Supabase in claude.ai die Organisation „Wolkenatlas“ freigegeben sein (siehe `CLAUDE.md`).
 
 Drei Tabellen in Supabase, jede mit `user_id` und aktiviertem Row Level Security,
 sodass jedes Konto nur eigene Zeilen sieht.
