@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flugbuch</title>
+<title>Wolkenatlas</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
@@ -360,7 +360,7 @@
   /* Alpin-Orte haben statt des Punkts einen Karabiner — in der Legende ebenso. */
   .legitem .kara{line-height:0;flex:none}
   .legitem .kara svg{display:block}
-  /* Trennt in der Legende die Art des Orts von den beiden Flugbuch-Knöpfen. */
+  /* Trennt in der Legende die Art des Orts von den beiden Wolkenatlas-Knöpfen. */
   .legsep{width:1px;height:17px;background:var(--line);margin:0 3px;flex:none}
 
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -474,12 +474,12 @@
 </head>
 <body>
 
-<div id="boot">Flugbuch wird geladen …</div>
+<div id="boot">Wolkenatlas wird geladen …</div>
 
 <!-- =================  ================= -->
 <div id="login">
   <div class="box">
-    <h1>Flugbuch</h1>
+    <h1>Wolkenatlas</h1>
     <p class="lead">Bitte melde dich an.</p>
     <div class="field"><label for="l-mail">E-Mail</label>
       <input type="email" id="l-mail" autocomplete="username"></div>
@@ -490,10 +490,10 @@
   </div>
 </div>
 
-<!-- ================= FLUGBUCH ================= -->
+<!-- ================= WOLKENATLAS ================= -->
 <div id="app"><div class="wrap">
   <header>
-    <h1>Flugbuch</h1>
+    <h1>Wolkenatlas</h1>
     <span class="sub" id="whoami"></span>
     <nav role="tablist">
       <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
@@ -565,10 +565,10 @@
               </div>
               <div class="fgr">
                 <label>Neu oder geflogen</label>
-                <div class="fsegs" id="f-log" role="group" aria-label="Eintrag im Flugbuch">
+                <div class="fsegs" id="f-log" role="group" aria-label="Eintrag im Wolkenatlas">
                   <button type="button" data-log="alle">Alle</button>
-                  <button type="button" data-log="ohne" title="Noch kein Flug im Flugbuch">Neue</button>
-                  <button type="button" data-log="mit" title="Schon mindestens ein Flug im Flugbuch">Geflogen</button>
+                  <button type="button" data-log="ohne" title="Noch kein Flug im Wolkenatlas">Neue</button>
+                  <button type="button" data-log="mit" title="Schon mindestens ein Flug im Wolkenatlas">Geflogen</button>
                 </div>
               </div>
               <div class="fgr">
@@ -721,7 +721,7 @@
   <section class="view" id="v-save">
     <div class="cols even">
       <div class="card"><h2>Sicherung herunterladen</h2><div class="body">
-        <p style="margin:0 0 14px;font-size:14.5px">Lädt dein komplettes Flugbuch als eine Datei herunter —
+        <p style="margin:0 0 14px;font-size:14.5px">Lädt deinen kompletten Wolkenatlas als eine Datei herunter —
           Flüge, Orte, Ausrüstung, Notizen und Reminder. Daraus lässt sich alles vollständig wiederherstellen.</p>
         <button class="btn" onclick="backupJSON()">Sicherung herunterladen</button>
         <p class="note">Leg die Datei in einen Ordner, der sich in die Cloud synchronisiert. Nach jeder
@@ -735,8 +735,8 @@
           die Sicherung links da.</p>
       </div></div>
       <div class="card" style="grid-column:1/-1"><h2>Wiederherstellen</h2><div class="body">
-        <p style="margin:0 0 14px;font-size:14.5px">Liest eine Sicherungsdatei ein und <b>ersetzt damit dein
-          gesamtes Flugbuch</b>. Alles, was gerade drinsteht, wird vorher gelöscht.</p>
+        <p style="margin:0 0 14px;font-size:14.5px">Liest eine Sicherungsdatei ein und <b>ersetzt damit deinen
+          gesamten Wolkenatlas</b>. Alles, was gerade drinsteht, wird vorher gelöscht.</p>
         <input type="file" id="restorefile" accept=".json,application/json" style="max-width:340px">
         <div class="rowend"><button class="btn danger" onclick="askRestore()">Sicherung einlesen</button></div>
         <p class="note">Probier das einmal aus, solange noch nichts Wertvolles drinsteht. Eine Sicherung, die
@@ -804,7 +804,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 /* ---------- Zustand ---------- */
 let S = { places: [], gear: [], flights: [] };
 /* Diese sechs Spalten sind später dazugekommen. Fehlen die Spalten in
-   der Datenbank noch, lässt das Flugbuch die betroffenen Felder einfach weg —
+   der Datenbank noch, lässt der Wolkenatlas die betroffenen Felder einfach weg —
    siehe README, Abschnitt „Später dazugekommene Felder“. */
 let HAS = { dist:false, asc:false, gclass:false, dirs:false, elev:false, info:false };
 
@@ -837,7 +837,7 @@ let infoId = null;
 let kartePasst = false;
 /* Die Arten, die im Filter an- und abgewählt werden können. */
 const ALLETYPEN = ['start','land','ground','alpin'];
-/* Der Filter über den Orten: Höhe von/bis, Eintrag im Flugbuch, Startrichtungen.
+/* Der Filter über den Orten: Höhe von/bis, Eintrag im Wolkenatlas, Startrichtungen.
    Leer beziehungsweise „alle“ heißt: kein Filter, alle Orte sind zu sehen. */
 const F = { typen:[...ALLETYPEN], min:'', max:'', log:'alle', dirs:[] };
 
@@ -871,7 +871,7 @@ const ARTLBL = {start:'Startplatz', land:'Landeplatz', ground:'Übungsgelände',
 /* Alpin-Orte (Touren, Kletterei, Klettersteige) haben mit Flügen nichts zu tun:
    Sie sind immer blitzblau, nie „noch kein Flug“, und stehen bei keinem Flug zur Wahl. */
 const alpin = p => p.type === 'alpin';
-/* Orange heißt: an diesem Ort steht noch kein Flug im Flugbuch. Sobald einer
+/* Orange heißt: an diesem Ort steht noch kein Flug im Wolkenatlas. Sobald einer
    eingetragen ist, bekommt der Punkt die Farbe seiner Art — Startplätze rot. */
 const KEINFLUG = '#E07A1F';
 /* Ausnahme: Ein Landeplatz ohne Flug ist hellgrün und durchgezogen gezeichnet —
@@ -2209,7 +2209,7 @@ function drawPlaces(){
     /* Der Ort, der gerade bearbeitet wird, steht unten als gestrichelter Punkt. */
     if (editId === p.id && pending) return;
     /* Ein Startplatz mit eingetragenen Richtungen bekommt das gezeichnete Symbol,
-       alle anderen Orte den schlichten Punkt. Ohne Eintrag im Flugbuch ist er
+       alle anderen Orte den schlichten Punkt. Ohne Eintrag im Wolkenatlas ist er
        gestrichelt — der Unterschied hängt so nicht allein an der Farbe, die sich
        von Rot nur wenig abhebt. */
     const mitRichtung = startet(p.type) && dirsIn(p.dirs).length;
@@ -3298,9 +3298,9 @@ window.backupJSON = async () => {
     sb.from('places').select('*'), sb.from('gear').select('*'), sb.from('flights').select('*')]);
   for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
   const strip = rows => rows.map(({user_id, ...rest}) => rest);
-  const data = { format:'flugbuch', version:1, exported_at:new Date().toISOString(),
+  const data = { format:'wolkenatlas', version:1, exported_at:new Date().toISOString(),
                  places:strip(pl.data), gear:strip(ge.data), flights:strip(fl.data) };
-  download('flugbuch-sicherung-'+heute()+'.json',
+  download('wolkenatlas-sicherung-'+heute()+'.json',
            JSON.stringify(data, null, 2), 'application/json');
   toast(`Sicherung mit ${fl.data.length} Flügen heruntergeladen.`);
 };
@@ -3314,7 +3314,7 @@ window.askRestore = () => {
     try { d = JSON.parse(reader.result); }
     catch { return toast('Diese Datei ist keine gültige Sicherung.', true); }
     if (!d.flights || !d.places) return toast('In dieser Datei fehlen Flüge oder Orte.', true);
-    ask(`<b>Gesamtes Flugbuch ersetzen?</b><br><br>
+    ask(`<b>Gesamten Wolkenatlas ersetzen?</b><br><br>
       Aus der Sicherung kommen ${d.flights.length} Flüge, ${d.places.length} Orte
       und ${(d.gear||[]).length} Ausrüstungsteile.<br><br>
       Dein jetziger Stand mit ${S.flights.length} Flügen wird vorher <b>vollständig gelöscht</b>.`,
@@ -3371,7 +3371,7 @@ window.exportCSV = () => {
             f.mins||'', f.mins?fmt(f.mins):'', f.dist||'', am?ASCLBL[am]:'', f.ascM||'', f.ascMin||'',
             f.glider, klasseOf(f.glider), f.harness, f.note, f.reminder].map(q).join(';');
   });
-  download('flugbuch-'+heute()+'.csv',
+  download('wolkenatlas-'+heute()+'.csv',
            '\uFEFF' + [head.map(q).join(';'), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
   toast('CSV heruntergeladen.');
 };
