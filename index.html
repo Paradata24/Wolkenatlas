@@ -496,8 +496,8 @@
     <h1>Wolkenatlas</h1>
     <span class="sub" id="whoami"></span>
     <nav role="tablist">
-      <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
-      <button role="tab" id="t-orte" aria-selected="false" onclick="show('orte')">Orte</button>
+      <button role="tab" id="t-orte" aria-selected="true" onclick="show('orte')">Orte</button>
+      <button role="tab" id="t-flug" aria-selected="false" onclick="show('flug')">Flüge</button>
       <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-gear" aria-selected="false" onclick="show('gear')">Ausrüstung</button>
       <button role="tab" id="t-stat" aria-selected="false" onclick="show('stat')">Statistik</button>
@@ -505,7 +505,7 @@
     </nav>
   </header>
 
-  <div class="readout" id="readout-flug">
+  <div class="readout" id="readout-flug" style="display:none">
     <div><div class="lbl">Flüge diesen Monat</div><div class="val" id="r-cnt-month">0</div></div>
     <div><div class="lbl">Flüge dieses Jahr</div><div class="val" id="r-cnt-year">0</div></div>
     <div><div class="lbl">Flüge insgesamt</div><div class="val" id="r-cnt-total">0</div></div>
@@ -516,7 +516,7 @@
 
 
   <!-- ---------- FLÜGE ---------- -->
-  <section class="view on" id="v-flug">
+  <section class="view" id="v-flug">
     <div class="card">
       <h2><span id="flugtitle">Flüge</span>
         <span class="tools">
@@ -542,7 +542,7 @@
   </section>
 
   <!-- ---------- ORTE ---------- -->
-  <section class="view" id="v-orte">
+  <section class="view on" id="v-orte">
     <div class="cols">
       <div class="card">
         <div id="mapwrap">
@@ -984,6 +984,9 @@ window.logout = async () => { await sb.auth.signOut(); location.reload(); };
 async function startApp(session){
   document.getElementById('whoami').textContent = session.user.email;
   document.getElementById('app').classList.add('on');
+  /* Die Seite öffnet mit den Orten. Zuerst sichtbar machen, dann die Karte
+     anlegen — so kennt sie gleich ihre richtige Größe. */
+  show('orte');
   initMap();
   initStats();
   await checkCols();

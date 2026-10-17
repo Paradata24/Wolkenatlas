@@ -27,8 +27,8 @@ Darum gilt im Chat:
 
 | Reiter | wofür |
 | --- | --- |
+| **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben — öffnet sich beim Start |
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
-| **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
 | **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
 | **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
 | **Statistik** | Säulenbild pro Monat und Auswertung nach Art, Ort und Ausrüstung |
@@ -180,7 +180,7 @@ danach lehnt Supabase manchmal einzelne Anfragen ab (Fehler `PGRST303`). Der Wol
 wartet dann kurz (1,5 Sekunden) und fragt **einmal** neu — beim Prüfen der Spalten und
 beim Laden von Orten, Ausrüstung und Flügen.
 
-## Die Startseite
+## Der Reiter „Flüge“
 
 Oben die **Kennzahlenleiste** mit sechs Feldern, in dieser Reihenfolge:
 
@@ -252,7 +252,7 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 ## Der Reiter „Orte“
 
 Der Ortsteil ist die **Sammlung aller Plätze** — die geflogenen und die, die noch auf der
-Liste stehen. Er steht darum gleich hinter „Flüge“.
+Liste stehen. Er ist darum der **erste Reiter** und öffnet sich, sobald die Seite geladen ist.
 
 Beim Öffnen ist **nur die Karte** zu sehen, über die ganze Breite — ohne Kennzahlenleiste
 oben und ohne Liste daneben. Über der Karte steht die Filterleiste, unter ihr die Legende. Was zu einem
