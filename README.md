@@ -1,6 +1,6 @@
-# Flugbuch
+# Wolkenatlas
 
-Persönliches digitales Flugbuch für Gleitschirmflüge. Läuft auf PC und Handy.
+Persönlicher digitaler Wolkenatlas für Gleitschirmflüge. Läuft auf PC und Handy.
 Repository: `paradata24/wolkenatlas` · Stand dieser Beschreibung: Oktober 2026.
 
 **Der Besitzer dieses Projekts programmiert nicht.** Erkläre Änderungen in Alltagssprache,
@@ -8,7 +8,7 @@ nicht in Fachbegriffen, und mach nie eine Änderung, ohne kurz zu sagen, was sie
 
 ## Für Claude im Chat
 
-Diese Datei ist die vollständige Beschreibung des Flugbuchs, so wie es gerade ist. Wer sie
+Diese Datei ist die vollständige Beschreibung des Wolkenatlas, so wie er gerade ist. Wer sie
 im Chat bekommt, sieht den Programmcode (`index.html`) nicht — nur diese Beschreibung.
 Darum gilt im Chat:
 
@@ -27,12 +27,12 @@ Darum gilt im Chat:
 
 | Reiter | wofür |
 | --- | --- |
+| **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben — öffnet sich beim Start |
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
-| **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
 | **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
 | **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
 | **Statistik** | Säulenbild pro Monat und Auswertung nach Art, Ort und Ausrüstung |
-| **Sicherung** | komplettes Flugbuch als JSON herunterladen und wieder einlesen; CSV für Excel |
+| **Sicherung** | kompletten Wolkenatlas als JSON herunterladen und wieder einlesen; CSV für Excel |
 
 ## Aufbau
 
@@ -97,8 +97,8 @@ dist_km, ascent, asc_m, asc_min, glider, harness, note, reminder, created_at`
 `siv` | `comp` (Wettkampf) | `gh` (Groundhandling)
 `ascent`: `foot` (zu Fuß) | `car` (Auto) | `lift` (Bahn) — leer heißt: nicht erfasst
 
-`dist_km` und `ascent` sind später dazugekommen. Fehlen sie in der Datenbank, lässt das
-Flugbuch die beiden Felder von selbst weg (siehe „Später dazugekommene Felder“).
+`dist_km` und `ascent` sind später dazugekommen. Fehlen sie in der Datenbank, lässt der
+Wolkenatlas die beiden Felder von selbst weg (siehe „Später dazugekommene Felder“).
 
 `start_place` und `land_place` verweisen auf `places` mit `on delete restrict`:
 Ein Ort, an dem noch Flüge hängen, lässt sich nicht löschen.
@@ -122,7 +122,7 @@ Danach lässt sich ein Flug auch halb ausgefüllt speichern.
 
 Sechs Angaben kamen erst später dazu: die geflogene **Strecke in Kilometern**, die
 **Aufstiegsart** (zu Fuß, Auto, Bahn), die **Schirmklasse**, die **Startrichtungen**,
-die **Höhe** und die **Infos** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt das Flugbuch unter
+die **Höhe** und die **Infos** an einem Ort. Solange die passenden Spalten in Supabase fehlen, zeigt der Wolkenatlas unter
 der Flugtabelle einen Hinweis und lässt die betroffenen Felder einfach weg — alles andere
 funktioniert normal weiter.
 Welche Spalten gerade fehlen, zählt dieser Hinweis einzeln auf.
@@ -137,7 +137,7 @@ alter table places  add column if not exists elev numeric;
 alter table places  add column if not exists info text;
 ```
 
-Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt das Flugbuch „zu Fuß“
+Danach die Seite neu laden. Ohne die Spalte `ascent` erkennt der Wolkenatlas „zu Fuß“
 daran, dass Höhenmeter oder Aufstiegsdauer eingetragen sind.
 
 **Falls die Art „Wettkampf“ beim Speichern abgelehnt wird:** Manche Datenbanken lassen
@@ -169,18 +169,18 @@ noch einmal ausführen.
 
 ### Verbindung zur Datenbank
 
-Beim Öffnen prüft das Flugbuch, welche der später dazugekommenen Spalten es in Supabase
+Beim Öffnen prüft der Wolkenatlas, welche der später dazugekommenen Spalten es in Supabase
 schon gibt. **Als fehlend gilt eine Spalte nur, wenn die Datenbank genau das meldet.** Ein
 anderer Fehler — Funkloch am Handy, Anmeldung gerade erneuert — lässt die Felder stehen.
 Früher verschwanden dann zum Beispiel Startrichtungen oder Aufstiegsart, obwohl die
 Spalten längst da waren.
 
 War die Seite länger zu, erneuert sie beim Öffnen zuerst die Anmeldung. In der Sekunde
-danach lehnt Supabase manchmal einzelne Anfragen ab (Fehler `PGRST303`). Das Flugbuch
+danach lehnt Supabase manchmal einzelne Anfragen ab (Fehler `PGRST303`). Der Wolkenatlas
 wartet dann kurz (1,5 Sekunden) und fragt **einmal** neu — beim Prüfen der Spalten und
 beim Laden von Orten, Ausrüstung und Flügen.
 
-## Die Startseite
+## Der Reiter „Flüge“
 
 Oben die **Kennzahlenleiste** mit sechs Feldern, in dieser Reihenfolge:
 
@@ -252,7 +252,7 @@ untereinander, jeweils mit Datum, Uhrzeit und Strecke darüber, neueste zuerst.
 ## Der Reiter „Orte“
 
 Der Ortsteil ist die **Sammlung aller Plätze** — die geflogenen und die, die noch auf der
-Liste stehen. Er steht darum gleich hinter „Flüge“.
+Liste stehen. Er ist darum der **erste Reiter** und öffnet sich, sobald die Seite geladen ist.
 
 Beim Öffnen ist **nur die Karte** zu sehen, über die ganze Breite — ohne Kennzahlenleiste
 oben und ohne Liste daneben. Über der Karte steht die Filterleiste, unter ihr die Legende. Was zu einem
@@ -308,10 +308,10 @@ jeweils nur, was dort auch passt.
 #### Von „Start und Landung“ zu zwei Punkten
 
 Früher gab es zusätzlich die Art **„Start und Landung“** (`both` in der Datenbank). Sie ist
-weggefallen. Stehen noch Orte dieser Art in der Datenbank, stellt das Flugbuch sie **beim
+weggefallen. Stehen noch Orte dieser Art in der Datenbank, stellt der Wolkenatlas sie **beim
 Laden von selbst um** — einmalig, ohne Nachfrage:
 
-- Der Ort ist im Flugbuch **nur als Landung** eingetragen → er wird **Landeplatz**
+- Der Ort ist im Wolkenatlas **nur als Landung** eingetragen → er wird **Landeplatz**
   (Startrichtungen werden dabei geleert, ein Landeplatz hat keine).
 - **Sonst** → er wird **Startplatz**. Das gilt auch für Orte, an denen noch kein Flug steht.
 - Der Ort ist bei Flügen **als Start und als Landung** eingetragen → er bleibt als
@@ -339,7 +339,7 @@ alten Sicherung.
 
 ### Die Farbe der Punkte
 
-Die Farbe sagt, ob an dem Ort schon ein Flug im Flugbuch steht:
+Die Farbe sagt, ob an dem Ort schon ein Flug im Wolkenatlas steht:
 
 | Farbe | heißt |
 | --- | --- |
@@ -456,7 +456,7 @@ Von links nach rechts:
   kann. Mehrere Richtungen heißen „oder“: **SW und W** zeigt jeden Platz, der bei mindestens
   einer der beiden geht. Nochmal antippen nimmt eine Richtung wieder weg. Landeplätze,
   Übungsgelände und Alpin-Orte haben keine Startrichtung und fallen heraus, sobald hier etwas gewählt ist.
-- **Neu oder geflogen** — *Alle* · *Neue* (noch kein Flug im Flugbuch) · *Geflogen* (schon
+- **Neu oder geflogen** — *Alle* · *Neue* (noch kein Flug im Wolkenatlas) · *Geflogen* (schon
   mindestens ein Flug dort). *W* + *Neue* heißt also: „neue Startplätze, die bei Westwind
   gehen“.
 - **Zeigen** — *Start*, *Landung*, *Übung*, *Alpin*: welche Arten von Orten zu sehen sind.
@@ -619,8 +619,8 @@ Wann sie geschrieben wird:
   Datenbank und wird nicht mehr abgefragt.
 - **Nach einem Wechsel des Höhenmodells:** einmalig werden *alle* Höhen neu berechnet und
   die alten, gröberen Werte überschrieben — ebenfalls mit einer kurzen Meldung. Danach
-  passiert das nicht wieder. Woran das Flugbuch erkennt, ob das schon gelaufen ist, merkt
-  es sich im Browser; auf einem zweiten Gerät läuft es deshalb noch einmal, mit demselben
+  passiert das nicht wieder. Woran der Wolkenatlas erkennt, ob das schon gelaufen ist, merkt
+  er sich im Browser; auf einem zweiten Gerät läuft es deshalb noch einmal, mit demselben
   Ergebnis.
 
 Die Zahl kommt von [Open Topo Data](https://www.opentopodata.org/), kostenlos und ohne
@@ -639,14 +639,14 @@ bei Zoomstufe 10 entspricht ein Bildpunkt rund 100 Metern im Gelände, und an ei
 Hang sind das schnell 50 Höhenmeter Unterschied.
 
 Der kostenlose Dienst erlaubt **100 Punkte pro Anfrage, eine Anfrage pro Sekunde und
-1000 pro Tag**. Das Flugbuch hält den Sekundenabstand von selbst ein. Weil jede Höhe nur
+1000 pro Tag**. Der Wolkenatlas hält den Sekundenabstand von selbst ein. Weil jede Höhe nur
 einmal geholt und dann in der Datenbank gespeichert wird, ist das Tageslimit auch bei
 vielen Orten kein Thema.
 
 Ist der Dienst gerade nicht erreichbar, etwa ohne Netz, bleibt das Feld leer und wird beim
 nächsten Laden nachgetragen; in derselben Sitzung wird nicht dauernd neu gefragt. Bei einem
 nur umbenannten Ort bleibt die alte Höhe erhalten. Solange die Spalte `elev` in Supabase
-fehlt, zeigt das Flugbuch die Höhe trotzdem an, merkt sie sich aber nur im Browser, statt
+fehlt, zeigt der Wolkenatlas die Höhe trotzdem an, merkt sie sich aber nur im Browser, statt
 sie zu speichern.
 
 ## Der Reiter „Ausrüstung“
@@ -689,7 +689,7 @@ Die Wahl bleibt beim Jahreswechsel stehen und gilt, bis sie umgestellt wird oder
 neu geladen wird; gemerkt wird sie nicht.
 
 Oben rechts im Säulenbild steht die **Jahresauswahl**. Sie kennt jedes Jahr, aus dem ein
-Flug im Flugbuch steht, und dazu — sobald es mehr als eines ist — **„alle Jahre“**.
+Flug im Wolkenatlas steht, und dazu — sobald es mehr als eines ist — **„alle Jahre“**.
 Vorgewählt ist das neueste Jahr.
 
 **Die Auswahl gilt für den ganzen Reiter**: Säulenbild, der Satz darunter und die
@@ -724,7 +724,7 @@ Diese Entscheidungen sind bewusst getroffen. Nicht ohne Rückfrage ändern:
 ## Sicherung
 
 Der Gratis-Tarif von Supabase hat **keine automatischen Sicherungen**.
-Der Reiter „Sicherung" lädt das komplette Flugbuch als JSON herunter und kann es
+Der Reiter „Sicherung" lädt den kompletten Wolkenatlas als JSON herunter und kann ihn
 wieder einlesen. Das ist die einzige Absicherung gegen Datenverlust —
 entsprechend vorsichtig damit umgehen.
 
