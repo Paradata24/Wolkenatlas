@@ -282,7 +282,7 @@ Setzen eines Punktes.
 einmal so, dass *alle* Orte hineinpassen — danach ändert ihn nur noch, wer es selbst
 verlangt:
 
-- der **Knopf mit der Kartennadel** (links unter Zoom und Vollbild) holt alle gerade
+- der **Knopf mit der Kartennadel** (unten rechts, unter Zoom und Vollbild) holt alle gerade
   sichtbaren Orte ins Bild.
 
 **Filtern und Suchen verändern den Ausschnitt nicht.** Es verschwinden nur die Punkte, die
@@ -480,7 +480,7 @@ ist), klappt sie stattdessen zu einer Zeile **Filter** zusammen, die sich auf Ti
 Entscheidend ist dabei die Breite der Karte, nicht die des Bildschirms.
 
 **Filtern verändert den Kartenausschnitt nicht** — es verschwinden nur die Punkte, die nicht
-passen. Wer die Treffer sehen will, nimmt den Knopf mit der Kartennadel links in der Karte. Gespeichert wird der Filter
+passen. Wer die Treffer sehen will, nimmt den Knopf mit der Kartennadel unten rechts in der Karte. Gespeichert wird der Filter
 nicht; beim nächsten Laden der Seite sind wieder alle Orte da.
 
 Zugeklappt (etwa auf dem **Handy**) zeigt die Leiste nur die Zeile **Filter**. Ein Tipp
@@ -496,7 +496,7 @@ Die **Legende unter der Karte** erklärt nur die Farben; gefiltert wird in der L
 
 ### Vollbild
 
-Links unter den Zoomknöpfen sitzt der **Vollbildknopf**. Er legt die Karte über den ganzen
+Unten rechts unter den Zoomknöpfen sitzt der **Vollbildknopf**. Er legt die Karte über den ganzen
 Bildschirm; derselbe Knopf bringt sie wieder zurück, ebenso Escape. Auch im Vollbild öffnet
 ein Klick auf einen Ort sein Infofeld, und ein Klick irgendwo in die Karte schließt es
 wieder. Die **Filterleiste** bleibt im Vollbild oben stehen.
@@ -513,7 +513,7 @@ Karte stattdessen über die ganze Seite gelegt — das sieht gleich aus und kann
 
 ### Gelände: Hangneigung und Hangausrichtung
 
-Links unter der Kartennadel sitzen **zwei Knöpfe**: oben der **Kompass** für die
+Unten rechts unter der Kartennadel sitzen **zwei Knöpfe**: oben der **Kompass** für die
 Ausrichtung, darunter der **Hang mit Winkel** für die Neigung. Ein Klick schaltet die
 Schicht ein — der Knopf wird rosa, und **ganz oben in der Karte**, rechts neben den
 Zoomknöpfen, erscheint nur ihre Legende, ganz klein, ohne Überschrift und ohne Kasten direkt
