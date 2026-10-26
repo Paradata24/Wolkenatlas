@@ -298,9 +298,8 @@
   /* Gelände-Knöpfe: rosa, solange ihre Schicht über der Karte liegt. */
   .leaflet-bar a.mapfs.an{background:var(--start);color:#fff}
   .gelbox{position:relative}
-  /* Ganz oben in der Karte, rechts neben den Zoomknöpfen: nur die Legenden der
-     eingeschalteten Schichten. */
-  .gelleg{position:absolute;left:54px;top:10px;z-index:1000;display:flex;
+  /* Ganz oben links in der Karte: nur die Legenden der eingeschalteten Schichten. */
+  .gelleg{position:absolute;left:10px;top:10px;z-index:1000;display:flex;
     gap:8px;align-items:flex-start;cursor:default}
   .gelleg[hidden]{display:none}
   /* Ohne Kasten direkt auf der Karte; ein weißer Rand um die Schrift hält sie lesbar. */
@@ -1329,7 +1328,7 @@ try { localStorage.removeItem('flugbuch-kartenansicht'); } catch(e){}
 function initMap(){
   /* Startansicht: Bozen in der Mitte, zwei Zoomstufen näher als früher.
      Zoomen mit dem Scrollrad, sobald die Maus über der Karte ist. */
-  map = L.map('map', {scrollWheelZoom:true}).setView([46.4983, 11.3548], 10);
+  map = L.map('map', {scrollWheelZoom:true, zoomControl:false}).setView([46.4983, 11.3548], 10);
 
   /* Eine einzige Karte: die Topo-Karte mit Höhenlinien und Geländeschattierung,
      im Browser entfärbt. Alles bleibt erhalten — Höhenlinien, Schummerung, Wege,
@@ -1344,9 +1343,13 @@ function initMap(){
     attribution: '© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)'
   }).addTo(map);
   layer = L.layerGroup().addTo(map);
-  addVollbildKnopf();
-  addAlleZeigenKnopf();
+  /* Alle Kartenknöpfe sitzen unten rechts, damit die Karte auf dem Handy mit dem
+     Daumen bedienbar ist. Unten stapelt Leaflet jeden neuen Knopf über den
+     vorigen — deshalb von unten nach oben: Gelände, Kartennadel, Vollbild, Zoom. */
   addGelaendeKnopf();
+  addAlleZeigenKnopf();
+  addVollbildKnopf();
+  L.control.zoom({position:'bottomright', zoomInTitle:'Näher heranzoomen', zoomOutTitle:'Weiter wegzoomen'}).addTo(map);
   addOrtKnopf();
   /* Art umgestellt: der Punkt auf der Karte bekommt sofort die passende Farbe,
      und die Windrose erscheint nur bei Orten, an denen gestartet wird. */
@@ -1426,7 +1429,7 @@ function passeKarteAn(){
 
 function addAlleZeigenKnopf(){
   const Knopf = L.Control.extend({
-    options: {position:'topleft'},
+    options: {position:'bottomright'},
     onAdd(){
       const box = L.DomUtil.create('div', 'leaflet-bar');
       const a = L.DomUtil.create('a', 'mapfs', box);
@@ -1645,7 +1648,7 @@ function zeichneGelLegende(){
   }
 }
 
-/* Zwei Knöpfe links unter der Kartennadel: oben die Ausrichtung (Kompass), darunter
+/* Zwei Knöpfe unten rechts, unter der Kartennadel: oben die Ausrichtung (Kompass), darunter
    die Neigung (Hang mit Winkel). Ein Klick schaltet die Schicht ein und zeigt ihre
    Legende, ein zweiter Klick schaltet sie wieder aus. */
 const GELICON = {
@@ -1658,7 +1661,7 @@ const GELICON = {
 const GELNAME = {ausrichtung: 'Hangausrichtung', neigung: 'Hangneigung'};
 function addGelaendeKnopf(){
   const Knopf = L.Control.extend({
-    options: {position:'topleft'},
+    options: {position:'bottomright'},
     onAdd(){
       const box = L.DomUtil.create('div', 'gelbox');
       const bar = L.DomUtil.create('div', 'leaflet-bar', box);
@@ -1687,7 +1690,7 @@ function addGelaendeKnopf(){
 }
 
 /* ---------- Vollbild ----------
-   Der Knopf sitzt links unter dem Zoom. Im Vollbild geht die Karte über den
+   Der Knopf sitzt unten rechts, unter dem Zoom. Im Vollbild geht die Karte über den
    ganzen Bildschirm; das Infofeld liegt mit drin und funktioniert weiter.
    Kann der Browser kein Vollbild für ein einzelnes Feld (ältere iPhones),
    wird die Karte stattdessen über die ganze Seite gelegt — sieht gleich aus. */
@@ -1703,7 +1706,7 @@ const imVollbild = () => {
 
 function addVollbildKnopf(){
   const Knopf = L.Control.extend({
-    options: {position:'topleft'},
+    options: {position:'bottomright'},
     onAdd(){
       const box = L.DomUtil.create('div', 'leaflet-bar');
       const a = L.DomUtil.create('a', 'mapfs', box);
