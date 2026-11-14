@@ -59,6 +59,14 @@
   .readout .val{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em}
   .readout .val small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
 
+  /* Suchzeile über der Flugliste und über dem Tagebuch — tippt man etwas ein,
+     bleiben nur die passenden Einträge stehen. Rechts steht, wie viele das sind. */
+  .listsearch{display:flex;align-items:center;gap:9px;padding:11px 15px;border-bottom:1px solid var(--line)}
+  .listsearch .si{width:15px;height:15px;color:var(--muted);flex:none}
+  .listsearch input{flex:1;width:auto;font-size:13.5px;padding:6px 10px}
+  .searchcount{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+    color:var(--muted);white-space:nowrap;flex:none}
+
   .view{display:none}
   .view.on{display:block}
   .cols{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start}
@@ -344,6 +352,13 @@
   @media(max-width:560px){
     .profile .zahl{font-size:8.5px;letter-spacing:-.03em}
     .placepanel{left:8px;right:8px;bottom:22px;width:auto;max-height:52%}
+    /* Am Handy die sechs Kennzahlen kompakt in zwei Reihen zu dritt — sonst
+       füllen sie fast den ganzen Bildschirm und die Flüge liegen weit unten. */
+    .readout{grid-template-columns:repeat(3,1fr);margin-bottom:15px}
+    .readout div{padding:8px 9px 9px;border-right:none}
+    .readout .lbl{font-size:8.5px;letter-spacing:.05em;margin-bottom:2px}
+    .readout .val{font-size:18px}
+    .readout .val small{font-size:9px;margin-left:2px}
   }
 
   /* Die Legende unter der Karte erklärt nur die Farben. */
@@ -525,6 +540,13 @@
             title="Neuen Flug eintragen" aria-label="Neuen Flug eintragen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
         </span>
       </h2>
+      <div class="listsearch" id="flugsearch">
+        <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <input type="search" id="flugquery" placeholder="Suchen: Ort, Schirm, Datum, Notiz …"
+          autocomplete="off" aria-label="Flüge durchsuchen" oninput="flugSuche(this.value)">
+        <span class="searchcount" id="flugcount"></span>
+      </div>
       <div id="flightlist"></div>
       <p class="edithint" id="edithint" style="display:none">Änder, was du willst, und drück dann
         <b>Speichern</b>. Kein Feld ist Pflicht — was du leer lässt, bleibt leer.</p>
@@ -536,7 +558,15 @@
   <!-- ---------- REMINDER ---------- -->
   <section class="view" id="v-rem">
     <div class="cols one"><div class="card">
-      <h2>Tagebuch — Kommentare und Reminder, neueste zuerst</h2><div id="remlist"></div>
+      <h2>Tagebuch — Kommentare und Reminder, neueste zuerst</h2>
+      <div class="listsearch" id="remsearch">
+        <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <input type="search" id="remquery" placeholder="Im Tagebuch suchen: Ort, Datum, Text …"
+          autocomplete="off" aria-label="Tagebuch durchsuchen" oninput="remSuche(this.value)">
+        <span class="searchcount" id="remcount"></span>
+      </div>
+      <div id="remlist"></div>
     </div></div>
   </section>
 
@@ -980,12 +1010,17 @@ async function doLogin(){
 
 window.logout = async () => { await sb.auth.signOut(); location.reload(); };
 
+/* Beim Öffnen wird die Spaltenprüfung gleichzeitig mit dem Laden der Daten
+   angestoßen, statt nacheinander — das spart eine Wartezeit, vor allem am Handy.
+   `spaltenFertig` hält das Versprechen der Prüfung fest; `loadAll` wartet darauf,
+   bevor es zeichnet, denn die Anzeige richtet sich nach den vorhandenen Spalten. */
+let spaltenFertig = Promise.resolve();
 async function startApp(session){
   document.getElementById('whoami').textContent = session.user.email;
   document.getElementById('app').classList.add('on');
   initMap();
   initStats();
-  await checkCols();
+  spaltenFertig = checkCols();
   await loadAll();
 }
 
@@ -1024,11 +1059,17 @@ async function checkCols(){
 }
 
 async function loadAll(){
-  const [pl, ge, fl] = await Promise.all([
+  /* Die drei Abfragen sofort losschicken — sie brauchen die Spaltenprüfung nicht.
+     Gezeichnet wird aber erst, wenn `spaltenFertig` da ist, weil sich die Anzeige
+     nach den vorhandenen Spalten (HAS) richtet. Beim Öffnen laufen Prüfung und
+     Laden so parallel; bei späteren Aufrufen ist die Prüfung längst erledigt. */
+  const daten = Promise.all([
     frag(() => sb.from('places').select('*').order('name')),
     frag(() => sb.from('gear').select('*').order('name')),
     frag(() => sb.from('flights').select('*').order('flight_date', {ascending:false}))
   ]);
+  await spaltenFertig;
+  const [pl, ge, fl] = await daten;
   for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
   /* Stehen noch Orte der alten Art „Start und Landung“ in der Datenbank, werden sie
      jetzt umgestellt — danach wird einmal frisch geladen. */
@@ -2589,6 +2630,21 @@ const KINDDEF = 'thermik';
 const sortKey = f => (f.date || '9999-99-99') + ' ' + (f.time || '');
 const sortedFlights = () => [...S.flights].sort((x,y)=> sortKey(y).localeCompare(sortKey(x)));
 
+/* ---------- Suche in der Flugliste ----------
+   Was in einem Flug durchsucht werden kann: Datum, Startzeit, Art, Strecke (die
+   Namen der Orte), Schirm, Gurtzeug, Schirmklasse, Strecke in km, Kommentar und
+   Reminder — alles in einen kleinschriftigen Text geworfen. */
+let flightQuery = '';
+const flugText = f => [
+  deDate(f.date), f.time, KINDS[f.kind], routeTxt(f),
+  f.glider, f.harness, klasseOf(f.glider),
+  (f.dist !== '' && f.dist != null) ? nk(f.dist) + ' km' : '',
+  f.note, f.reminder
+].filter(Boolean).join(' ').toLowerCase();
+/* Mehrere Wörter heißen „und“: jedes muss irgendwo im Text vorkommen. */
+const passtSuche = (text, q) => q.split(/\s+/).filter(Boolean).every(w => text.includes(w));
+window.flugSuche = v => { flightQuery = v; renderTable(); };
+
 /* ---------- Auswahllisten ---------- */
 function kindOpts(cur){
   return Object.entries(KINDS).map(([k,t])=>
@@ -2771,10 +2827,20 @@ window.ascChanged = sel => {
 
 function renderTable(){
   const el = document.getElementById('flightlist');
-  const rows = sortedFlights();
+  let rows = sortedFlights();
+  /* Gesucht wird nur in der Ansicht, nicht beim Bearbeiten — sonst könnte die
+     Zeile verschwinden, die man gerade ändert. Rechts im Suchfeld steht, wie
+     viele der Flüge gerade passen. */
+  const q = editMode ? '' : flightQuery.trim().toLowerCase();
+  if (q) rows = rows.filter(f => passtSuche(flugText(f), q));
+  document.getElementById('flugcount').textContent =
+    q ? rows.length + ' von ' + S.flights.length : '';
   if (!rows.length && !editMode){
-    el.innerHTML = '<div class="empty"><b>Noch keine Flüge erfasst.</b><br>'
-      + 'Klick oben rechts auf <b>+</b> und trag den ersten ein.</div>';
+    el.innerHTML = q
+      ? '<div class="empty">Kein Flug passt zu <b>„' + esc(flightQuery.trim()) + '“</b>.<br>'
+        + 'Tipp weniger ein oder leer das Feld.</div>'
+      : '<div class="empty"><b>Noch keine Flüge erfasst.</b><br>'
+        + 'Klick oben rechts auf <b>+</b> und trag den ersten ein.</div>';
     return;
   }
   const head = ['Datum','Art','Strecke','Flug','Aufstieg','Ausrüstung','Notiz']
@@ -2815,6 +2881,8 @@ function setTools(){
   document.getElementById('tablesave').style.display   = editMode ? '' : 'none';
   document.getElementById('tablecancel').style.display = editMode ? '' : 'none';
   document.getElementById('edithint').style.display    = editMode ? '' : 'none';
+  /* Beim Bearbeiten ist die Suche weg — dann sind ohnehin alle Zeilen zu sehen. */
+  document.getElementById('flugsearch').style.display  = editMode ? 'none' : '';
 }
 
 window.addRow = () => {
@@ -3174,8 +3242,19 @@ function renderAll(){
 /* ══════════ TAGEBUCH ══════════
    Alles, was du zu einem Flug geschrieben hast: Kommentar und Reminder,
    mit Datum und Strecke darüber, neueste zuerst. */
+/* Dasselbe Suchfeld wie bei den Flügen, nur fürs Tagebuch: gesucht wird in
+   Datum, Strecke, Kommentar und Reminder. */
+let diaryQuery = '';
+window.remSuche = v => { diaryQuery = v; renderDiary(); };
+
 function renderDiary(){
-  const list = sortedFlights().filter(f => f.note || f.reminder);
+  let list = sortedFlights().filter(f => f.note || f.reminder);
+  const q = diaryQuery.trim().toLowerCase();
+  if (q) list = list.filter(f => passtSuche(
+    [dateLbl(f.date), f.time, routeTxt(f), f.note, f.reminder]
+      .filter(Boolean).join(' ').toLowerCase(), q));
+  document.getElementById('remcount').textContent =
+    q ? list.length + (list.length === 1 ? ' Eintrag' : ' Einträge') : '';
   document.getElementById('remlist').innerHTML = list.length ? list.map(f => `
     <article class="entry">
       <div class="entryhead">
@@ -3186,9 +3265,11 @@ function renderDiary(){
       ${f.note ? `<div class="blk"><h4>Kommentar</h4><div class="txt">${esc(f.note)}</div></div>` : ''}
       ${f.reminder ? `<div class="blk remblk"><h4>Reminder</h4><div class="txt">${esc(f.reminder)}</div></div>` : ''}
     </article>`).join('')
-    : '<div class="empty"><b>Noch nichts notiert.</b><br>In der Flugliste öffnest du rechts mit dem '
-      + 'roten Plus einen Reminder und mit dem Plus daneben einen Kommentar.<br>'
-      + 'Beides erscheint dann hier.</div>';
+    : (q
+      ? '<div class="empty">Kein Eintrag passt zu <b>„' + esc(diaryQuery.trim()) + '“</b>.</div>'
+      : '<div class="empty"><b>Noch nichts notiert.</b><br>In der Flugliste öffnest du rechts mit dem '
+        + 'roten Plus einen Reminder und mit dem Plus daneben einen Kommentar.<br>'
+        + 'Beides erscheint dann hier.</div>');
 }
 
 /* Was die Säulen zeigen: 'anzahl' sind die Flüge pro Monat, 'zeit' die Zeit in
