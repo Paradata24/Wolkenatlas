@@ -1,0 +1,25 @@
+{
+  "name": "Wolkenatlas",
+  "short_name": "Wolkenatlas",
+  "description": "Persönliches Flugbuch für Gleitschirmflüge — Flüge, Orte, Ausrüstung, Statistik.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15202B",
+  "theme_color": "#F6F8FA",
+  "lang": "de",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "S.o.S. — Stay or Start",
+      "short_name": "S.o.S.",
+      "url": "./?sos",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
