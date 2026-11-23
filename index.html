@@ -148,6 +148,58 @@
   .note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
   .rowend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
 
+  /* ---------- S.o.S. — Stay or Start ---------- */
+  /* Die Ampel-Tabelle: links der Punkt, rechts die drei Zeitpunkte. */
+  .sos-grid{display:grid;grid-template-columns:minmax(118px,1.5fr) repeat(3,minmax(54px,1fr));
+    gap:4px 8px;align-items:center}
+  .sos-corner{border-bottom:1px solid var(--line);height:100%}
+  .sos-spalte{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted);text-align:center;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .sos-spalte.sos-wichtig{color:var(--ink);font-weight:700}
+  .sos-name{font-size:14px;font-weight:600;line-height:1.25;padding:10px 0}
+  .sos-name small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);
+    font-family:var(--sans);letter-spacing:0;text-transform:none;margin-top:2px}
+  .sos-badge{font-family:var(--mono);font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--start);border:1px solid var(--start);border-radius:2px;padding:1px 4px;
+    vertical-align:middle;font-weight:600;margin-left:5px;white-space:nowrap}
+  .sos-zelle{display:flex;justify-content:center;align-items:center;padding:5px 0;
+    border-top:1px solid #EEF2F6}
+  .sos-licht{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);
+    background:#EEF2F6;cursor:pointer;font-size:18px;font-weight:700;color:#fff;line-height:1;
+    display:flex;align-items:center;justify-content:center;font-family:var(--sans);
+    transition:transform .08s ease,background .12s ease,border-color .12s ease}
+  .sos-licht:hover{transform:scale(1.09)}
+  .sos-licht.leer{color:var(--muted)}
+  .sos-licht.gruen{background:#2E9E4F;border-color:#1E7A3E}
+  .sos-licht.gelb{background:#F2C200;border-color:#C9A200;color:#4A3B00}
+  .sos-licht.rot{background:#E23B2E;border-color:#B52A1F}
+  .sos-entfaellt{color:#C9D3DC;font-size:19px;font-weight:700}
+
+  /* „Deine Grenzen“: Föhn und Wind als Regler, die du je Startplatz ziehst.
+     Der Farbbalken wächst beim Ziehen mit. */
+  .sos-ref{display:flex;flex-direction:column;gap:22px}
+  .sos-regler{display:flex;flex-direction:column;gap:9px}
+  .sos-regler-kopf{font-size:14px;font-weight:650}
+  .sos-regler-kopf small{font-weight:400;color:var(--muted);font-size:10.5px;
+    font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-left:7px}
+  .sos-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .sos-bar .g{background:#2E9E4F}.sos-bar .y{background:#F2C200}.sos-bar .r{background:#E23B2E}
+  .sos-bar div{min-width:0}
+  .sos-reihe{display:grid;grid-template-columns:62px 1fr 56px;align-items:center;gap:11px}
+  .sos-reihe label{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase}
+  .sos-reihe label.y{color:#9A7A00}.sos-reihe label.r{color:#C0291B}
+  .sos-reihe input[type=range]{width:100%;padding:0;background:none;border:none;cursor:pointer}
+  .sos-reihe input[type=range].gelb{accent-color:#D4A800}
+  .sos-reihe input[type=range].rot{accent-color:#E23B2E}
+  .sos-wert{font-family:var(--mono);font-size:15px;font-weight:600;text-align:right}
+  .sos-wert.y{color:#9A7A00}.sos-wert.r{color:#C0291B}
+  @media(max-width:520px){
+    .sos-grid{grid-template-columns:minmax(88px,1.3fr) repeat(3,1fr);gap:4px 5px}
+    .sos-licht{width:34px;height:34px;font-size:16px}
+    .sos-name{font-size:13px}
+  }
+
   .overlay{position:fixed;inset:0;background:rgba(21,32,43,.45);z-index:500;
     display:none;align-items:center;justify-content:center;padding:18px}
   .overlay.on{display:flex}
@@ -497,6 +549,7 @@
     <nav role="tablist">
       <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
       <button role="tab" id="t-orte" aria-selected="false" onclick="show('orte')">Orte</button>
+      <button role="tab" id="t-sos"  aria-selected="false" onclick="show('sos')">S.o.S.</button>
       <button role="tab" id="t-rem"  aria-selected="false" onclick="show('rem')">Reminder</button>
       <button role="tab" id="t-gear" aria-selected="false" onclick="show('gear')">Ausrüstung</button>
       <button role="tab" id="t-stat" aria-selected="false" onclick="show('stat')">Statistik</button>
@@ -666,6 +719,30 @@
             <button class="btn ghost" onclick="cancelPlaceAsk()">Abbrechen</button>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- AUSRÜSTUNG ---------- -->
+  <!-- ---------- S.o.S. — STAY OR START ---------- -->
+  <section class="view" id="v-sos">
+    <div class="cols one" style="max-width:920px">
+      <div class="card">
+        <h2>Stay or Start — Hike &amp; Fly</h2>
+        <div class="body">
+          <!-- Die Ampel-Tabelle. Zeilen und Spalten baut das Skript. -->
+          <div class="sos-grid" id="sos-grid" role="group" aria-label="Stay or Start — Ampel-Check"></div>
+
+          <div class="rowend">
+            <button class="btn ghost small" onclick="sosReset()">Neuer Check — alles zurücksetzen</button>
+            <span class="note" id="sos-stand" style="margin:0"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Deine Grenzen — Föhn &amp; Wind</h2>
+        <div class="body sos-ref" id="sos-ref"></div>
       </div>
     </div>
   </section>
@@ -1143,12 +1220,13 @@ async function migriereBeides(places, flights){
 
 /* ══════════ ANSICHTEN ══════════ */
 window.show = v => {
-  ['flug','rem','orte','gear','stat','save'].forEach(k=>{
+  ['flug','rem','orte','sos','gear','stat','save'].forEach(k=>{
     document.getElementById('v-'+k).classList.toggle('on', k===v);
     document.getElementById('t-'+k).setAttribute('aria-selected', k===v);
   });
-  /* Im Reiter „Orte“ steht nur die Karte — die Zahlen zu den Flügen bleiben weg. */
-  document.getElementById('readout-flug').style.display = v==='orte' ? 'none' : '';
+  /* In „Orte“ und „S.o.S.“ steht keine Flug-Tabelle — die Zahlen oben bleiben weg. */
+  document.getElementById('readout-flug').style.display = (v==='orte'||v==='sos') ? 'none' : '';
+  if (v==='sos') sosRender();
   if (v==='orte' && map) setTimeout(() => {
     map.invalidateSize();
     /* Beim ersten Öffnen alle Orte ins Bild holen — jetzt kennt die Karte ihre Größe. */
@@ -3377,6 +3455,188 @@ window.exportCSV = () => {
   download('flugbuch-'+heute()+'.csv',
            '\uFEFF' + [head.map(q).join(';'), ...rows].join('\r\n'), 'text/csv;charset=utf-8');
   toast('CSV heruntergeladen.');
+};
+
+/* ══════════ S.o.S. — STAY OR START ══════════
+   Ein Ampel-Check vor dem Start, vorerst nur für Hike & Fly. Jeder Punkt lässt
+   sich für Vortag, Tag und Start getrennt auf Grün, Gelb oder Rot schalten; aus
+   allen Ampeln ergibt sich oben von selbst ein Urteil. Das Ganze ist eine reine
+   Selbstprüfung — es wird nur im Browser gemerkt, nicht in der Datenbank. */
+
+/* Die Punkte und ihre Grenzen an einer Stelle: daraus entstehen die Tabelle
+   oben und das Nachschlagewerk „Deine Grenzen“ unten. `spalten` sagt, welche
+   der drei Zeitpunkte es bei diesem Punkt gibt (Wind-Messwerte gibt es am Vortag
+   noch nicht). `grenzen` ist die farbige Stufenleiter zum Nachschlagen. */
+const SOS_PUNKTE = [
+  { key:'wetter', name:'Wetter allgemein', sub:'Nebel · Regen · Gewitter · Sicht',
+    spalten:{vortag:true, tag:true, start:true} },
+  { key:'foehn', name:'Föhn', sub:'Druckdifferenz · Indikatoren auf 1.500 & 2.000 m',
+    spalten:{vortag:true, tag:true, start:true} },
+  { key:'wind', name:'Wind', sub:'Alle relevanten Höhen + eine über dem Start, bis zur Landewiese',
+    spalten:{vortag:true, tag:true, start:true} },
+  { key:'mess', name:'Messwerte vs. Prognose', sub:'Stimmt die Realität mit der Vorhersage?',
+    spalten:{vortag:false, tag:true, start:true} }
+];
+
+/* Die Grenzen für Föhn und Wind als ziehbare Regler — eine Gelb- und eine
+   Rot-Grenze je Punkt. `std` sind die Startwerte, bis du selbst etwas einstellst.
+   Du passt sie je nach Startplatz an; gemerkt wird das im Browser. */
+const SOS_REGLER = [
+  { key:'foehn', name:'Föhn', einheit:'hPa',  min:0, max:6,  step:0.5, std:{gelb:2,  rot:2.5} },
+  { key:'wind',  name:'Wind', einheit:'km/h', min:0, max:40, step:1,   std:{gelb:18, rot:25}  }
+];
+
+let sosGrenzen = {};
+try { sosGrenzen = JSON.parse(localStorage.getItem('flugbuch-sos-grenzen') || '{}') || {}; }
+catch(e){ sosGrenzen = {}; }
+function sosSaveGrenzen(){
+  try { localStorage.setItem('flugbuch-sos-grenzen', JSON.stringify(sosGrenzen)); } catch(e){}
+}
+
+const sosNum = n => Number(n).toLocaleString('de-DE');
+
+/* Die aktuell gültigen Grenzen eines Reglers: was gespeichert ist, sonst std. */
+function sosGrenzenVon(r){
+  const s = sosGrenzen[r.key] || {};
+  return { gelb: s.gelb != null ? +s.gelb : r.std.gelb,
+           rot:  s.rot  != null ? +s.rot  : r.std.rot };
+}
+
+/* Der Farbbalken: grün bis zur Gelb-Grenze, gelb bis zur Rot-Grenze, dann rot. */
+function sosBarSegs(r, g){
+  const span = r.max - r.min || 1;
+  const gW = (g.gelb - r.min) / span * 100;
+  const yW = (g.rot  - g.gelb) / span * 100;
+  const rW = (r.max  - g.rot)  / span * 100;
+  return '<div class="g" style="width:'+gW+'%"></div>'
+    + '<div class="y" style="width:'+yW+'%"></div>'
+    + '<div class="r" style="width:'+rW+'%"></div>';
+}
+
+function sosReglerReihe(r, stufe, text, wert){
+  const k = stufe==='rot' ? 'r' : 'y';
+  return '<div class="sos-reihe"><label class="'+k+'">'+text+'</label>'
+    + '<input type="range" class="'+stufe+'" data-stufe="'+stufe+'"'
+    + ' min="'+r.min+'" max="'+r.max+'" step="'+r.step+'" value="'+wert+'"'
+    + ' aria-label="'+esc(r.name)+' — '+text+'">'
+    + '<span class="sos-wert '+k+'" data-stufe="'+stufe+'">'+sosNum(wert)+'</span></div>';
+}
+
+/* Beim Ziehen: Gelb darf nie über Rot liegen — der jeweils andere Regler
+   wird mitgeschoben. Dann Werte und Balken sofort aktualisieren und merken. */
+function sosReglerInput(key, stufe){
+  const r = SOS_REGLER.find(x => x.key === key);
+  const box = document.querySelector('.sos-regler[data-k="'+key+'"]');
+  const gInp = box.querySelector('input[data-stufe="gelb"]');
+  const rInp = box.querySelector('input[data-stufe="rot"]');
+  let gelb = +gInp.value, rot = +rInp.value;
+  if (gelb > rot){
+    if (stufe === 'gelb') rot = gelb; else gelb = rot;
+    gInp.value = gelb; rInp.value = rot;
+  }
+  sosGrenzen[key] = { gelb, rot };
+  sosSaveGrenzen();
+  box.querySelector('.sos-wert[data-stufe="gelb"]').textContent = sosNum(gelb);
+  box.querySelector('.sos-wert[data-stufe="rot"]').textContent = sosNum(rot);
+  box.querySelector('.sos-bar').innerHTML = sosBarSegs(r, { gelb, rot });
+}
+
+const SOS_SPALTEN = ['vortag','tag','start'];
+const SOS_ZEICHEN = { gruen:'✓', gelb:'!', rot:'✕' };
+const sosSpalteName = sp => sp==='vortag' ? 'Vortag' : sp==='tag' ? 'Tag' : 'Start';
+const sosLabel = v => v==='gruen' ? 'Grün' : v==='gelb' ? 'Gelb' : v==='rot' ? 'Rot' : 'noch offen';
+
+/* Die Reihenfolge beim Weiterklicken: leer → grün → gelb → rot → leer. */
+function sosWeiter(cur){
+  const reihe = ['','gruen','gelb','rot'];
+  return reihe[(reihe.indexOf(cur || '') + 1) % reihe.length];
+}
+
+let sosState = {};
+let sosStand = '';
+try { sosState = JSON.parse(localStorage.getItem('flugbuch-sos') || '{}') || {}; } catch(e){ sosState = {}; }
+try { sosStand = localStorage.getItem('flugbuch-sos-stand') || ''; } catch(e){ sosStand = ''; }
+
+function sosSave(){
+  try {
+    localStorage.setItem('flugbuch-sos', JSON.stringify(sosState));
+    localStorage.setItem('flugbuch-sos-stand', sosStand);
+  } catch(e){ /* kein Speicher da — dann gilt der Check nur für diese Sitzung */ }
+}
+
+/* Ein Klick schaltet eine Ampel eine Stufe weiter. */
+function sosKlick(key, sp){
+  sosState[key] = sosState[key] || {};
+  const neu = sosWeiter(sosState[key][sp]);
+  if (neu) sosState[key][sp] = neu; else delete sosState[key][sp];
+  sosStand = new Date().toLocaleString('de-DE',
+    {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+  sosSave();
+  sosRender();
+}
+
+/* Baut die Ampel-Tabelle und die Grenzen-Piktogramme neu auf. */
+function sosRender(){
+  const grid = document.getElementById('sos-grid');
+  if (!grid) return;
+  let html = '<div class="sos-corner"></div>'
+    + '<div class="sos-spalte">Vortag</div>'
+    + '<div class="sos-spalte">Tag</div>'
+    + '<div class="sos-spalte sos-wichtig">Start</div>';
+  SOS_PUNKTE.forEach(p => {
+    html += '<div class="sos-name">'+esc(p.name)
+      + '<small>'+esc(p.sub)+'</small></div>';
+    SOS_SPALTEN.forEach(sp => {
+      if (!p.spalten[sp]){
+        html += '<div class="sos-zelle"><span class="sos-entfaellt" title="entfällt am Vortag"'
+          + ' aria-label="entfällt">–</span></div>';
+      } else {
+        const v = (sosState[p.key] || {})[sp] || '';
+        html += '<div class="sos-zelle"><button type="button" class="sos-licht '+(v||'leer')+'"'
+          + ' data-p="'+p.key+'" data-s="'+sp+'"'
+          + ' aria-label="'+esc(p.name)+' — '+sosSpalteName(sp)+': '+sosLabel(v)+'"'
+          + ' title="'+esc(p.name)+' · '+sosSpalteName(sp)+' — klicken zum Weiterschalten">'
+          + (v ? SOS_ZEICHEN[v] : '') + '</button></div>';
+      }
+    });
+  });
+  grid.innerHTML = html;
+  grid.querySelectorAll('.sos-licht').forEach(b =>
+    b.addEventListener('click', () => sosKlick(b.dataset.p, b.dataset.s)));
+
+  const ref = document.getElementById('sos-ref');
+  ref.innerHTML = SOS_REGLER.map(r => {
+    const g = sosGrenzenVon(r);
+    return '<div class="sos-regler" data-k="'+r.key+'">'
+      + '<div class="sos-regler-kopf">'+esc(r.name)+'<small>'+esc(r.einheit)+'</small></div>'
+      + '<div class="sos-bar">'+sosBarSegs(r, g)+'</div>'
+      + sosReglerReihe(r, 'gelb', 'Gelb ab', g.gelb)
+      + sosReglerReihe(r, 'rot',  'Rot ab',  g.rot)
+      + '</div>';
+  }).join('')
+  + '<p class="note" style="margin-top:2px">Zieh die Regler so, wie es zu deinem Startplatz passt — '
+  + 'ein weiter, offener Platz verträgt mehr als ein enger. Die Einstellung bleibt gespeichert, '
+  + 'bis du sie wieder änderst.</p>';
+  SOS_REGLER.forEach(r => {
+    const box = ref.querySelector('.sos-regler[data-k="'+r.key+'"]');
+    box.querySelectorAll('input[type=range]').forEach(inp =>
+      inp.addEventListener('input', () => sosReglerInput(r.key, inp.dataset.stufe)));
+  });
+
+  document.getElementById('sos-stand').textContent =
+    sosStand ? ('zuletzt geändert: ' + sosStand) : '';
+}
+
+window.sosReset = () => {
+  if (!Object.keys(sosState).length){ sosRender(); return; }
+  ask('Setzt alle Ampeln wieder auf Grau — der Check beginnt von vorn.',
+    () => {
+      sosState = {}; sosStand = '';
+      sosSave();
+      closeConfirm();
+      sosRender();
+    },
+    'Neuer Check?', 'Ja, zurücksetzen');
 };
 
 /* ══════════ START ══════════ */
