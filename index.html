@@ -175,18 +175,25 @@
   .sos-licht.rot{background:#E23B2E;border-color:#B52A1F}
   .sos-entfaellt{color:#C9D3DC;font-size:19px;font-weight:700}
 
-  /* „Deine Grenzen“: nur Föhn und Wind, als kompakte Farb-Piktogramme. */
-  .sos-ref{display:flex;flex-direction:column;gap:14px}
-  .sos-skala{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .sos-skala-name{font-size:14px;font-weight:650;min-width:52px}
-  .sos-skala-name small{display:block;font-weight:400;font-size:10.5px;color:var(--muted);
-    font-family:var(--mono);letter-spacing:.04em}
-  .sos-stufen{display:flex;gap:7px}
-  .sos-chip{min-width:48px;padding:7px 9px;border-radius:var(--r);text-align:center;
-    font-family:var(--mono);font-size:15px;font-weight:600;color:#fff;line-height:1.1;
-    border:1px solid rgba(0,0,0,.12)}
-  .sos-chip.gruen{background:#2E9E4F}.sos-chip.gelb{background:#F2C200;color:#4A3B00}
-  .sos-chip.orange{background:#E8821E}.sos-chip.rot{background:#E23B2E}
+  /* „Deine Grenzen“: Föhn und Wind als Regler, die du je Startplatz ziehst.
+     Der Farbbalken wächst beim Ziehen mit. */
+  .sos-ref{display:flex;flex-direction:column;gap:22px}
+  .sos-regler{display:flex;flex-direction:column;gap:9px}
+  .sos-regler-kopf{font-size:14px;font-weight:650}
+  .sos-regler-kopf small{font-weight:400;color:var(--muted);font-size:10.5px;
+    font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-left:7px}
+  .sos-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .sos-bar .g{background:#2E9E4F}.sos-bar .y{background:#F2C200}.sos-bar .r{background:#E23B2E}
+  .sos-bar div{min-width:0}
+  .sos-reihe{display:grid;grid-template-columns:62px 1fr 56px;align-items:center;gap:11px}
+  .sos-reihe label{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase}
+  .sos-reihe label.y{color:#9A7A00}.sos-reihe label.r{color:#C0291B}
+  .sos-reihe input[type=range]{width:100%;padding:0;background:none;border:none;cursor:pointer}
+  .sos-reihe input[type=range].gelb{accent-color:#D4A800}
+  .sos-reihe input[type=range].rot{accent-color:#E23B2E}
+  .sos-wert{font-family:var(--mono);font-size:15px;font-weight:600;text-align:right}
+  .sos-wert.y{color:#9A7A00}.sos-wert.r{color:#C0291B}
   @media(max-width:520px){
     .sos-grid{grid-template-columns:minmax(88px,1.3fr) repeat(3,1fr);gap:4px 5px}
     .sos-licht{width:34px;height:34px;font-size:16px}
@@ -3471,12 +3478,68 @@ const SOS_PUNKTE = [
     spalten:{vortag:false, tag:true, start:true} }
 ];
 
-/* Die Grenzen als kompakte Farb-Piktogramme — nur bei Föhn und Wind, weil nur
-   die zwei feste Zahlen haben. Jede Stufe: [Farbe, Wert]. */
-const SOS_SKALEN = [
-  { name:'Föhn', einheit:'hPa',  stufen:[['gruen','< 2'],['gelb','2–2,5'],['rot','2,5 +']] },
-  { name:'Wind', einheit:'km/h', stufen:[['gruen','< 18'],['gelb','18–25'],['rot','25 +']] }
+/* Die Grenzen für Föhn und Wind als ziehbare Regler — eine Gelb- und eine
+   Rot-Grenze je Punkt. `std` sind die Startwerte, bis du selbst etwas einstellst.
+   Du passt sie je nach Startplatz an; gemerkt wird das im Browser. */
+const SOS_REGLER = [
+  { key:'foehn', name:'Föhn', einheit:'hPa',  min:0, max:6,  step:0.5, std:{gelb:2,  rot:2.5} },
+  { key:'wind',  name:'Wind', einheit:'km/h', min:0, max:40, step:1,   std:{gelb:18, rot:25}  }
 ];
+
+let sosGrenzen = {};
+try { sosGrenzen = JSON.parse(localStorage.getItem('flugbuch-sos-grenzen') || '{}') || {}; }
+catch(e){ sosGrenzen = {}; }
+function sosSaveGrenzen(){
+  try { localStorage.setItem('flugbuch-sos-grenzen', JSON.stringify(sosGrenzen)); } catch(e){}
+}
+
+const sosNum = n => Number(n).toLocaleString('de-DE');
+
+/* Die aktuell gültigen Grenzen eines Reglers: was gespeichert ist, sonst std. */
+function sosGrenzenVon(r){
+  const s = sosGrenzen[r.key] || {};
+  return { gelb: s.gelb != null ? +s.gelb : r.std.gelb,
+           rot:  s.rot  != null ? +s.rot  : r.std.rot };
+}
+
+/* Der Farbbalken: grün bis zur Gelb-Grenze, gelb bis zur Rot-Grenze, dann rot. */
+function sosBarSegs(r, g){
+  const span = r.max - r.min || 1;
+  const gW = (g.gelb - r.min) / span * 100;
+  const yW = (g.rot  - g.gelb) / span * 100;
+  const rW = (r.max  - g.rot)  / span * 100;
+  return '<div class="g" style="width:'+gW+'%"></div>'
+    + '<div class="y" style="width:'+yW+'%"></div>'
+    + '<div class="r" style="width:'+rW+'%"></div>';
+}
+
+function sosReglerReihe(r, stufe, text, wert){
+  const k = stufe==='rot' ? 'r' : 'y';
+  return '<div class="sos-reihe"><label class="'+k+'">'+text+'</label>'
+    + '<input type="range" class="'+stufe+'" data-stufe="'+stufe+'"'
+    + ' min="'+r.min+'" max="'+r.max+'" step="'+r.step+'" value="'+wert+'"'
+    + ' aria-label="'+esc(r.name)+' — '+text+'">'
+    + '<span class="sos-wert '+k+'" data-stufe="'+stufe+'">'+sosNum(wert)+'</span></div>';
+}
+
+/* Beim Ziehen: Gelb darf nie über Rot liegen — der jeweils andere Regler
+   wird mitgeschoben. Dann Werte und Balken sofort aktualisieren und merken. */
+function sosReglerInput(key, stufe){
+  const r = SOS_REGLER.find(x => x.key === key);
+  const box = document.querySelector('.sos-regler[data-k="'+key+'"]');
+  const gInp = box.querySelector('input[data-stufe="gelb"]');
+  const rInp = box.querySelector('input[data-stufe="rot"]');
+  let gelb = +gInp.value, rot = +rInp.value;
+  if (gelb > rot){
+    if (stufe === 'gelb') rot = gelb; else gelb = rot;
+    gInp.value = gelb; rInp.value = rot;
+  }
+  sosGrenzen[key] = { gelb, rot };
+  sosSaveGrenzen();
+  box.querySelector('.sos-wert[data-stufe="gelb"]').textContent = sosNum(gelb);
+  box.querySelector('.sos-wert[data-stufe="rot"]').textContent = sosNum(rot);
+  box.querySelector('.sos-bar').innerHTML = sosBarSegs(r, { gelb, rot });
+}
 
 const SOS_SPALTEN = ['vortag','tag','start'];
 const SOS_ZEICHEN = { gruen:'✓', gelb:'!', rot:'✕' };
@@ -3542,14 +3605,23 @@ function sosRender(){
     b.addEventListener('click', () => sosKlick(b.dataset.p, b.dataset.s)));
 
   const ref = document.getElementById('sos-ref');
-  ref.innerHTML = SOS_SKALEN.map(s => {
-    const chips = s.stufen.map(st =>
-      '<span class="sos-chip '+st[0]+'">'+esc(st[1])+'</span>'
-    ).join('');
-    return '<div class="sos-skala"><div class="sos-skala-name">'+esc(s.name)
-      + '<small>'+esc(s.einheit)+'</small></div>'
-      + '<div class="sos-stufen">'+chips+'</div></div>';
-  }).join('');
+  ref.innerHTML = SOS_REGLER.map(r => {
+    const g = sosGrenzenVon(r);
+    return '<div class="sos-regler" data-k="'+r.key+'">'
+      + '<div class="sos-regler-kopf">'+esc(r.name)+'<small>'+esc(r.einheit)+'</small></div>'
+      + '<div class="sos-bar">'+sosBarSegs(r, g)+'</div>'
+      + sosReglerReihe(r, 'gelb', 'Gelb ab', g.gelb)
+      + sosReglerReihe(r, 'rot',  'Rot ab',  g.rot)
+      + '</div>';
+  }).join('')
+  + '<p class="note" style="margin-top:2px">Zieh die Regler so, wie es zu deinem Startplatz passt — '
+  + 'ein weiter, offener Platz verträgt mehr als ein enger. Die Einstellung bleibt gespeichert, '
+  + 'bis du sie wieder änderst.</p>';
+  SOS_REGLER.forEach(r => {
+    const box = ref.querySelector('.sos-regler[data-k="'+r.key+'"]');
+    box.querySelectorAll('input[type=range]').forEach(inp =>
+      inp.addEventListener('input', () => sosReglerInput(r.key, inp.dataset.stufe)));
+  });
 
   document.getElementById('sos-stand').textContent =
     sosStand ? ('zuletzt geändert: ' + sosStand) : '';
