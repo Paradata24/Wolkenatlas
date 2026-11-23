@@ -1,33 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Logo „Wolkenatlas“ (Nov. 2026): Ein Gleitschirmflieger, dessen Schirm
-       eine Quellwolke ist. Der Witz: oben sieht man nur Wolke, erst die
-       gewölbte Unterkante, die Leinen und der kleine Pilot machen daraus
-       einen Schirm. Farben wie die App: Hintergrund = Tinte (Farbe „ink“ der Seite),
-       Pilot in einem hellen Pink, verwandt mit der Farbe „start“.
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="crispEdges">
+  <!-- Logo „Wolkenatlas“ als Pixelbild (Nov. 2026, Wunsch des Besitzers).
+       Die Idee: Der Gleitschirm ist eine Wolke. Die Wolke besteht aus weißen
+       Pixeln mit unterschiedlicher Deckkraft, ihre Unterkante ist gewölbt wie
+       die Kappe eines Schirms (an den Enden tiefer). Darunter hängt der Pilot:
+       ein einziges pinkes Pixel. Hintergrund in der Tintenfarbe der Seite.
+       Raster 21 mal 21, ein Pixel = 24 Punkte. Die Karte der Pixel
+       (9 = ganz weiß, 4 = 40 Prozent Deckkraft, P = Pilot; leere Zeilen
+       weggelassen, der Pilot hängt drei leere Zeilen unter der Wolke):
+       .........4966........
+       ........599894.56....
+       ....564.899899698....
+       ...499988999999995...
+       ...699899999989999...
+       ...789967999989779...
+       ...57...........76...
+       ..........P..........
        Aus dieser Datei sind alle Symbole in icons/ und apple-touch-icon.png
        gerechnet. Wer das Logo ändert, muss die PNG-Dateien neu erzeugen. -->
   <rect width="512" height="512" fill="#15202B"/>
-  <defs>
-    <!-- Die Wolke endet unten in einem flachen Bogen, wie die Kappe eines
-         Schirms von vorn: in der Mitte höher, an den Enden tiefer. -->
-    <clipPath id="ueber">
-      <path d="M0 0 H512 V300 L420 300 L420 258 Q256 210 92 258 L92 300 L0 300 Z"/>
-    </clipPath>
-  </defs>
-  <g fill="#FFFFFF" clip-path="url(#ueber)">
-    <circle cx="158" cy="226" r="48"/>
-    <circle cx="218" cy="186" r="62"/>
-    <circle cx="294" cy="168" r="72"/>
-    <circle cx="362" cy="216" r="52"/>
-    <path d="M92 258 Q92 222 128 222 L384 222 Q420 222 420 258 Z"/>
+  <g fill="#FFFFFF">
+    <rect x="220" y="124" width="24" height="24" fill-opacity=".4"/>
+    <rect x="244" y="124" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="124" width="24" height="24" fill-opacity=".64"/>
+    <rect x="292" y="124" width="24" height="24" fill-opacity=".64"/>
+    <rect x="196" y="148" width="24" height="24" fill-opacity=".52"/>
+    <rect x="220" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="148" width="24" height="24" fill-opacity=".88"/>
+    <rect x="292" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="148" width="24" height="24" fill-opacity=".4"/>
+    <rect x="364" y="148" width="24" height="24" fill-opacity=".52"/>
+    <rect x="388" y="148" width="24" height="24" fill-opacity=".64"/>
+    <rect x="100" y="172" width="24" height="24" fill-opacity=".52"/>
+    <rect x="124" y="172" width="24" height="24" fill-opacity=".64"/>
+    <rect x="148" y="172" width="24" height="24" fill-opacity=".4"/>
+    <rect x="196" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="220" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="292" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="340" y="172" width="24" height="24" fill-opacity=".64"/>
+    <rect x="364" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="76" y="196" width="24" height="24" fill-opacity=".4"/>
+    <rect x="100" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="124" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="172" y="196" width="24" height="24" fill-opacity=".88"/>
+    <rect x="196" y="196" width="24" height="24" fill-opacity=".88"/>
+    <rect x="220" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="340" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="412" y="196" width="24" height="24" fill-opacity=".52"/>
+    <rect x="76" y="220" width="24" height="24" fill-opacity=".64"/>
+    <rect x="100" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="124" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="220" width="24" height="24" fill-opacity=".88"/>
+    <rect x="172" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="196" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="220" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="220" width="24" height="24" fill-opacity=".88"/>
+    <rect x="340" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="412" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="76" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="100" y="244" width="24" height="24" fill-opacity=".88"/>
+    <rect x="124" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="172" y="244" width="24" height="24" fill-opacity=".64"/>
+    <rect x="196" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="220" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="244" width="24" height="24" fill-opacity=".88"/>
+    <rect x="340" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="388" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="412" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="76" y="268" width="24" height="24" fill-opacity=".52"/>
+    <rect x="100" y="268" width="24" height="24" fill-opacity=".76"/>
+    <rect x="388" y="268" width="24" height="24" fill-opacity=".76"/>
+    <rect x="412" y="268" width="24" height="24" fill-opacity=".64"/>
   </g>
-  <!-- Leinen: je drei pro Seite, laufen an den beiden Karabinern zusammen -->
-  <g stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" opacity=".7" fill="none">
-    <path d="M100 254 L250 372"/><path d="M162 239 L250 372"/><path d="M220 231 L250 372"/>
-    <path d="M412 254 L262 372"/><path d="M350 239 L262 372"/><path d="M292 231 L262 372"/>
-  </g>
-  <!-- Pilot, sitzend im Gurtzeug, von der Seite -->
-  <path d="M257 374 L251 397 L278 399 L281 419" fill="none" stroke="#F2557F"
-        stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="256" cy="355" r="10.5" fill="#F2557F"/>
+  <!-- Der Pilot: ein einziges pinkes Pixel -->
+  <rect x="244" y="364" width="24" height="24" fill="#F2557F"/>
 </svg>

@@ -758,15 +758,18 @@ Adresszeile und ein Start ohne Netz dazu.
 Beim ersten Öffnen der App einmal anmelden — App und Safari haben am iPhone getrennte
 Speicher, die Anmeldung aus Safari gilt in der App nicht.
 
-**Logo:** eine Quellwolke, deren gewölbte Unterkante, Leinen und ein kleiner pinker Pilot
-sie zum Gleitschirm machen. Dunkler Hintergrund in der Tintenfarbe der Seite (`#15202B`),
-Pilot in hellem Pink (`#F2557F`, verwandt mit der Farbe der Startplätze). Die Vorlage ist
-`icons/logo.svg`; daraus sind alle Symbole gerechnet (`icons/icon-192.png`,
+**Logo:** ein Pixelbild. Der Gleitschirm ist eine Wolke aus weißen Pixeln mit
+unterschiedlicher Deckkraft (von ganz weiß bis 40 Prozent), ihre Unterkante ist gewölbt
+wie die Kappe eines Schirms. Darunter hängt der Pilot: **ein einziges pinkes Pixel**
+(`#F2557F`). Dunkler Hintergrund in der Tintenfarbe der Seite (`#15202B`). Raster 21 × 21;
+die Karte der Pixel steht als Kommentar oben in `icons/logo.svg`, jedes Pixel ist dort ein
+eigenes Rechteck. Aus dieser Datei sind alle Symbole gerechnet (`icons/icon-192.png`,
 `icons/icon-512.png`, `icons/icon-maskable-512.png` mit etwas mehr Rand für den runden
 Zuschnitt bei Android, `apple-touch-icon.png` fürs iPhone, `favicon.svg` und
 `icons/favicon-32.png` für den Browser-Reiter). Wer das Logo ändert, muss die PNG-Dateien
 neu erzeugen. Das Logo steht auch klein vor dem Namen in der Kopfzeile und groß über
-der Anmeldung.
+der Anmeldung. (Die erste Fassung im Nov. 2026 war eine glatte Vektor-Wolke mit Leinen
+und Strichmännchen; der Besitzer wollte dieselbe Idee als Pixelbild.)
 
 **Abkürzung (nur Android):** Langes Drücken aufs App-Symbol bietet **„S.o.S.“** an — die App
 öffnet dann gleich den S.o.S.-Reiter (Adresse mit `?sos`).
