@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="crispEdges">
+  <!-- Logo „Wolkenatlas“ als Pixelbild (Nov. 2026, Wunsch des Besitzers).
+       Die Idee: Der Gleitschirm ist eine Wolke. Die Wolke besteht aus weißen
+       Pixeln mit unterschiedlicher Deckkraft, ihre Unterkante ist gewölbt wie
+       die Kappe eines Schirms (an den Enden tiefer). Darunter hängt der Pilot:
+       ein einziges pinkes Pixel. Hintergrund in der Tintenfarbe der Seite.
+       Raster 21 mal 21, ein Pixel = 24 Punkte. Die Karte der Pixel
+       (9 = ganz weiß, 4 = 40 Prozent Deckkraft, P = Pilot; leere Zeilen
+       weggelassen, der Pilot hängt drei leere Zeilen unter der Wolke):
+       .........4966........
+       ........599894.56....
+       ....564.899899698....
+       ...499988999999995...
+       ...699899999989999...
+       ...789967999989779...
+       ...57...........76...
+       ..........P..........
+       Aus dieser Datei sind alle Symbole in icons/ und apple-touch-icon.png
+       gerechnet. Wer das Logo ändert, muss die PNG-Dateien neu erzeugen. -->
+  <rect width="512" height="512" fill="#15202B"/>
+  <g fill="#FFFFFF">
+    <rect x="220" y="124" width="24" height="24" fill-opacity=".4"/>
+    <rect x="244" y="124" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="124" width="24" height="24" fill-opacity=".64"/>
+    <rect x="292" y="124" width="24" height="24" fill-opacity=".64"/>
+    <rect x="196" y="148" width="24" height="24" fill-opacity=".52"/>
+    <rect x="220" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="148" width="24" height="24" fill-opacity=".88"/>
+    <rect x="292" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="148" width="24" height="24" fill-opacity=".4"/>
+    <rect x="364" y="148" width="24" height="24" fill-opacity=".52"/>
+    <rect x="388" y="148" width="24" height="24" fill-opacity=".64"/>
+    <rect x="100" y="172" width="24" height="24" fill-opacity=".52"/>
+    <rect x="124" y="172" width="24" height="24" fill-opacity=".64"/>
+    <rect x="148" y="172" width="24" height="24" fill-opacity=".4"/>
+    <rect x="196" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="220" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="292" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="340" y="172" width="24" height="24" fill-opacity=".64"/>
+    <rect x="364" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="76" y="196" width="24" height="24" fill-opacity=".4"/>
+    <rect x="100" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="124" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="172" y="196" width="24" height="24" fill-opacity=".88"/>
+    <rect x="196" y="196" width="24" height="24" fill-opacity=".88"/>
+    <rect x="220" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="340" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="412" y="196" width="24" height="24" fill-opacity=".52"/>
+    <rect x="76" y="220" width="24" height="24" fill-opacity=".64"/>
+    <rect x="100" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="124" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="220" width="24" height="24" fill-opacity=".88"/>
+    <rect x="172" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="196" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="220" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="220" width="24" height="24" fill-opacity=".88"/>
+    <rect x="340" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="412" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="76" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="100" y="244" width="24" height="24" fill-opacity=".88"/>
+    <rect x="124" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="172" y="244" width="24" height="24" fill-opacity=".64"/>
+    <rect x="196" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="220" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="244" width="24" height="24" fill-opacity=".88"/>
+    <rect x="340" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="388" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="412" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="76" y="268" width="24" height="24" fill-opacity=".52"/>
+    <rect x="100" y="268" width="24" height="24" fill-opacity=".76"/>
+    <rect x="388" y="268" width="24" height="24" fill-opacity=".76"/>
+    <rect x="412" y="268" width="24" height="24" fill-opacity=".64"/>
+  </g>
+  <!-- Der Pilot: ein einziges pinkes Pixel -->
+  <rect x="244" y="364" width="24" height="24" fill="#F2557F"/>
+</svg>

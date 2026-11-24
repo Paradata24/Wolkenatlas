@@ -1,7 +1,12 @@
-# Flugbuch
+# Wolkenatlas
 
-Persönliches digitales Flugbuch für Gleitschirmflüge. Läuft auf PC und Handy.
-Repository: `paradata24/wolkenatlas` · Stand dieser Beschreibung: Oktober 2026.
+Persönliches digitales Flugbuch für Gleitschirmflüge. Läuft auf PC und Handy — im Browser
+und als App auf dem Home-Bildschirm (siehe „Web-App „Wolkenatlas““).
+Repository: `paradata24/wolkenatlas` · Stand dieser Beschreibung: November 2026.
+
+Bis November 2026 hieß die Seite „Flugbuch“. Der Name **Wolkenatlas** steht seither im
+Titel, in der Kopfzeile, auf der Anmeldeseite und unter dem App-Symbol. Im Text der Seite
+bleibt „Flugbuch“ das Wort für die Sammlung deiner Flüge („Noch kein Flug im Flugbuch“).
 
 **Der Besitzer dieses Projekts programmiert nicht.** Erkläre Änderungen in Alltagssprache,
 nicht in Fachbegriffen, und mach nie eine Änderung, ohne kurz zu sagen, was sie bewirkt.
@@ -29,6 +34,7 @@ Darum gilt im Chat:
 | --- | --- |
 | **Flüge** | Kennzahlen oben, darunter die Tabelle aller Flüge — zugleich das Eingabeformular |
 | **Orte** | Karte mit allen Start-, Lande- und Übungsplätzen und Alpin-Orten, mit Filter und Geländefarben |
+| **S.o.S.** | Stay or Start: Ampel-Check für Hike & Fly, liegt nur im Handy und geht auch ohne Netz |
 | **Reminder** | alle Kommentare und Reminder zu den Flügen, wie ein Tagebuch |
 | **Ausrüstung** | Schirme (mit Klasse) und Gurtzeuge, mit Anzahl Flüge und Flugzeit |
 | **Statistik** | Säulenbild pro Monat und Auswertung nach Art, Ort und Ausrüstung |
@@ -36,8 +42,13 @@ Darum gilt im Chat:
 
 ## Aufbau
 
-Bewusst simpel gehalten: **eine einzige Datei**, `index.html`, mit HTML, CSS und JavaScript darin.
-Kein Build-Schritt, kein npm, kein Framework. Wer hier etwas ändert, ändert genau diese Datei.
+Bewusst simpel gehalten: Das ganze Programm steckt in **einer Datei**, `index.html`, mit HTML,
+CSS und JavaScript darin. Kein Build-Schritt, kein npm, kein Framework. Wer am Flugbuch
+etwas ändert, ändert genau diese Datei.
+
+Dazu kommen seit November 2026 nur die Teile der Web-App (siehe „Web-App „Wolkenatlas““):
+`manifest.webmanifest` (App-Beschreibung), `sw.js` (Hintergrund-Helfer), `favicon.svg`,
+`apple-touch-icon.png` und der Ordner `icons/` mit Logo und Symbolen.
 
 - **Hosting:** Vercel, verbunden mit diesem Repository. Jeder Push wird automatisch veröffentlicht.
 - **Datenbank und Login:** Supabase (Gratis-Tarif).
@@ -729,6 +740,64 @@ wieder einlesen. Das ist die einzige Absicherung gegen Datenverlust —
 entsprechend vorsichtig damit umgehen.
 
 Der CSV-Export ist zum Auswerten in Excel gedacht, **nicht** zum Wiederherstellen.
+
+## Web-App „Wolkenatlas“
+
+Seit November 2026 lässt sich die Seite wie eine App auf den Home-Bildschirm legen — nach
+dem Vorbild von SISOSIG: **eine Website, eine Adresse, ein Code.** Im Browser bleibt alles,
+wie es war; als App kommen eigenes Symbol, der Name *Wolkenatlas*, Vollbild ohne
+Adresszeile und ein Start ohne Netz dazu.
+
+**Installieren**
+
+- **iPhone (Safari):** Seite öffnen → unten das **Teilen-Symbol** (Quadrat mit Pfeil nach
+  oben) → **„Zum Home-Bildschirm“** → **„Hinzufügen“**.
+- **Android (Chrome):** Seite öffnen → oben rechts **⋮** → **„App installieren“** (bei
+  manchen Handys „Zum Startbildschirm hinzufügen“) → **„Installieren“**.
+
+Beim ersten Öffnen der App einmal anmelden — App und Safari haben am iPhone getrennte
+Speicher, die Anmeldung aus Safari gilt in der App nicht.
+
+**Logo:** ein Pixelbild. Der Gleitschirm ist eine Wolke aus weißen Pixeln mit
+unterschiedlicher Deckkraft (von ganz weiß bis 40 Prozent), ihre Unterkante ist gewölbt
+wie die Kappe eines Schirms. Darunter hängt der Pilot: **ein einziges pinkes Pixel**
+(`#F2557F`). Dunkler Hintergrund in der Tintenfarbe der Seite (`#15202B`). Raster 21 × 21;
+die Karte der Pixel steht als Kommentar oben in `icons/logo.svg`, jedes Pixel ist dort ein
+eigenes Rechteck. Aus dieser Datei sind alle Symbole gerechnet (`icons/icon-192.png`,
+`icons/icon-512.png`, `icons/icon-maskable-512.png` mit etwas mehr Rand für den runden
+Zuschnitt bei Android, `apple-touch-icon.png` fürs iPhone, `favicon.svg` und
+`icons/favicon-32.png` für den Browser-Reiter). Wer das Logo ändert, muss die PNG-Dateien
+neu erzeugen. Das Logo steht auch klein vor dem Namen in der Kopfzeile und groß über
+der Anmeldung. (Die erste Fassung im Nov. 2026 war eine glatte Vektor-Wolke mit Leinen
+und Strichmännchen; der Besitzer wollte dieselbe Idee als Pixelbild.)
+
+**Abkürzung (nur Android):** Langes Drücken aufs App-Symbol bietet **„S.o.S.“** an — die App
+öffnet dann gleich den S.o.S.-Reiter (Adresse mit `?sos`).
+
+**Ohne Netz** — gilt nur in der App, nicht im Browser:
+
+- Der **Hintergrund-Helfer** (`sw.js`) speichert die Seite, die Programmteile (Leaflet von
+  unpkg.com, supabase-js von esm.sh) und **jedes angesehene Kartenstück** (OpenTopoMap und
+  die Höhenkacheln der Geländefarben; höchstens 4000, nach 30 Tagen erneuert). Wer ein
+  Gebiet vorher einmal in den gebrauchten Zoomstufen anschaut, hat es am Berg auch ohne
+  Empfang. Bewusst **kein „Gebiet herunterladen“**: OpenTopoMap verbietet Massen-Downloads.
+- Die **Daten** (Flüge, Orte, Ausrüstung) legt die Seite nach jedem Laden als Kopie im Handy
+  ab (`localStorage`, Schlüssel `wolkenatlas-offline`). Startet die App ohne Netz — oder
+  kommt bei schwachem Empfang nach 8 Sekunden keine Anmeldung bzw. nach 12 Sekunden keine
+  Daten —, zeigt sie diese Kopie mit einem **gelben Streifen** oben: „Ohne Netz · Stand … ·
+  nur ansehen, nichts speichern“ und dem Knopf **Neu laden**. Kommt das Netz zurück, steht
+  dort „Netz wieder da“ und der Knopf wird dunkel.
+- **Ohne Netz wird nichts gespeichert.** Wer trotzdem auf Speichern drückt, bekommt die
+  Meldung „Ohne Netz wird nichts gespeichert …“; was im Formular steht, bleibt stehen.
+- Der Reiter **S.o.S.** liegt ohnehin nur im Handy und funktioniert ohne Netz ganz normal.
+- **Abmelden** löscht die Kopie im Handy.
+- **Mit Netz verhält sich alles wie die Website**: Seite und Daten kommen immer zuerst
+  frisch aus dem Netz, der Speicher ist nur Ersatz. Wichtig, weil der Helfer bei Android
+  nach der Installation auch für die Website in Chrome gilt.
+
+Bei einer grundlegenden Änderung am Helfer `VERSION` oben in `sw.js` hochzählen — dann
+werden die alten Speicher beim nächsten Start gelöscht. Kommt ein neuer Kartendienst dazu,
+muss er in `istKartenstueck` in `sw.js` ergänzt werden, sonst wird er nicht gespeichert.
 
 ## Offene Ideen
 

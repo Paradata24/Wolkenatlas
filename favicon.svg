@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="crispEdges">
+  <!-- Symbol im Browser-Reiter und Logo in der Kopfzeile: dasselbe
+       Pixelbild wie icons/logo.svg, nur mit runden Ecken. -->
+  <rect width="512" height="512" rx="112" fill="#15202B"/>
+  <g fill="#FFFFFF">
+    <rect x="220" y="124" width="24" height="24" fill-opacity=".4"/>
+    <rect x="244" y="124" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="124" width="24" height="24" fill-opacity=".64"/>
+    <rect x="292" y="124" width="24" height="24" fill-opacity=".64"/>
+    <rect x="196" y="148" width="24" height="24" fill-opacity=".52"/>
+    <rect x="220" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="148" width="24" height="24" fill-opacity=".88"/>
+    <rect x="292" y="148" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="148" width="24" height="24" fill-opacity=".4"/>
+    <rect x="364" y="148" width="24" height="24" fill-opacity=".52"/>
+    <rect x="388" y="148" width="24" height="24" fill-opacity=".64"/>
+    <rect x="100" y="172" width="24" height="24" fill-opacity=".52"/>
+    <rect x="124" y="172" width="24" height="24" fill-opacity=".64"/>
+    <rect x="148" y="172" width="24" height="24" fill-opacity=".4"/>
+    <rect x="196" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="220" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="292" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="340" y="172" width="24" height="24" fill-opacity=".64"/>
+    <rect x="364" y="172" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="172" width="24" height="24" fill-opacity=".88"/>
+    <rect x="76" y="196" width="24" height="24" fill-opacity=".4"/>
+    <rect x="100" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="124" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="172" y="196" width="24" height="24" fill-opacity=".88"/>
+    <rect x="196" y="196" width="24" height="24" fill-opacity=".88"/>
+    <rect x="220" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="340" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="196" width="24" height="24" fill-opacity="1"/>
+    <rect x="412" y="196" width="24" height="24" fill-opacity=".52"/>
+    <rect x="76" y="220" width="24" height="24" fill-opacity=".64"/>
+    <rect x="100" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="124" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="220" width="24" height="24" fill-opacity=".88"/>
+    <rect x="172" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="196" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="220" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="220" width="24" height="24" fill-opacity=".88"/>
+    <rect x="340" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="388" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="412" y="220" width="24" height="24" fill-opacity="1"/>
+    <rect x="76" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="100" y="244" width="24" height="24" fill-opacity=".88"/>
+    <rect x="124" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="148" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="172" y="244" width="24" height="24" fill-opacity=".64"/>
+    <rect x="196" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="220" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="244" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="268" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="292" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="316" y="244" width="24" height="24" fill-opacity=".88"/>
+    <rect x="340" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="364" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="388" y="244" width="24" height="24" fill-opacity=".76"/>
+    <rect x="412" y="244" width="24" height="24" fill-opacity="1"/>
+    <rect x="76" y="268" width="24" height="24" fill-opacity=".52"/>
+    <rect x="100" y="268" width="24" height="24" fill-opacity=".76"/>
+    <rect x="388" y="268" width="24" height="24" fill-opacity=".76"/>
+    <rect x="412" y="268" width="24" height="24" fill-opacity=".64"/>
+  </g>
+  <!-- Der Pilot: ein einziges pinkes Pixel -->
+  <rect x="244" y="364" width="24" height="24" fill="#F2557F"/>
+</svg>

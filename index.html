@@ -3,7 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flugbuch</title>
+<title>Wolkenatlas</title>
+<meta name="description" content="Persönliches Flugbuch für Gleitschirmflüge — Flüge, Orte, Ausrüstung, Statistik.">
+<!-- Web-App „Wolkenatlas“ (Nov. 2026, nach dem Vorbild von SISOSIG): Wer die
+     Seite zum Home-Bildschirm hinzufügt (iPhone: Teilen → „Zum Home-Bildschirm“,
+     Android: „App installieren“), bekommt eine App mit eigenem Namen und Symbol,
+     ohne Adresszeile. Im Browser ändert sich dadurch nichts.
+     Das Logo steht in icons/logo.svg, alle Symbole sind daraus gerechnet. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Wolkenatlas">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F6F8FA">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
@@ -35,6 +50,19 @@
     border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:4px}
   header h1{font-size:19px;font-weight:650;letter-spacing:.14em;text-transform:uppercase;margin:0}
   header .sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+  /* Das Logo (Wolke als Schirm) vor dem Namen — klein in der Kopfzeile, groß
+     über der Anmeldung. Es ist dieselbe Datei wie das Symbol im Browser-Reiter. */
+  .logo{width:26px;height:26px;vertical-align:-6px;margin-right:10px}
+  #login .logo{display:block;width:72px;height:72px;margin:0 0 16px}
+
+  /* ---------- Ohne Netz (nur in der App) ----------
+     Gelber Streifen über allem, solange die App die gespeicherte Kopie zeigt. */
+  #offline{display:none;align-items:center;gap:6px 12px;flex-wrap:wrap;
+    background:#FFF3C4;border:1px solid #E8C547;border-radius:var(--r);
+    padding:8px 12px;margin:0 0 12px;font-size:13.5px}
+  #offline.on{display:flex}
+  #offline b{font-weight:650}
+  #offline .btn{margin-left:auto}
   nav{margin-left:auto;display:flex;gap:2px;flex-wrap:wrap}
   nav button{font:inherit;font-size:13px;background:none;border:none;cursor:pointer;
     padding:6px 13px;color:var(--muted);border-radius:var(--r) var(--r) 0 0}
@@ -525,12 +553,22 @@
 </head>
 <body>
 
-<div id="boot">Flugbuch wird geladen …</div>
+<div id="boot">Wolkenatlas wird geladen …</div>
+<script>
+  /* Ohne Netz und ohne gespeicherte Programmteile kommt das Hauptprogramm unten
+     gar nicht erst in Gang — dann stünde hier für immer „wird geladen“. */
+  setTimeout(() => {
+    const b = document.getElementById('boot');
+    if (b && b.style.display !== 'none' && navigator.onLine === false)
+      b.textContent = 'Keine Verbindung zum Internet — bitte später noch einmal öffnen.';
+  }, 8000);
+</script>
 
 <!-- =================  ================= -->
 <div id="login">
   <div class="box">
-    <h1>Flugbuch</h1>
+    <img class="logo" src="favicon.svg" alt="">
+    <h1>Wolkenatlas</h1>
     <p class="lead">Bitte melde dich an.</p>
     <div class="field"><label for="l-mail">E-Mail</label>
       <input type="email" id="l-mail" autocomplete="username"></div>
@@ -543,8 +581,13 @@
 
 <!-- ================= FLUGBUCH ================= -->
 <div id="app"><div class="wrap">
+  <!-- Nur in der App, wenn sie ohne Netz die gespeicherte Kopie zeigt. -->
+  <div id="offline" role="status">
+    <span><b>Ohne Netz</b> · <span id="offline-stand"></span> · nur ansehen, nichts speichern</span>
+    <button class="btn ghost small" onclick="location.reload()">Neu laden</button>
+  </div>
   <header>
-    <h1>Flugbuch</h1>
+    <h1><img class="logo" src="favicon.svg" alt="">Wolkenatlas</h1>
     <span class="sub" id="whoami"></span>
     <nav role="tablist">
       <button role="tab" id="t-flug" aria-selected="true" onclick="show('flug')">Flüge</button>
@@ -1030,13 +1073,138 @@ function toast(msg, bad){
   t.textContent = msg; t.className = 'toast on' + (bad?' bad':'');
   clearTimeout(t._x); t._x = setTimeout(()=>t.className='toast', bad?4200:2200);
 }
-const oops = e => { console.error(e); toast(e?.message || 'Etwas ist schiefgegangen.', true); };
+/* Fehler, die nur heißen „keine Verbindung“ (Funkloch, Flugmodus) — in jedem
+   Browser anders formuliert. Sie bekommen eine verständliche Meldung. */
+const NETZFEHLER = /Failed to fetch|NetworkError|Load failed|Network request failed/i;
+const istNetzfehler = e => !!e && (e.name === 'AuthRetryableFetchError' || NETZFEHLER.test(e.message || ''));
+const oops = e => {
+  console.error(e);
+  toast(istNetzfehler(e) ? 'Keine Verbindung zum Internet — bitte später noch einmal.'
+                         : (e?.message || 'Etwas ist schiefgegangen.'), true);
+};
+
+/* ══════════ WEB-APP: OHNE NETZ ══════════
+   Läuft die Seite als App (vom Home-Bildschirm geöffnet), merkt sie sich nach
+   jedem Laden eine Kopie von Flügen, Orten und Ausrüstung im Handy. Startet die
+   App ohne Netz — oder ist der Empfang so schwach, dass nach ein paar Sekunden
+   nichts kommt —, zeigt sie diese Kopie, mit gelbem Streifen „Ohne Netz“ oben.
+   Ändern lässt sich dann nichts, Speichern braucht die Datenbank. Der S.o.S.-Check
+   liegt ohnehin nur im Handy und geht auch ohne Netz ganz normal.
+   Im Browser bleibt alles wie bisher: keine Kopie, kein Streifen. */
+const ALS_APP = matchMedia('(display-mode: standalone)').matches
+             || matchMedia('(display-mode: fullscreen)').matches
+             || navigator.standalone === true;          /* ältere iPhones */
+const KOPIE_SPEICHER = 'wolkenatlas-offline';
+/* Hier legt supabase-js die Anmeldung ab (fester Name, aus der Adresse gebildet). */
+const ANMELDE_SPEICHER = 'sb-' + new URL(SUPABASE_URL).hostname.split('.')[0] + '-auth-token';
+/* So lange dürfen Anmeldung bzw. Laden dauern, bevor die App auf die Kopie
+   umschaltet. Mit Netz dauert beides unter einer Sekunde — die Grenzen greifen
+   also nur bei Funkloch oder sehr schwachem Empfang. Ohne sie hängt die App:
+   supabase-js versucht die Anmeldung ohne Netz rund 30 Sekunden lang zu erneuern. */
+const ANMELDUNG_WARTEN_MS = 8000;
+const LADEN_WARTEN_MS = 12000;
+
+/* true, sobald die Kopie gezeigt wird. Bleibt so bis „Neu laden“. */
+let OFFLINE = false;
+/* Wer angemeldet ist — für die Kopie. */
+let ANGEMELDET = null;
+/* Wann Flüge, Orte und Ausrüstung zuletzt frisch aus der Datenbank kamen. */
+let GELADEN_UM = 0;
+/* Beim ersten Laden in der App: Scheitert es am Netz, springt die Kopie ein —
+   dann ohne Fehlermeldung, der gelbe Streifen sagt genug. */
+let KOPIE_ALS_ERSATZ = null;
+
+const innerhalb = (versprechen, ms) =>
+  Promise.race([versprechen, new Promise(ok => setTimeout(() => ok(null), ms))]);
+
+function merkeKopie(){
+  if (!ALS_APP || OFFLINE || !ANGEMELDET || !GELADEN_UM) return;
+  try {
+    localStorage.setItem(KOPIE_SPEICHER, JSON.stringify({
+      v: 1, zeit: GELADEN_UM, user: ANGEMELDET.id, email: ANGEMELDET.email,
+      HAS, places: S.places, gear: S.gear, flights: S.flights }));
+  } catch(e){ /* Speicher voll o. ä.: dann eben ohne Kopie */ }
+}
+/* Notizen und Reminder werden teils ohne neues Laden gespeichert. Damit auch sie
+   in der Kopie landen, wird sie beim Verlassen der App noch einmal geschrieben. */
+document.addEventListener('visibilitychange', () => { if (document.hidden) merkeKopie(); });
+
+function ladeKopie(){
+  if (!ALS_APP) return null;
+  try {
+    const k = JSON.parse(localStorage.getItem(KOPIE_SPEICHER) || 'null');
+    if (!k || k.v !== 1 || !Array.isArray(k.flights)) return null;
+    /* Nur, solange im Handy noch dieselbe Person angemeldet ist. */
+    const anm = JSON.parse(localStorage.getItem(ANMELDE_SPEICHER) || 'null');
+    if (!anm || (anm.user?.id && anm.user.id !== k.user)) return null;
+    return k;
+  } catch(e){ return null; }
+}
+const vergissKopie = () => { try { localStorage.removeItem(KOPIE_SPEICHER); } catch(e){} };
+
+/* Ohne Netz geht keine Anfrage an die Datenbank hinaus: Jede endet sofort mit
+   einer verständlichen Meldung, statt lange aufs Netz zu warten. Was gerade im
+   Formular steht, bleibt dabei stehen — wie bei jedem anderen Speicherfehler.
+   Die Anfrage-Kette (.insert().select().single() …) wird dazu nachgebildet. */
+const OHNE_NETZ = { message: 'Ohne Netz wird nichts gespeichert. Mit Netz „Neu laden“ und noch einmal versuchen.' };
+const echtesFrom = sb.from.bind(sb);
+sb.from = name => OFFLINE ? gesperrteAnfrage() : echtesFrom(name);
+function gesperrteAnfrage(){
+  const antwort = { data: null, error: OHNE_NETZ, count: null };
+  const kette = new Proxy(() => {}, {
+    get: (_, k) => k === 'then' ? (ok, nein) => Promise.resolve(antwort).then(ok, nein) : () => kette
+  });
+  return kette;
+}
+
+/* Die gespeicherte Kopie anzeigen und auf „nur ansehen“ schalten. */
+function zeigeKopie(kopie){
+  OFFLINE = true;
+  Object.assign(HAS, kopie.HAS || {});
+  S.places = kopie.places || []; S.gear = kopie.gear || []; S.flights = kopie.flights || [];
+  renderAll(); renderStats(); syncForm();
+  if (!kartePasst) passeKarteAn();
+  const stand = new Date(kopie.zeit).toLocaleString('de-DE',
+    {day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'});
+  document.getElementById('offline-stand').textContent = 'Stand ' + stand + ' Uhr';
+  document.getElementById('offline').classList.add('on');
+}
+/* Kommt das Netz zurück, wird „Neu laden“ zum dunklen Knopf. */
+window.addEventListener('online', () => {
+  if (!OFFLINE) return;
+  document.querySelector('#offline b').textContent = 'Netz wieder da';
+  document.querySelector('#offline .btn').classList.remove('ghost');
+});
+
+/* Langes Drücken aufs App-Symbol (Android) bietet „S.o.S.“ an: Dann steht
+   „?sos“ in der Adresse und die App öffnet gleich diesen Reiter. */
+function oeffneStartReiter(){
+  if (new URLSearchParams(location.search).has('sos')) show('sos');
+}
 
 /* ══════════  ══════════ */
 async function boot(){
-  const { data:{ session } } = await sb.auth.getSession();
+  const kopie = ladeKopie();
+  /* Ganz ohne Netz gar nicht erst auf die Anmeldung warten. */
+  if (kopie && navigator.onLine === false) return startOhneNetz(kopie);
+  const anmeldung = sb.auth.getSession();
+  const ergebnis = kopie ? await innerhalb(anmeldung, ANMELDUNG_WARTEN_MS) : await anmeldung;
+  /* Anmeldung kam nicht rechtzeitig oder scheiterte am Netz: die Kopie zeigen. */
+  if (kopie && (!ergebnis || (!ergebnis.data.session && istNetzfehler(ergebnis.error))))
+    return startOhneNetz(kopie);
+  const { data:{ session } } = ergebnis;
   document.getElementById('boot').style.display = 'none';
-  session ? startApp(session) : document.getElementById('login').classList.add('on');
+  session ? startApp(session, kopie) : document.getElementById('login').classList.add('on');
+}
+
+function startOhneNetz(kopie){
+  document.getElementById('boot').style.display = 'none';
+  document.getElementById('whoami').textContent = kopie.email || '';
+  document.getElementById('app').classList.add('on');
+  initMap();
+  initStats();
+  zeigeKopie(kopie);
+  oeffneStartReiter();
 }
 
 document.getElementById('l-btn').onclick = doLogin;
@@ -1055,15 +1223,33 @@ async function doLogin(){
   startApp(data.session);
 }
 
-window.logout = async () => { await sb.auth.signOut(); location.reload(); };
+/* Beim Abmelden auch die Kopie fürs Offline-Ansehen löschen — sie gehört der
+   Person, die sich gerade abmeldet. */
+window.logout = async () => { vergissKopie(); await sb.auth.signOut(); location.reload(); };
 
-async function startApp(session){
+/* `kopie` gibt es nur in der App, wenn schon einmal etwas geladen wurde. */
+async function startApp(session, kopie){
+  ANGEMELDET = session.user;
   document.getElementById('whoami').textContent = session.user.email;
   document.getElementById('app').classList.add('on');
   initMap();
   initStats();
-  await checkCols();
-  await loadAll();
+  oeffneStartReiter();
+  if (!kopie){
+    await checkCols();
+    await loadAll();
+    return;
+  }
+  /* In der App: Kommt mit schwachem Netz nach LADEN_WARTEN_MS nichts, oder
+     scheitert das Laden am Netz, wird die Kopie gezeigt. */
+  KOPIE_ALS_ERSATZ = kopie;
+  const frisch = (async () => { await checkCols(); return loadAll(); })()
+    .catch(e => { console.error(e); return false; });
+  const geladen = await innerhalb(frisch, LADEN_WARTEN_MS);
+  KOPIE_ALS_ERSATZ = null;
+  /* null = Zeit abgelaufen, 'netz' = am Netz gescheitert. Andere Fehler hat
+     loadAll schon gemeldet; dann bleibt es wie im Browser. */
+  if ((geladen === null || geladen === 'netz') && !OFFLINE && !GELADEN_UM) zeigeKopie(kopie);
 }
 
 /* ══════════ DATEN LADEN ══════════ */
@@ -1100,13 +1286,22 @@ async function checkCols(){
   syncForm();
 }
 
+/* Gibt true zurück, wenn alles geladen ist, 'netz', wenn es am Netz scheiterte,
+   sonst false. Gebraucht wird das nur beim Start der App (siehe startApp). */
 async function loadAll(){
   const [pl, ge, fl] = await Promise.all([
     frag(() => sb.from('places').select('*').order('name')),
     frag(() => sb.from('gear').select('*').order('name')),
     frag(() => sb.from('flights').select('*').order('flight_date', {ascending:false}))
   ]);
-  for (const r of [pl, ge, fl]) if (r.error) return oops(r.error);
+  /* Inzwischen zeigt die App die Kopie (Netz zu langsam): dabei bleibt es. */
+  if (OFFLINE) return false;
+  const fehler = [pl, ge, fl].find(r => r.error)?.error;
+  if (fehler){
+    if (KOPIE_ALS_ERSATZ && istNetzfehler(fehler)) return 'netz';
+    oops(fehler);
+    return istNetzfehler(fehler) ? 'netz' : false;
+  }
   /* Stehen noch Orte der alten Art „Start und Landung“ in der Datenbank, werden sie
      jetzt umgestellt — danach wird einmal frisch geladen. */
   if (await migriereBeides(pl.data, fl.data)) return loadAll();
@@ -1120,12 +1315,15 @@ async function loadAll(){
     dist:f.dist_km ?? '', asc:f.ascent||'',
     glider:f.glider||'', harness:f.harness||'', note:f.note||'', reminder:f.reminder||''
   }));
+  GELADEN_UM = Date.now();
+  merkeKopie();
   renderAll(); renderStats();
   /* Die Höhen kommen nach: sie brauchen einen Moment und sollen das Laden nicht aufhalten.
      Orte, bei denen sie schon in der Datenbank steht, werden dabei übersprungen. */
   if (!kartePasst) passeKarteAn();
   const ohneHoehe = HAS.elev ? S.places.filter(p => p.elev == null) : S.places;
   ladeHoehen(ohneHoehe, () => { renderPlaceList(); drawPlaces(); }).then(hoehenNachtragen);
+  return true;
 }
 
 
@@ -3650,6 +3848,27 @@ document.addEventListener('keydown', e => {
   /* Das echte Vollbild beendet der Browser selbst; das Ersatz-Vollbild nicht. */
   else if (document.getElementById('mapwrap').classList.contains('fsfake')) verlasseVollbild();
 });
+
+/* Den Hintergrund-Helfer (sw.js) anmelden — NUR in der App, wie bei SISOSIG.
+   Er speichert Seite, Programmteile und angesehene Kartenstücke, damit die App
+   auch ohne Netz startet. Erst nach dem Laden, damit er den Start nicht bremst.
+   Beim allerersten Start war er noch nicht da, als Seite und Programmteile
+   kamen: Er bekommt deshalb die Liste der schon geladenen Dateien und holt sie
+   nach — sonst ginge „ohne Netz starten“ erst ab dem zweiten Öffnen. */
+if (ALS_APP && 'serviceWorker' in navigator){
+  const meldeHelfer = () => navigator.serviceWorker.register('sw.js')
+    .then(() => navigator.serviceWorker.ready)
+    .then(reg => {
+      const geladen = performance.getEntriesByType('resource').map(e => e.name)
+        .filter(u => /^https:\/\/(unpkg\.com|esm\.sh)\//.test(u));
+      const eigene = ['./', 'favicon.svg', 'manifest.webmanifest', 'icons/icon-192.png']
+        .map(u => new URL(u, location.href).href);
+      reg.active?.postMessage({ type: 'dateien-merken', urls: [...eigene, ...geladen] });
+    })
+    .catch(() => { /* Ohne Helfer geht die App wie die Website, nur nicht offline. */ });
+  document.readyState === 'complete' ? meldeHelfer()
+    : addEventListener('load', meldeHelfer, { once: true });
+}
 
 boot().catch(e => {
   document.getElementById('boot').textContent =
